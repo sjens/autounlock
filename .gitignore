@@ -35,6 +35,7 @@ proguard/
 captures/
 
 # Intellij
+.idea/
 *.iml
 
 # Keystore files
