@@ -13,6 +13,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     UnlockService mService;
     boolean mBound = false;
+    DataStore dataStore = new DataStore(this, "datastore.db", null, 1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +27,7 @@ public class MainActivity extends Activity {
         // Bind to LocalService
         Intent intent = new Intent(this, UnlockService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        dataStore.getWritableDatabase();
     }
 
     @Override

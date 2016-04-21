@@ -19,6 +19,7 @@
             </intent-filter>
         </activity>
         <service android:name=".UnlockService" android:enabled="true" />
+        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     </application>
 
 </manifest>
