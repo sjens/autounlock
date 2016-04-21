@@ -36,31 +36,31 @@ public class DataStore extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE " + btleTable + " ("
-                + id + " INTEGER PRIMARY KEY , "
+                + id + " INTEGER PRIMARY KEY, "
                 + btleRSSI + " TEXT, "
                 + btleSource + " TEXT, "
                 + timestamp + " TEXT)");
 
         db.execSQL("CREATE TABLE " + wifiTable + " ("
-                + id + " INTEGER PRIMARY KEY , "
+                + id + " INTEGER PRIMARY KEY, "
                 + wifiSSID + " TEXT, "
                 + wifiMAC + " TEXT, "
                 + wifiRSSI + " TEXT, "
                 + timestamp + " TEXT)");
 
         db.execSQL("CREATE TABLE " + accelTable + " ("
-                + id + " INTEGER PRIMARY KEY , "
+                + id + " INTEGER PRIMARY KEY, "
                 + accelVector + " TEXT, "
                 + accelVelocity + " TEXT, "
                 + timestamp + " TEXT)");
 
         db.execSQL("CREATE TABLE " + magnetTable + " ("
-                + id + " INTEGER PRIMARY KEY , "
+                + id + " INTEGER PRIMARY KEY, "
                 + magnetDegree + " TEXT, "
                 + timestamp + " TEXT)");
 
         db.execSQL("CREATE TABLE " + locationTable + " ("
-                + id + " INTEGER PRIMARY KEY , "
+                + id + " INTEGER PRIMARY KEY, "
                 + locationLatitude + " TEXT, "
                 + locationLongitude + " TEXT, "
                 + locationPrecision + " TEXT, "

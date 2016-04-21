@@ -1,10 +1,7 @@
 package net.simonjensen.autounlock;
 
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.*;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
@@ -28,6 +25,8 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(this, UnlockService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         dataStore.getWritableDatabase();
+
+        ContentValues contentValues = new ContentValues();
     }
 
     @Override
