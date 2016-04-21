@@ -1,9 +1,12 @@
 package net.simonjensen.autounlock;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.*;
 import android.os.Process;
+import android.support.v7.app.NotificationCompat;
 import android.widget.Toast;
 
 import java.util.Random;
@@ -63,7 +66,19 @@ public class UnlockService extends Service {
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper);
 
-        Toast.makeText(this, "service onCreate", Toast.LENGTH_SHORT).show();
+        // Running the service in the foreground by creating a notification
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                notificationIntent, 0);
+
+        Notification notification = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("AutoUnlock")
+                .setContentText("Service running in the background")
+                .setContentIntent(pendingIntent).build();
+
+        startForeground(1337, notification);
     }
 
     @Override
