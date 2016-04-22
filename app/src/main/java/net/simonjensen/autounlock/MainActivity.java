@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    UnlockService mService;
+    UnlockService unlockService;
     boolean mBound = false;
     DataStore dataStore = new DataStore(this, "datastore.db", null, 1);
 
@@ -22,8 +22,9 @@ public class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
         // Bind to LocalService
-        Intent intent = new Intent(this, UnlockService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        Intent unlockIntent = new Intent(this, UnlockService.class);
+        bindService(unlockIntent, mConnection, Context.BIND_AUTO_CREATE);
+
         dataStore.getWritableDatabase();
 
         ContentValues contentValues = new ContentValues();
@@ -46,8 +47,10 @@ public class MainActivity extends Activity {
             // Call a method from the LocalService.
             // However, if this call were something that might hang, then this request should
             // occur in a separate thread to avoid slowing down the activity performance.
-            int num = mService.getRandomNumber();
-            Toast.makeText(this, "number: " + num, Toast.LENGTH_SHORT).show();
+            //int num = unlockService.getRandomNumber();
+            //Toast.makeText(this, "number: " + num, Toast.LENGTH_SHORT).show();
+            unlockService.startAccelService();
+            Toast.makeText(this, "AccelerometerService started", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -59,7 +62,7 @@ public class MainActivity extends Activity {
                                        IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             UnlockService.LocalBinder binder = (UnlockService.LocalBinder) service;
-            mService = binder.getService();
+            unlockService = binder.getService();
             mBound = true;
         }
 

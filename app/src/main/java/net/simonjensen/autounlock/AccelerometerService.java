@@ -1,34 +1,58 @@
 package net.simonjensen.autounlock;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.*;
 import android.os.Process;
-import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.util.Random;
 
-public class UnlockService extends Service {
+public class AccelerometerService extends Service implements SensorEventListener {
     private Looper mServiceLooper;
     private ServiceHandler mServiceHandler;
 
-    // Binder given to clients
-    private final IBinder mBinder = new LocalBinder();
-    // Random number generator
-    private final Random mGenerator = new Random();
+    float [] history = new float[2];
+    String [] direction = {"NONE","NONE"};
 
-    /**
-     * Class used for the client Binder.  Because we know this service always
-     * runs in the same process as its clients, we don't need to deal with IPC.
-     */
-    public class LocalBinder extends Binder {
-        UnlockService getService() {
-            // Return this instance of LocalService so clients can call public methods
-            return UnlockService.this;
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        float xChange = history[0] - event.values[0];
+        float yChange = history[1] - event.values[1];
+
+        history[0] = event.values[0];
+        history[1] = event.values[1];
+
+        if (xChange > 2){
+            direction[0] = "LEFT";
         }
+        else if (xChange < -2){
+            direction[0] = "RIGHT";
+        }
+
+        if (yChange > 2){
+            direction[1] = "DOWN";
+        }
+        else if (yChange < -2){
+            direction[1] = "UP";
+        }
+
+        Log.v("SENSOR CHANGE: ", "X: " + direction[0] + " Y: " + direction[1]);
+    }
+
+    public String[] getDirection() {
+        return direction;
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 
     // Handler that receives messages from the thread
@@ -54,6 +78,7 @@ public class UnlockService extends Service {
 
     @Override
     public void onCreate() {
+        Toast.makeText(this, "accservice onCreate", Toast.LENGTH_SHORT).show();
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
@@ -66,24 +91,14 @@ public class UnlockService extends Service {
         mServiceLooper = thread.getLooper();
         mServiceHandler = new ServiceHandler(mServiceLooper);
 
-        // Running the service in the foreground by creating a notification
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                notificationIntent, 0);
-
-        Notification notification = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("AutoUnlock")
-                .setContentText("Service running in the background")
-                .setContentIntent(pendingIntent).build();
-
-        startForeground(1337, notification);
+        SensorManager manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        Sensor accelerometer = manager.getSensorList(Sensor.TYPE_ACCELEROMETER).get(0);
+        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "accservice starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -97,23 +112,12 @@ public class UnlockService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // mBinder is used for bound services
-        return mBinder;
+        // We don't provide binding, so return null
+        return null;
     }
-
-    /** method for clients */
-    public int getRandomNumber() {
-        return mGenerator.nextInt(100);
-    }
-
-    public void startAccelService() {
-        Intent accelIntent = new Intent(this, AccelerometerService.class);
-        startService(accelIntent);
-    }
-
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "accservice done" + direction[0] + " " + direction[1], Toast.LENGTH_SHORT).show();
     }
 }
