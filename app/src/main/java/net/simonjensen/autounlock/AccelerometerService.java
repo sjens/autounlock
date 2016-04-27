@@ -12,42 +12,44 @@ import android.os.Process;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.util.Random;
-
 public class AccelerometerService extends Service implements SensorEventListener {
-    private Looper mServiceLooper;
-    private ServiceHandler mServiceHandler;
+    private Looper serviceLooper;
+    private ServiceHandler serviceHandler;
+    private Sensor accelerometer;
+    private Sensor magnetometer;
 
-    float [] history = new float[2];
-    String [] direction = {"NONE","NONE"};
+    private float[] previousAccelerometer = new float[3];
+    private float[] previousMagnetometer = new float[3];
+    private boolean previousAccelerometerSet = false;
+    private boolean previousMagnetometerSet = false;
+    private float[] rotation = new float[9];
+    private float[] orientation = new float[3];
+    private float currentDegree = 0f;
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        float xChange = history[0] - event.values[0];
-        float yChange = history[1] - event.values[1];
-
-        history[0] = event.values[0];
-        history[1] = event.values[1];
-
-        if (xChange > 2){
-            direction[0] = "LEFT";
+        if (event.sensor == accelerometer) {
+            System.arraycopy(event.values, 0, previousAccelerometer, 0, event.values.length);
+            previousAccelerometerSet = true;
+        } else if (event.sensor == magnetometer) {
+            System.arraycopy(event.values, 0, previousMagnetometer, 0, event.values.length);
+            previousMagnetometerSet = true;
         }
-        else if (xChange < -2){
-            direction[0] = "RIGHT";
-        }
+        if (previousAccelerometerSet && previousMagnetometerSet) {
+            SensorManager.getRotationMatrix(rotation, null, previousAccelerometer, previousMagnetometer);
+            SensorManager.getOrientation(rotation, orientation);
+            float azimuthInRadians = orientation[0];
+            float azimuthInDegrees = (float)(Math.toDegrees(azimuthInRadians)+360)%360;
 
-        if (yChange > 2){
-            direction[1] = "DOWN";
-        }
-        else if (yChange < -2){
-            direction[1] = "UP";
-        }
+            currentDegree = -azimuthInDegrees;
+            Log.v("ON SENSOR CHANGED: ", String.valueOf((float)(Math.toDegrees(orientation[0])+360)%360) + " "
+                    + String.valueOf((float)(Math.toDegrees(orientation[1])+360)%360) + " "
+                    + String.valueOf((float)(Math.toDegrees(orientation[2])+360)%360));
 
-        Log.v("SENSOR CHANGE: ", "X: " + direction[0] + " Y: " + direction[1]);
-    }
-
-    public String[] getDirection() {
-        return direction;
+            //Log.v("1ON SENSOR CHANGED: ", String.valueOf(rotation[0]) + " " + String.valueOf(rotation[1]) + " " + String.valueOf(rotation[2]));
+            //Log.v("2ON SENSOR CHANGED: ", String.valueOf(rotation[3]) + " " + String.valueOf(rotation[4]) + " " + String.valueOf(rotation[5]));
+            //Log.v("3ON SENSOR CHANGED: ", String.valueOf(rotation[6]) + " " + String.valueOf(rotation[7]) + " " + String.valueOf(rotation[8]));
+        }
     }
 
     @Override
@@ -88,12 +90,14 @@ public class AccelerometerService extends Service implements SensorEventListener
         thread.start();
 
         // Get the HandlerThread's Looper and use it for our Handler
-        mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper);
+        serviceLooper = thread.getLooper();
+        serviceHandler = new ServiceHandler(serviceLooper);
 
-        SensorManager manager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        Sensor accelerometer = manager.getSensorList(Sensor.TYPE_ACCELEROMETER).get(0);
-        manager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
+        SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
@@ -102,9 +106,9 @@ public class AccelerometerService extends Service implements SensorEventListener
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
-        Message msg = mServiceHandler.obtainMessage();
+        Message msg = serviceHandler.obtainMessage();
         msg.arg1 = startId;
-        mServiceHandler.sendMessage(msg);
+        serviceHandler.sendMessage(msg);
 
         // If we get killed, after returning from here, restart
         return START_STICKY;
@@ -118,6 +122,6 @@ public class AccelerometerService extends Service implements SensorEventListener
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "accservice done" + direction[0] + " " + direction[1], Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "accservice done", Toast.LENGTH_SHORT).show();
     }
 }

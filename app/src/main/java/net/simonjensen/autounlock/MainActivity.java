@@ -42,7 +42,7 @@ public class MainActivity extends Activity {
 
     /** Called when a button is clicked (the button in the layout file attaches to
      * this method with the android:onClick attribute) */
-    public void onButtonClick(View v) {
+    public void onButtonClickAccel(View v) {
         if (mBound) {
             // Call a method from the LocalService.
             // However, if this call were something that might hang, then this request should
@@ -51,6 +51,18 @@ public class MainActivity extends Activity {
             //Toast.makeText(this, "number: " + num, Toast.LENGTH_SHORT).show();
             unlockService.startAccelService();
             Toast.makeText(this, "AccelerometerService started", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void onButtonClickNetwork(View v) {
+        if (mBound) {
+            // Call a method from the LocalService.
+            // However, if this call were something that might hang, then this request should
+            // occur in a separate thread to avoid slowing down the activity performance.
+            //int num = unlockService.getRandomNumber();
+            //Toast.makeText(this, "number: " + num, Toast.LENGTH_SHORT).show();
+            unlockService.startNetworkService();
+            Toast.makeText(this, "NetworkService started", Toast.LENGTH_SHORT).show();
         }
     }
 

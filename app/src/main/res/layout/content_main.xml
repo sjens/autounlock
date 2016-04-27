@@ -13,14 +13,18 @@
         tools:showIn="@layout/activity_main"
         tools:context="net.simonjensen.autounlock.MainActivity">
 
-    <TextView
-            android:text="Hello World!"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
     <Button
+            android:id="@+id/accstart"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:text="Start Service"
-            android:onClick="onButtonClick" />
+            android:text="Start Acceleration Service"
+            android:onClick="onButtonClickAccel" />
+
+    <Button
+            android:id="@+id/networkstart"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_below="@id/accstart"
+            android:text="Start Network Service"
+            android:onClick="onButtonClickNetwork" />
 </RelativeLayout>

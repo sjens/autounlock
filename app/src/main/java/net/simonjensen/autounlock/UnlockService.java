@@ -111,6 +111,11 @@ public class UnlockService extends Service {
         startService(accelIntent);
     }
 
+    public void startNetworkService() {
+        Intent networkIntent = new Intent(this, NetworkService.class);
+        startService(networkIntent);
+    }
+
 
     @Override
     public void onDestroy() {

@@ -20,6 +20,7 @@
         </activity>
         <service android:name=".UnlockService" android:enabled="true" />
         <service android:name=".AccelerometerService" android:enabled="true" />
+        <service android:name=".NetworkService" android:enabled="true" />
         <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     </application>
 
