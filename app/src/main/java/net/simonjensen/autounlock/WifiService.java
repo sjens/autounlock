@@ -1,14 +1,37 @@
 package net.simonjensen.autounlock;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
 import android.os.*;
 import android.os.Process;
+import android.util.Log;
 import android.widget.Toast;
 
-public class NetworkService extends Service {
+import java.util.List;
+
+public class WifiService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
+
+    WifiManager wifiManager;
+
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context c, Intent intent) {
+            if (intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
+                List<ScanResult> scanResults = wifiManager.getScanResults();
+                // add your logic here
+                for (int i = 0; i < scanResults.size(); i++) {
+                    Log.v("Wifi", String.valueOf(scanResults.get(i)));
+                }
+            }
+        }
+    };
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
@@ -33,7 +56,7 @@ public class NetworkService extends Service {
 
     @Override
     public void onCreate() {
-        Toast.makeText(this, "network service onCreate", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "wifi service onCreate", Toast.LENGTH_SHORT).show();
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
@@ -45,11 +68,18 @@ public class NetworkService extends Service {
         // Get the HandlerThread's Looper and use it for our Handler
         serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper);
+
+        Log.v("HERE?", "");
+
+        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        registerReceiver(broadcastReceiver,
+                new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        wifiManager.startScan();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "network service starting", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "wifi service starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -69,6 +99,7 @@ public class NetworkService extends Service {
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "network service done", Toast.LENGTH_SHORT).show();
+        unregisterReceiver(broadcastReceiver);
+        Toast.makeText(this, "wifi service done", Toast.LENGTH_SHORT).show();
     }
 }

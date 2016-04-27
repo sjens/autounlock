@@ -111,11 +111,15 @@ public class UnlockService extends Service {
         startService(accelIntent);
     }
 
-    public void startNetworkService() {
-        Intent networkIntent = new Intent(this, NetworkService.class);
-        startService(networkIntent);
+    public void startLoactionService() {
+        Intent locationIntent = new Intent(this, LocationService.class);
+        startService(locationIntent);
     }
 
+    public void startWifiService() {
+        Intent wifiIntent = new Intent(this, WifiService.class);
+        startService(wifiIntent);
+    }
 
     @Override
     public void onDestroy() {
