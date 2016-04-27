@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.*;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
@@ -90,7 +89,7 @@ public class MainActivity extends Activity {
                 // result of the request.
             }
         } else {
-            unlockService.startNetworkService();
+            unlockService.startLoactionService();
         }
     }
 
@@ -103,7 +102,7 @@ public class MainActivity extends Activity {
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                     Log.v("yay", "yay");
-                    //unlockService.startNetworkService();
+                    //unlockService.startLoactionService();
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
 
@@ -118,6 +117,18 @@ public class MainActivity extends Activity {
 
             // other 'case' lines to check for other
             // permissions this app might request
+        }
+    }
+
+    public void onButtonClickWifi(View v) {
+        if (bound) {
+            // Call a method from the LocalService.
+            // However, if this call were something that might hang, then this request should
+            // occur in a separate thread to avoid slowing down the activity performance.
+            //int num = unlockService.getRandomNumber();
+            //Toast.makeText(this, "number: " + num, Toast.LENGTH_SHORT).show();
+            unlockService.startWifiService();
+            Toast.makeText(this, "WifiService started", Toast.LENGTH_SHORT).show();
         }
     }
 

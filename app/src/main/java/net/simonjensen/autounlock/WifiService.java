@@ -1,50 +1,43 @@
 package net.simonjensen.autounlock;
 
-import android.Manifest;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
+import android.content.IntentFilter;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
 import android.os.*;
 import android.os.Process;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-public class NetworkService extends Service {
+import java.util.List;
+
+public class WifiService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
 
-    // Define a listener that responds to location updates
-    LocationListener locationListener = new LocationListener() {
-        public void onLocationChanged(Location location) {
-            // Called when a new location is found by the network location provider.
-            makeUseOfNewLocation(location);
-        }
+    WifiManager wifiManager;
 
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-
-        public void onProviderEnabled(String provider) {
-        }
-
-        public void onProviderDisabled(String provider) {
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context c, Intent intent) {
+            if (intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
+                List<ScanResult> scanResults = wifiManager.getScanResults();
+                // add your logic here
+                for (int i = 0; i < scanResults.size(); i++) {
+                    Log.v("Wifi", String.valueOf(scanResults.get(i)));
+                }
+            }
         }
     };
-
-    public void makeUseOfNewLocation(Location location) {
-        Log.v("LOCATION: ", location.toString());
-    }
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
         public ServiceHandler(Looper looper) {
             super(looper);
         }
-
         @Override
         public void handleMessage(Message msg) {
             // Normally we would do some work here, like download a file.
@@ -63,7 +56,7 @@ public class NetworkService extends Service {
 
     @Override
     public void onCreate() {
-        Toast.makeText(this, "network service onCreate", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "wifi service onCreate", Toast.LENGTH_SHORT).show();
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
@@ -76,20 +69,17 @@ public class NetworkService extends Service {
         serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper);
 
-        // Check that permissions are granted
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
+        Log.v("HERE?", "");
 
-        Log.v("HERE?", "ØØ");
-        // Register the listener with the Location Manager to receive location updates
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 1, locationListener);
+        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        registerReceiver(broadcastReceiver,
+                new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        wifiManager.startScan();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "network service starting", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "wifi service starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -109,6 +99,7 @@ public class NetworkService extends Service {
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "network service done", Toast.LENGTH_SHORT).show();
+        unregisterReceiver(broadcastReceiver);
+        Toast.makeText(this, "wifi service done", Toast.LENGTH_SHORT).show();
     }
 }
