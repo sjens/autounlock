@@ -15,12 +15,14 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     UnlockService unlockService;
     boolean bound = false;
-    DataStore dataStore = new DataStore(this);
+
+    DataStore dataStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        dataStore = new DataStore(this);
     }
 
     @Override
@@ -32,6 +34,8 @@ public class MainActivity extends Activity {
         //Intent unlockIntent = new Intent(this, UnlockService.class);
         //startService(unlockIntent);
         //bindService(unlockIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
+
     }
 
     @Override
@@ -103,7 +107,7 @@ public class MainActivity extends Activity {
                     // contacts-related task you need to do.
 
                 } else {
-                    Log.v("boo", "boo");
+                    Toast.makeText(this, "The app needs access to location in order to function.", Toast.LENGTH_SHORT).show();
 
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.

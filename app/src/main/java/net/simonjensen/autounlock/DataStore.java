@@ -30,9 +30,10 @@ public class DataStore {
     static final String MAGNET_DEGREE = "degree";
 
     static final String LOCATION_TABLE = "location";
+    static final String LOCATION_PROVIDER = "provider";
     static final String LOCATION_LATITUDE = "latitude";
     static final String LOCATION_LONGITUDE = "longitude";
-    static final String LOCATION_PRECISION = "precision";
+    static final String LOCATION_ACCURACY = "accuracy";
 
     private SQLiteDatabase database;
     private DatabaseHelper databaseHelper;
@@ -47,18 +48,17 @@ public class DataStore {
     }
 
     //: I cannot see why it should not work.
-    public void insertBtle(int id, String btleRSSI, String btleSource, String timestamp) {
+    public void insertBtle(String btleRSSI, String btleSource, long timestamp) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(ID, id);
         contentValues.put(BTLE_RSSI, btleRSSI);
         contentValues.put(BTLE_SOURCE, btleSource);
         contentValues.put(TIMESTAMP, timestamp);
         database.replace(BTLE_TABLE, null, contentValues);
     }
 
-    public void insertWifi(int id, String wifiSSID, String wifiMAC, String wifiRSSI, String timestamp) {
+    public void insertWifi(String wifiSSID, String wifiMAC, String wifiRSSI, long timestamp) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(ID, id);
+        //contentValues.put(ID, id);
         contentValues.put(WIFI_SSID, wifiSSID);
         contentValues.put(WIFI_MAC, wifiMAC);
         contentValues.put(WIFI_RSSI, wifiRSSI);
@@ -66,29 +66,27 @@ public class DataStore {
         database.replace(WIFI_TABLE, null, contentValues);
     }
 
-    public void insertAccelerometer(int id, String accelVector, String accelVelocity, String timestamp) {
+    public void insertAccelerometer(String accelVector, String accelVelocity, long timestamp) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(ID, id);
         contentValues.put(ACCEL_VECTOR, accelVector);
         contentValues.put(ACCEL_VELOCITY, accelVelocity);
         contentValues.put(TIMESTAMP, timestamp);
         database.replace(ACCEL_TABLE, null, contentValues);
     }
 
-    public void insertMagnetometer(int id, String degree, String timestamp) {
+    public void insertMagnetometer(String degree, long timestamp) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(ID, id);
         contentValues.put(MAGNET_DEGREE, degree);
         contentValues.put(TIMESTAMP, timestamp);
         database.replace(MAGNET_TABLE, null, contentValues);
     }
 
-    public void insertLocation(int id, String latitude, String longitude, String precision, String timestamp) {
+    public void insertLocation(String provider, double latitude, double longitude, float accuracy, long timestamp) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(ID, id);
+        contentValues.put(LOCATION_PROVIDER, provider);
         contentValues.put(LOCATION_LATITUDE, latitude);
         contentValues.put(LOCATION_LONGITUDE, longitude);
-        contentValues.put(LOCATION_PRECISION, precision);
+        contentValues.put(LOCATION_ACCURACY, accuracy);
         contentValues.put(TIMESTAMP, timestamp);
         database.replace(LOCATION_TABLE, null, contentValues);
     }
@@ -104,54 +102,55 @@ public class DataStore {
         }
 
         @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
             // Production-quality upgrade code should modify the tables when
             // the database version changes instead of dropping the tables and
             // re-creating them.
             if (newVersion != DATABASE_VERSION) {
                 Log.w("Datastore", "Database upgrade from old: " + oldVersion + " to: " +
                         newVersion);
-                db.execSQL("DROP TABLE IF EXISTS " + BTLE_TABLE);
-                db.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE);
-                db.execSQL("DROP TABLE IF EXISTS " + ACCEL_TABLE);
-                db.execSQL("DROP TABLE IF EXISTS " + MAGNET_TABLE);
-                db.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
-                createDatastore(db);
+                database.execSQL("DROP TABLE IF EXISTS " + BTLE_TABLE);
+                database.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE);
+                database.execSQL("DROP TABLE IF EXISTS " + ACCEL_TABLE);
+                database.execSQL("DROP TABLE IF EXISTS " + MAGNET_TABLE);
+                database.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
+                createDatastore(database);
                 return;
             }
         }
 
-        private void createDatastore(SQLiteDatabase db) {
-            db.execSQL("CREATE TABLE " + BTLE_TABLE + " ("
-                    + ID + " INTEGER PRIMARY KEY, "
+        private void createDatastore(SQLiteDatabase database) {
+            database.execSQL("CREATE TABLE " + BTLE_TABLE + " ("
+                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + BTLE_RSSI + " TEXT, "
                     + BTLE_SOURCE + " TEXT, "
-                    + TIMESTAMP + " TEXT)");
+                    + TIMESTAMP + " LONG)");
 
-            db.execSQL("CREATE TABLE " + WIFI_TABLE + " ("
-                    + ID + " INTEGER PRIMARY KEY, "
+            database.execSQL("CREATE TABLE " + WIFI_TABLE + " ("
+                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + WIFI_SSID + " TEXT, "
                     + WIFI_MAC + " TEXT, "
                     + WIFI_RSSI + " TEXT, "
-                    + TIMESTAMP + " TEXT)");
+                    + TIMESTAMP + " LONG)");
 
-            db.execSQL("CREATE TABLE " + ACCEL_TABLE + " ("
-                    + ID + " INTEGER PRIMARY KEY, "
+            database.execSQL("CREATE TABLE " + ACCEL_TABLE + " ("
+                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + ACCEL_VECTOR + " TEXT, "
                     + ACCEL_VELOCITY + " TEXT, "
-                    + TIMESTAMP + " TEXT)");
+                    + TIMESTAMP + " LONG)");
 
-            db.execSQL("CREATE TABLE " + MAGNET_TABLE + " ("
-                    + ID + " INTEGER PRIMARY KEY, "
+            database.execSQL("CREATE TABLE " + MAGNET_TABLE + " ("
+                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + MAGNET_DEGREE + " TEXT, "
-                    + TIMESTAMP + " TEXT)");
+                    + TIMESTAMP + " LONG)");
 
-            db.execSQL("CREATE TABLE " + LOCATION_TABLE + " ("
-                    + ID + " INTEGER PRIMARY KEY, "
-                    + LOCATION_LATITUDE + " TEXT, "
-                    + LOCATION_LONGITUDE + " TEXT, "
-                    + LOCATION_PRECISION + " TEXT, "
-                    + TIMESTAMP + " TEXT)");
+            database.execSQL("CREATE TABLE " + LOCATION_TABLE + " ("
+                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + LOCATION_PROVIDER + " TEXT, "
+                    + LOCATION_LATITUDE + " FLOAT, "
+                    + LOCATION_LONGITUDE + " FLOAT, "
+                    + LOCATION_ACCURACY + " FLOAT, "
+                    + TIMESTAMP + " LONG)");
         }
     }
 }

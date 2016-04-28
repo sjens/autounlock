@@ -7,11 +7,14 @@ import android.content.Intent;
 import android.os.*;
 import android.os.Process;
 import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 import android.widget.Toast;
 
 public class UnlockService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
+
+    DataStore dataStore;
 
     // Binder given to clients
     private final IBinder localBinder = new LocalBinder();
@@ -75,6 +78,8 @@ public class UnlockService extends Service {
                 .setContentIntent(pendingIntent).build();
 
         startForeground(1337, notification);
+
+        dataStore = new DataStore(this);
     }
 
     @Override
@@ -108,6 +113,7 @@ public class UnlockService extends Service {
     }
 
     public void startWifiService() {
+        Log.v("start wifi", "");
         Intent wifiIntent = new Intent(this, WifiService.class);
         startService(wifiIntent);
     }

@@ -18,11 +18,22 @@ public class LocationService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
 
+    DataStore dataStore;
+
     // Define a listener that responds to location updates
     LocationListener locationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
             // Called when a new location is found by the network location provider.
-            makeUseOfNewLocation(location);
+            long time = System.currentTimeMillis();
+            String stringTime = String.valueOf(time);
+
+            Log.v("LOCATION: ", location.toString());
+            dataStore.insertLocation(
+                    location.getProvider(),
+                    location.getLatitude(),
+                    location.getLongitude(),
+                    location.getAccuracy(),
+                    time);
         }
 
         public void onStatusChanged(String provider, int status, Bundle extras) {
@@ -34,10 +45,6 @@ public class LocationService extends Service {
         public void onProviderDisabled(String provider) {
         }
     };
-
-    public void makeUseOfNewLocation(Location location) {
-        Log.v("LOCATION: ", location.toString());
-    }
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
@@ -84,7 +91,9 @@ public class LocationService extends Service {
         Log.v("LocationService", "Starting location gathering");
         // Register the listener with the Location Manager to receive location updates
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 1, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+
+        dataStore = new DataStore(this);
     }
 
     @Override
