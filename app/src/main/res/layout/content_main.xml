@@ -35,4 +35,12 @@
             android:layout_below="@id/networkstart"
             android:text="Start Wifi Service"
             android:onClick="onButtonClickWifi" />
+
+    <Button
+            android:id="@+id/bluetoothstart"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_below="@id/wifistart"
+            android:text="Start Bluetooth Service"
+            android:onClick="onButtonClickBluetooth" />
 </RelativeLayout>

@@ -122,13 +122,15 @@ public class MainActivity extends Activity {
 
     public void onButtonClickWifi(View v) {
         if (bound) {
-            // Call a method from the LocalService.
-            // However, if this call were something that might hang, then this request should
-            // occur in a separate thread to avoid slowing down the activity performance.
-            //int num = unlockService.getRandomNumber();
-            //Toast.makeText(this, "number: " + num, Toast.LENGTH_SHORT).show();
             unlockService.startWifiService();
             Toast.makeText(this, "WifiService started", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void onButtonClickBluetooth(View v) {
+        if (bound) {
+            unlockService.startBluetoothService();
+            Toast.makeText(this, "BluetoothService started", Toast.LENGTH_SHORT).show();
         }
     }
 

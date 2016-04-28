@@ -1,34 +1,33 @@
 package net.simonjensen.autounlock;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Intent;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.*;
 import android.os.*;
 import android.os.Process;
-import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-public class UnlockService extends Service {
+public class BluetoothService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
 
+    BluetoothAdapter bluetoothAdapter;
     DataStore dataStore;
 
-    // Binder given to clients
-    private final IBinder localBinder = new LocalBinder();
-
-    /**
-     * Class used for the client Binder.  Because we know this service always
-     * runs in the same process as its clients, we don't need to deal with IPC.
-     */
-    public class LocalBinder extends Binder {
-        UnlockService getService() {
-            // Return this instance of LocalService so clients can call public methods
-            return UnlockService.this;
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            // When discovery finds a device
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Get the BluetoothDevice object from the Intent
+                BluetoothDevice bluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                int RSSI = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
+                Log.v("Bluetooth:", bluetoothDevice.getName() + bluetoothDevice.getAddress() + bluetoothDevice.getUuids() + RSSI);
+            }
         }
-    }
+    };
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
@@ -53,6 +52,7 @@ public class UnlockService extends Service {
 
     @Override
     public void onCreate() {
+        Toast.makeText(this, "bluetooth service onCreate", Toast.LENGTH_SHORT).show();
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
@@ -65,26 +65,18 @@ public class UnlockService extends Service {
         serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper);
 
-        // Running the service in the foreground by creating a notification
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                notificationIntent, 0);
-
-        Notification notification = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("AutoUnlock")
-                .setContentText("Service running in the background")
-                .setContentIntent(pendingIntent).build();
-
-        startForeground(1337, notification);
-
         dataStore = new DataStore(this);
+
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        bluetoothAdapter.startDiscovery();
+
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(broadcastReceiver, filter); // Don't forget to unregister during onDestroy
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "bluetooth service starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -98,33 +90,13 @@ public class UnlockService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // localBinder is used for bound services
-        return localBinder;
-    }
-
-    public void startAccelService() {
-        Intent accelIntent = new Intent(this, AccelerometerService.class);
-        startService(accelIntent);
-    }
-
-    public void startLoactionService() {
-        Intent locationIntent = new Intent(this, LocationService.class);
-        startService(locationIntent);
-    }
-
-    public void startWifiService() {
-        Log.v("start wifi", "");
-        Intent wifiIntent = new Intent(this, WifiService.class);
-        startService(wifiIntent);
-    }
-
-    public void startBluetoothService() {
-        Intent bluetoothIntent = new Intent(this, BluetoothService.class);
-        startService(bluetoothIntent);
+        // We don't provide binding, so return null
+        return null;
     }
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        unregisterReceiver(broadcastReceiver);
+        Toast.makeText(this, "bluetooth service done", Toast.LENGTH_SHORT).show();
     }
 }
