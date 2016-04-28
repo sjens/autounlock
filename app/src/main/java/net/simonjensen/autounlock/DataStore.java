@@ -24,9 +24,13 @@ public class DataStore {
     static final String WIFI_MAC = "MAC";
     static final String WIFI_RSSI = "RSSI";
 
-    static final String ACCEL_TABLE = "accelerometer";
-    static final String ACCEL_VECTOR = "vector";
-    static final String ACCEL_VELOCITY = "velocity";
+    static final String ACCELEROMETER_TABLE = "accelerometer";
+    static final String ACCELEROMETER_X = "accelerometer_x";
+    static final String ACCELEROMETER_Y = "accelerometer_y";
+    static final String ACCELEROMETER_Z = "accelerometer_z";
+    static final String ROTATION_X = "rotation_x";
+    static final String ROTATION_Y = "rotation_y";
+    static final String ROTATION_Z = "rotation_z";
 
     static final String MAGNET_TABLE = "magnetometer";
     static final String MAGNET_DEGREE = "degree";
@@ -69,14 +73,20 @@ public class DataStore {
         database.replace(WIFI_TABLE, null, contentValues);
     }
 
-    public void insertAccelerometer(String accelVector, String accelVelocity, long timestamp) {
+    public void insertAccelerometer(String accelerometerX, String accelerometerY, String accelerometerZ,
+                                    String rotationX, String rotationY, String rotationZ, long timestamp) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(ACCEL_VECTOR, accelVector);
-        contentValues.put(ACCEL_VELOCITY, accelVelocity);
+        contentValues.put(ACCELEROMETER_X, accelerometerX);
+        contentValues.put(ACCELEROMETER_Y, accelerometerY);
+        contentValues.put(ACCELEROMETER_Z, accelerometerZ);
+        contentValues.put(ROTATION_X, rotationX);
+        contentValues.put(ROTATION_Y, rotationY);
+        contentValues.put(ROTATION_Z, rotationZ);
         contentValues.put(TIMESTAMP, timestamp);
-        database.replace(ACCEL_TABLE, null, contentValues);
+        database.replace(ACCELEROMETER_TABLE, null, contentValues);
     }
 
+    // Likely unneeded.
     public void insertMagnetometer(String degree, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(MAGNET_DEGREE, degree);
@@ -114,7 +124,7 @@ public class DataStore {
                         newVersion);
                 database.execSQL("DROP TABLE IF EXISTS " + BLUETOOTH_TABLE);
                 database.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE);
-                database.execSQL("DROP TABLE IF EXISTS " + ACCEL_TABLE);
+                database.execSQL("DROP TABLE IF EXISTS " + ACCELEROMETER_TABLE);
                 database.execSQL("DROP TABLE IF EXISTS " + MAGNET_TABLE);
                 database.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
                 createDatastore(database);
@@ -137,12 +147,17 @@ public class DataStore {
                     + WIFI_RSSI + " TEXT, "
                     + TIMESTAMP + " LONG)");
 
-            database.execSQL("CREATE TABLE " + ACCEL_TABLE + " ("
+            database.execSQL("CREATE TABLE " + ACCELEROMETER_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + ACCEL_VECTOR + " TEXT, "
-                    + ACCEL_VELOCITY + " TEXT, "
+                    + ACCELEROMETER_X + " TEXT, "
+                    + ACCELEROMETER_Y + " TEXT, "
+                    + ACCELEROMETER_Z + " TEXT, "
+                    + ROTATION_X + " TEXT, "
+                    + ROTATION_Y + " TEXT, "
+                    + ROTATION_Z + " TEXT, "
                     + TIMESTAMP + " LONG)");
 
+            // This is currently unused. Likeley to be deleted.
             database.execSQL("CREATE TABLE " + MAGNET_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + MAGNET_DEGREE + " TEXT, "

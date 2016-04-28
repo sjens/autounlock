@@ -105,6 +105,7 @@ public class WifiService extends Service {
 
     @Override
     public void onDestroy() {
+        dataStore.close();
         unregisterReceiver(broadcastReceiver);
         Toast.makeText(this, "wifi service done", Toast.LENGTH_SHORT).show();
     }

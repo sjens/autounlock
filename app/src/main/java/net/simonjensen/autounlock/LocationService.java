@@ -18,6 +18,7 @@ public class LocationService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
 
+    LocationManager locationManager;
     DataStore dataStore;
 
     // Define a listener that responds to location updates
@@ -90,7 +91,7 @@ public class LocationService extends Service {
 
         Log.v("LocationService", "Starting location gathering");
         // Register the listener with the Location Manager to receive location updates
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 1, locationListener);
 
         dataStore = new DataStore(this);
@@ -118,6 +119,10 @@ public class LocationService extends Service {
 
     @Override
     public void onDestroy() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        locationManager.removeUpdates(locationListener);
         Toast.makeText(this, "network service done", Toast.LENGTH_SHORT).show();
     }
 }

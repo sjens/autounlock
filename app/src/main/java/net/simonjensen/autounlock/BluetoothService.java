@@ -70,10 +70,10 @@ public class BluetoothService extends Service {
         serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper);
 
-        dataStore = new DataStore(this);
-
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         bluetoothAdapter.startDiscovery();
+
+        dataStore = new DataStore(this);
 
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(broadcastReceiver, filter); // Don't forget to unregister during onDestroy
@@ -101,6 +101,7 @@ public class BluetoothService extends Service {
 
     @Override
     public void onDestroy() {
+        dataStore.close();
         unregisterReceiver(broadcastReceiver);
         Toast.makeText(this, "bluetooth service done", Toast.LENGTH_SHORT).show();
     }

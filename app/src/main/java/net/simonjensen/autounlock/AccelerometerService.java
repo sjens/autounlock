@@ -1,7 +1,6 @@
 package net.simonjensen.autounlock;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -17,6 +16,8 @@ public class AccelerometerService extends Service implements SensorEventListener
     private ServiceHandler serviceHandler;
     private Sensor accelerometer;
     private Sensor magnetometer;
+
+    DataStore dataStore;
 
     private float[] previousAccelerometer = new float[3];
     private float[] previousMagnetometer = new float[3];
@@ -41,14 +42,23 @@ public class AccelerometerService extends Service implements SensorEventListener
             float azimuthInRadians = orientation[0];
             float azimuthInDegrees = (float)(Math.toDegrees(azimuthInRadians)+360)%360;
 
+            long time = System.currentTimeMillis();
+
             currentDegree = -azimuthInDegrees;
             Log.v("ON SENSOR CHANGED: ", String.valueOf((float)(Math.toDegrees(orientation[0])+360)%360) + " "
                     + String.valueOf((float)(Math.toDegrees(orientation[1])+360)%360) + " "
                     + String.valueOf((float)(Math.toDegrees(orientation[2])+360)%360));
 
-            //Log.v("1ON SENSOR CHANGED: ", String.valueOf(rotation[0]) + " " + String.valueOf(rotation[1]) + " " + String.valueOf(rotation[2]));
-            //Log.v("2ON SENSOR CHANGED: ", String.valueOf(rotation[3]) + " " + String.valueOf(rotation[4]) + " " + String.valueOf(rotation[5]));
-            //Log.v("3ON SENSOR CHANGED: ", String.valueOf(rotation[6]) + " " + String.valueOf(rotation[7]) + " " + String.valueOf(rotation[8]));
+            String accelerometerX = String.valueOf(previousAccelerometer[0]);
+            String accelerometerY = String.valueOf(previousAccelerometer[1]);
+            String accelerometerZ = String.valueOf(previousAccelerometer[2]);
+            String rotationX = String.valueOf((float)(Math.toDegrees(orientation[0])+360)%360);
+            String rotationY = String.valueOf((float)(Math.toDegrees(orientation[1])+360)%360);
+            String rotationZ = String.valueOf((float)(Math.toDegrees(orientation[2])+360)%360);
+
+            dataStore = new DataStore(this);
+            dataStore.insertAccelerometer(accelerometerX, accelerometerY, accelerometerZ, rotationX, rotationY, rotationZ, time);
+            dataStore.close();
         }
     }
 
@@ -122,6 +132,7 @@ public class AccelerometerService extends Service implements SensorEventListener
 
     @Override
     public void onDestroy() {
+        dataStore.close();
         Toast.makeText(this, "accservice done", Toast.LENGTH_SHORT).show();
     }
 }

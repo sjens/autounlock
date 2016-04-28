@@ -42,10 +42,10 @@ public class MainActivity extends Activity {
     protected void onStop() {
         super.onStop();
         // Unbind from the service
-        /*if (bound) {
-            unbindService(mConnection);
+        if (bound) {
+            unbindService(serviceConnection);
             bound = false;
-        }*/
+        }
     }
 
     /** Called when a button is clicked (the button in the layout file attaches to

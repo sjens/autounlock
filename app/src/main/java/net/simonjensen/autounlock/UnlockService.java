@@ -125,6 +125,7 @@ public class UnlockService extends Service {
 
     @Override
     public void onDestroy() {
+        dataStore.close();
         Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
     }
 }
