@@ -1,10 +1,7 @@
 package net.simonjensen.autounlock;
 
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.content.*;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.*;
@@ -19,15 +16,22 @@ public class WifiService extends Service {
     private ServiceHandler serviceHandler;
 
     WifiManager wifiManager;
+    DataStore dataStore;
 
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
-        public void onReceive(Context c, Intent intent) {
+        public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
                 List<ScanResult> scanResults = wifiManager.getScanResults();
-                // add your logic here
+                long time = System.currentTimeMillis();
+                String stringTime = String.valueOf(time);
+
                 for (int i = 0; i < scanResults.size(); i++) {
                     Log.v("Wifi", String.valueOf(scanResults.get(i)));
+                    String SSID = scanResults.get(i).SSID;
+                    String MAC = scanResults.get(i).BSSID;
+                    String RSSI = String.valueOf(scanResults.get(i).level);
+                    dataStore.insertWifi(SSID, MAC, RSSI, time);
                 }
             }
         }
@@ -70,6 +74,8 @@ public class WifiService extends Service {
         serviceHandler = new ServiceHandler(serviceLooper);
 
         Log.v("HERE?", "");
+
+        dataStore = new DataStore(this);
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         registerReceiver(broadcastReceiver,

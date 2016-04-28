@@ -15,12 +15,14 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
     UnlockService unlockService;
     boolean bound = false;
-    DataStore dataStore = new DataStore(this, "datastore.db", null, 1);
+
+    DataStore dataStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        dataStore = new DataStore(this);
     }
 
     @Override
@@ -33,9 +35,7 @@ public class MainActivity extends Activity {
         //startService(unlockIntent);
         //bindService(unlockIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
-        dataStore.getWritableDatabase();
 
-        ContentValues contentValues = new ContentValues();
     }
 
     @Override
@@ -107,7 +107,7 @@ public class MainActivity extends Activity {
                     // contacts-related task you need to do.
 
                 } else {
-                    Log.v("boo", "boo");
+                    Toast.makeText(this, "The app needs access to location in order to function.", Toast.LENGTH_SHORT).show();
 
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
@@ -122,13 +122,15 @@ public class MainActivity extends Activity {
 
     public void onButtonClickWifi(View v) {
         if (bound) {
-            // Call a method from the LocalService.
-            // However, if this call were something that might hang, then this request should
-            // occur in a separate thread to avoid slowing down the activity performance.
-            //int num = unlockService.getRandomNumber();
-            //Toast.makeText(this, "number: " + num, Toast.LENGTH_SHORT).show();
             unlockService.startWifiService();
             Toast.makeText(this, "WifiService started", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void onButtonClickBluetooth(View v) {
+        if (bound) {
+            unlockService.startBluetoothService();
+            Toast.makeText(this, "BluetoothService started", Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -1,48 +1,36 @@
 package net.simonjensen.autounlock;
 
-import android.Manifest;
 import android.app.Service;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.*;
 import android.os.*;
 import android.os.Process;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-public class LocationService extends Service {
+public class BluetoothService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
 
+    BluetoothAdapter bluetoothAdapter;
     DataStore dataStore;
 
-    // Define a listener that responds to location updates
-    LocationListener locationListener = new LocationListener() {
-        public void onLocationChanged(Location location) {
-            // Called when a new location is found by the network location provider.
+    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
             long time = System.currentTimeMillis();
-            String stringTime = String.valueOf(time);
+            // When discovery finds a device
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Get the BluetoothDevice object from the Intent
+                BluetoothDevice bluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                String name = bluetoothDevice.getName();
+                String source = bluetoothDevice.getAddress();
+                int RSSI = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
+                Log.v("Bluetooth:", bluetoothDevice.getName() + bluetoothDevice.getAddress() + bluetoothDevice.getUuids() + RSSI);
 
-            Log.v("LOCATION: ", location.toString());
-            dataStore.insertLocation(
-                    location.getProvider(),
-                    location.getLatitude(),
-                    location.getLongitude(),
-                    location.getAccuracy(),
-                    time);
-        }
-
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-
-        public void onProviderEnabled(String provider) {
-        }
-
-        public void onProviderDisabled(String provider) {
+                dataStore.insertBtle(name, source, RSSI, time);
+            }
         }
     };
 
@@ -51,7 +39,6 @@ public class LocationService extends Service {
         public ServiceHandler(Looper looper) {
             super(looper);
         }
-
         @Override
         public void handleMessage(Message msg) {
             // Normally we would do some work here, like download a file.
@@ -70,7 +57,7 @@ public class LocationService extends Service {
 
     @Override
     public void onCreate() {
-        Toast.makeText(this, "network service onCreate", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "bluetooth service onCreate", Toast.LENGTH_SHORT).show();
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
@@ -83,22 +70,18 @@ public class LocationService extends Service {
         serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper);
 
-        // Check that permissions are granted
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-
-        Log.v("LocationService", "Starting location gathering");
-        // Register the listener with the Location Manager to receive location updates
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 1, locationListener);
-
         dataStore = new DataStore(this);
+
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        bluetoothAdapter.startDiscovery();
+
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(broadcastReceiver, filter); // Don't forget to unregister during onDestroy
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "network service starting", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "bluetooth service starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -118,6 +101,7 @@ public class LocationService extends Service {
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "network service done", Toast.LENGTH_SHORT).show();
+        unregisterReceiver(broadcastReceiver);
+        Toast.makeText(this, "bluetooth service done", Toast.LENGTH_SHORT).show();
     }
 }

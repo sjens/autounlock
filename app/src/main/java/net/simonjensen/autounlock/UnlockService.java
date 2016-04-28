@@ -7,18 +7,17 @@ import android.content.Intent;
 import android.os.*;
 import android.os.Process;
 import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 import android.widget.Toast;
 
-import java.util.Random;
-
 public class UnlockService extends Service {
-    private Looper mServiceLooper;
-    private ServiceHandler mServiceHandler;
+    private Looper serviceLooper;
+    private ServiceHandler serviceHandler;
+
+    DataStore dataStore;
 
     // Binder given to clients
-    private final IBinder mBinder = new LocalBinder();
-    // Random number generator
-    private final Random mGenerator = new Random();
+    private final IBinder localBinder = new LocalBinder();
 
     /**
      * Class used for the client Binder.  Because we know this service always
@@ -63,8 +62,8 @@ public class UnlockService extends Service {
         thread.start();
 
         // Get the HandlerThread's Looper and use it for our Handler
-        mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper);
+        serviceLooper = thread.getLooper();
+        serviceHandler = new ServiceHandler(serviceLooper);
 
         // Running the service in the foreground by creating a notification
         Intent notificationIntent = new Intent(this, MainActivity.class);
@@ -79,6 +78,8 @@ public class UnlockService extends Service {
                 .setContentIntent(pendingIntent).build();
 
         startForeground(1337, notification);
+
+        dataStore = new DataStore(this);
     }
 
     @Override
@@ -87,9 +88,9 @@ public class UnlockService extends Service {
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
-        Message msg = mServiceHandler.obtainMessage();
+        Message msg = serviceHandler.obtainMessage();
         msg.arg1 = startId;
-        mServiceHandler.sendMessage(msg);
+        serviceHandler.sendMessage(msg);
 
         // If we get killed, after returning from here, restart
         return START_STICKY;
@@ -97,13 +98,8 @@ public class UnlockService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // mBinder is used for bound services
-        return mBinder;
-    }
-
-    /** method for clients */
-    public int getRandomNumber() {
-        return mGenerator.nextInt(100);
+        // localBinder is used for bound services
+        return localBinder;
     }
 
     public void startAccelService() {
@@ -117,8 +113,14 @@ public class UnlockService extends Service {
     }
 
     public void startWifiService() {
+        Log.v("start wifi", "");
         Intent wifiIntent = new Intent(this, WifiService.class);
         startService(wifiIntent);
+    }
+
+    public void startBluetoothService() {
+        Intent bluetoothIntent = new Intent(this, BluetoothService.class);
+        startService(bluetoothIntent);
     }
 
     @Override
