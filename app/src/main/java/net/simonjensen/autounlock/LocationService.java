@@ -91,7 +91,7 @@ public class LocationService extends Service {
         Log.v("LocationService", "Starting location gathering");
         // Register the listener with the Location Manager to receive location updates
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 1, locationListener);
 
         dataStore = new DataStore(this);
     }

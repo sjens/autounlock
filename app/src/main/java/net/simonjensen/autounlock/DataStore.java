@@ -13,9 +13,11 @@ public class DataStore {
     static final String ID = "ID";
     static final String TIMESTAMP = "TIMESTAMP";
 
-    static final String BTLE_TABLE = "btle";
-    static final String BTLE_RSSI = "RSSI";
-    static final String BTLE_SOURCE = "Source";
+    static final String BLUETOOTH_TABLE = "bluetooth";
+    static final String BLUETOOTH_NAME = "name";
+    static final String BLUETOOTH_SOURCE = "Source";
+    static final String BLUETOOTH_RSSI = "RSSI";
+
 
     static final String WIFI_TABLE = "wifi";
     static final String WIFI_SSID = "SSID";
@@ -48,12 +50,13 @@ public class DataStore {
     }
 
     //: I cannot see why it should not work.
-    public void insertBtle(String btleRSSI, String btleSource, long timestamp) {
+    public void insertBtle(String name, String btleSource, int btleRSSI, long timestamp) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(BTLE_RSSI, btleRSSI);
-        contentValues.put(BTLE_SOURCE, btleSource);
+        contentValues.put(BLUETOOTH_NAME, name);
+        contentValues.put(BLUETOOTH_SOURCE, btleSource);
+        contentValues.put(BLUETOOTH_RSSI, btleRSSI);
         contentValues.put(TIMESTAMP, timestamp);
-        database.replace(BTLE_TABLE, null, contentValues);
+        database.replace(BLUETOOTH_TABLE, null, contentValues);
     }
 
     public void insertWifi(String wifiSSID, String wifiMAC, String wifiRSSI, long timestamp) {
@@ -109,7 +112,7 @@ public class DataStore {
             if (newVersion != DATABASE_VERSION) {
                 Log.w("Datastore", "Database upgrade from old: " + oldVersion + " to: " +
                         newVersion);
-                database.execSQL("DROP TABLE IF EXISTS " + BTLE_TABLE);
+                database.execSQL("DROP TABLE IF EXISTS " + BLUETOOTH_TABLE);
                 database.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE);
                 database.execSQL("DROP TABLE IF EXISTS " + ACCEL_TABLE);
                 database.execSQL("DROP TABLE IF EXISTS " + MAGNET_TABLE);
@@ -120,10 +123,11 @@ public class DataStore {
         }
 
         private void createDatastore(SQLiteDatabase database) {
-            database.execSQL("CREATE TABLE " + BTLE_TABLE + " ("
+            database.execSQL("CREATE TABLE " + BLUETOOTH_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + BTLE_RSSI + " TEXT, "
-                    + BTLE_SOURCE + " TEXT, "
+                    + BLUETOOTH_NAME + " TEXT, "
+                    + BLUETOOTH_SOURCE + " TEXT, "
+                    + BLUETOOTH_RSSI + " INTEGER, "
                     + TIMESTAMP + " LONG)");
 
             database.execSQL("CREATE TABLE " + WIFI_TABLE + " ("
