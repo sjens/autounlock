@@ -3,15 +3,15 @@ package net.simonjensen.autounlock;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.content.*;
-import android.os.*;
-import android.os.Process;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class BluetoothService extends Service {
     int mStartMode;       // indicates how to behave if the service is killed

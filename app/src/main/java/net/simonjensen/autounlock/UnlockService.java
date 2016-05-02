@@ -90,6 +90,8 @@ public class UnlockService extends Service {
         startForeground(1337, notification);
 
         dataStore = new DataStore(this);
+
+        Log.v("UnlockService", "Service created");
     }
 
     @Override
