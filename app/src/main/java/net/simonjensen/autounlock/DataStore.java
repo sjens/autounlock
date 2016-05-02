@@ -46,7 +46,6 @@ public class DataStore {
 
     public DataStore(Context context) {
         databaseHelper = new DatabaseHelper(context);
-        database = databaseHelper.getWritableDatabase();
     }
 
     public void close() {
@@ -60,7 +59,9 @@ public class DataStore {
         contentValues.put(BLUETOOTH_SOURCE, btleSource);
         contentValues.put(BLUETOOTH_RSSI, btleRSSI);
         contentValues.put(TIMESTAMP, timestamp);
+        database = databaseHelper.getWritableDatabase();
         database.replace(BLUETOOTH_TABLE, null, contentValues);
+        database.close();
     }
 
     public void insertWifi(String wifiSSID, String wifiMAC, String wifiRSSI, long timestamp) {
@@ -70,7 +71,9 @@ public class DataStore {
         contentValues.put(WIFI_MAC, wifiMAC);
         contentValues.put(WIFI_RSSI, wifiRSSI);
         contentValues.put(TIMESTAMP, timestamp);
+        database = databaseHelper.getWritableDatabase();
         database.replace(WIFI_TABLE, null, contentValues);
+        database.close();
     }
 
     public void insertAccelerometer(String accelerometerX, String accelerometerY, String accelerometerZ,
@@ -83,7 +86,9 @@ public class DataStore {
         contentValues.put(ROTATION_Y, rotationY);
         contentValues.put(ROTATION_Z, rotationZ);
         contentValues.put(TIMESTAMP, timestamp);
+        database = databaseHelper.getWritableDatabase();
         database.replace(ACCELEROMETER_TABLE, null, contentValues);
+        database.close();
     }
 
     // Likely unneeded.
@@ -91,7 +96,9 @@ public class DataStore {
         ContentValues contentValues = new ContentValues();
         contentValues.put(MAGNET_DEGREE, degree);
         contentValues.put(TIMESTAMP, timestamp);
+        database = databaseHelper.getWritableDatabase();
         database.replace(MAGNET_TABLE, null, contentValues);
+        database.close();
     }
 
     public void insertLocation(String provider, double latitude, double longitude, float accuracy, long timestamp) {
@@ -101,7 +108,9 @@ public class DataStore {
         contentValues.put(LOCATION_LONGITUDE, longitude);
         contentValues.put(LOCATION_ACCURACY, accuracy);
         contentValues.put(TIMESTAMP, timestamp);
+        database = databaseHelper.getWritableDatabase();
         database.replace(LOCATION_TABLE, null, contentValues);
+        database.close();
     }
 
     private class DatabaseHelper extends SQLiteOpenHelper {
@@ -122,17 +131,20 @@ public class DataStore {
             if (newVersion != DATABASE_VERSION) {
                 Log.w("Datastore", "Database upgrade from old: " + oldVersion + " to: " +
                         newVersion);
+                database = databaseHelper.getWritableDatabase();
                 database.execSQL("DROP TABLE IF EXISTS " + BLUETOOTH_TABLE);
                 database.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE);
                 database.execSQL("DROP TABLE IF EXISTS " + ACCELEROMETER_TABLE);
                 database.execSQL("DROP TABLE IF EXISTS " + MAGNET_TABLE);
                 database.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
                 createDatastore(database);
+                database.close();
                 return;
             }
         }
 
         private void createDatastore(SQLiteDatabase database) {
+            database = databaseHelper.getWritableDatabase();
             database.execSQL("CREATE TABLE " + BLUETOOTH_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + BLUETOOTH_NAME + " TEXT, "
@@ -170,6 +182,8 @@ public class DataStore {
                     + LOCATION_LONGITUDE + " FLOAT, "
                     + LOCATION_ACCURACY + " FLOAT, "
                     + TIMESTAMP + " LONG)");
+
+            database.close();
         }
     }
 }
