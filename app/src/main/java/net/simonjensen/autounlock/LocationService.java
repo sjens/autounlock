@@ -22,7 +22,6 @@ public class LocationService extends Service {
     private ServiceHandler serviceHandler;
 
     LocationManager locationManager;
-    DataStore dataStore;
 
     // Define a listener that responds to location updates
     LocationListener locationListener = new LocationListener() {
@@ -39,7 +38,7 @@ public class LocationService extends Service {
             UnlockService.foundLocation.add(aLocation);
 
             Log.v("LOCATION: ", location.toString());
-            dataStore.insertLocation(
+            UnlockService.dataStore.insertLocation(
                     location.getProvider(),
                     location.getLatitude(),
                     location.getLongitude(),
@@ -103,8 +102,6 @@ public class LocationService extends Service {
         // Register the listener with the Location Manager to receive location updates
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 1, locationListener);
-
-        dataStore = new DataStore(this);
     }
 
     @Override

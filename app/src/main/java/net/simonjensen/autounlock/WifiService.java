@@ -17,7 +17,6 @@ public class WifiService extends Service {
     private ServiceHandler serviceHandler;
 
     WifiManager wifiManager;
-    DataStore dataStore;
 
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
@@ -40,7 +39,7 @@ public class WifiService extends Service {
                     UnlockService.foundWifi.add(aWifiDevice);
                     Log.v("TEST", UnlockService.foundWifi.toString());
 
-                    dataStore.insertWifi(SSID, MAC, RSSI, time);
+                    UnlockService.dataStore.insertWifi(SSID, MAC, RSSI, time);
                 }
             }
         }
@@ -82,10 +81,6 @@ public class WifiService extends Service {
         serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper);
 
-        Log.v("HERE?", "");
-
-        dataStore = new DataStore(this);
-
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         registerReceiver(broadcastReceiver,
                 new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
@@ -114,7 +109,6 @@ public class WifiService extends Service {
 
     @Override
     public void onDestroy() {
-        dataStore.close();
         unregisterReceiver(broadcastReceiver);
         //Toast.makeText(this, "wifi service done", Toast.LENGTH_SHORT).show();
     }

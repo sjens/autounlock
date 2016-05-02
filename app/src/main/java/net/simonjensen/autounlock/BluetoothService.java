@@ -20,7 +20,7 @@ public class BluetoothService extends Service {
     static final String SIMON_BEKEY = "7C:09:2B:EF:04:04";
 
     BluetoothAdapter bluetoothAdapter;
-    DataStore dataStore;
+    //DataStore dataStore;
 
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -42,7 +42,7 @@ public class BluetoothService extends Service {
                 aBluetoothDevice.add(String.valueOf(time));
                 UnlockService.foundBluetooth.add(aBluetoothDevice);
 
-                dataStore.insertBtle(name, source, RSSI, time);
+                UnlockService.dataStore.insertBtle(name, source, RSSI, time);
             }
         }
     };
@@ -86,7 +86,7 @@ public class BluetoothService extends Service {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         bluetoothAdapter.startDiscovery();
 
-        dataStore = new DataStore(this);
+        //dataStore = new DataStore(this);
 
         startBluetoothDiscovery();
     }
@@ -118,7 +118,7 @@ public class BluetoothService extends Service {
 
     @Override
     public void onDestroy() {
-        dataStore.close();
+        //dataStore.close();
         unregisterReceiver(broadcastReceiver);
     }
 }

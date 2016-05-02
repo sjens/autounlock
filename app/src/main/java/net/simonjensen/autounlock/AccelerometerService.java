@@ -20,8 +20,6 @@ public class AccelerometerService extends Service implements SensorEventListener
     private Sensor accelerometer;
     private Sensor magnetometer;
 
-    DataStore dataStore;
-
     private float[] previousAccelerometer = new float[3];
     private float[] previousMagnetometer = new float[3];
     private boolean previousAccelerometerSet = false;
@@ -68,9 +66,7 @@ public class AccelerometerService extends Service implements SensorEventListener
             anAccelerometerEvent.add(rotationZ);
             UnlockService.recordedAccelerometer.add(anAccelerometerEvent);
 
-            dataStore = new DataStore(this);
-            dataStore.insertAccelerometer(accelerometerX, accelerometerY, accelerometerZ, rotationX, rotationY, rotationZ, time);
-            dataStore.close();
+            UnlockService.dataStore.insertAccelerometer(accelerometerX, accelerometerY, accelerometerZ, rotationX, rotationY, rotationZ, time);
         }
     }
 
@@ -144,7 +140,6 @@ public class AccelerometerService extends Service implements SensorEventListener
 
     @Override
     public void onDestroy() {
-        dataStore.close();
         //Toast.makeText(this, "accservice done", Toast.LENGTH_SHORT).show();
     }
 }

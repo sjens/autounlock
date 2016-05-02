@@ -17,7 +17,7 @@ public class UnlockService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
 
-    DataStore dataStore;
+    public static DataStore dataStore;
 
     public static List<List<String>> foundBluetooth = new ArrayList<List<String>>();
     public static List<List<String>> foundWifi = new ArrayList<List<String>>();
