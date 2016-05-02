@@ -34,8 +34,6 @@ public class MainActivity extends Activity {
         //Intent unlockIntent = new Intent(this, UnlockService.class);
         //startService(unlockIntent);
         //bindService(unlockIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-
-
     }
 
     @Override
@@ -131,6 +129,15 @@ public class MainActivity extends Activity {
         if (bound) {
             unlockService.startBluetoothService();
             Toast.makeText(this, "BluetoothService started", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void onButtonClickAll(View v) {
+        if (bound) {
+            unlockService.startBluetoothService();
+            unlockService.startWifiService();
+            unlockService.startAccelService();
+            unlockService.startLoactionService();
         }
     }
 

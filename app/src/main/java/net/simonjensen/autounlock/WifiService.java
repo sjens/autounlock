@@ -9,6 +9,7 @@ import android.os.Process;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class WifiService extends Service {
@@ -24,13 +25,21 @@ public class WifiService extends Service {
             if (intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
                 List<ScanResult> scanResults = wifiManager.getScanResults();
                 long time = System.currentTimeMillis();
-                String stringTime = String.valueOf(time);
 
                 for (int i = 0; i < scanResults.size(); i++) {
                     Log.v("Wifi", String.valueOf(scanResults.get(i)));
                     String SSID = scanResults.get(i).SSID;
                     String MAC = scanResults.get(i).BSSID;
                     String RSSI = String.valueOf(scanResults.get(i).level);
+
+                    List<String> aWifiDevice = new ArrayList<String>();
+                    aWifiDevice.add(SSID);
+                    aWifiDevice.add(MAC);
+                    aWifiDevice.add(RSSI);
+                    aWifiDevice.add(String.valueOf(time));
+                    UnlockService.foundWifi.add(aWifiDevice);
+                    Log.v("TEST", UnlockService.foundWifi.toString());
+
                     dataStore.insertWifi(SSID, MAC, RSSI, time);
                 }
             }
@@ -60,7 +69,7 @@ public class WifiService extends Service {
 
     @Override
     public void onCreate() {
-        Toast.makeText(this, "wifi service onCreate", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "wifi service onCreate", Toast.LENGTH_SHORT).show();
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
@@ -85,7 +94,7 @@ public class WifiService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "wifi service starting", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "wifi service starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -107,6 +116,6 @@ public class WifiService extends Service {
     public void onDestroy() {
         dataStore.close();
         unregisterReceiver(broadcastReceiver);
-        Toast.makeText(this, "wifi service done", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "wifi service done", Toast.LENGTH_SHORT).show();
     }
 }

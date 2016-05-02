@@ -14,6 +14,9 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LocationService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
@@ -26,7 +29,14 @@ public class LocationService extends Service {
         public void onLocationChanged(Location location) {
             // Called when a new location is found by the network location provider.
             long time = System.currentTimeMillis();
-            String stringTime = String.valueOf(time);
+
+            List<String> aLocation = new ArrayList<String>();
+            aLocation.add(location.getProvider());
+            aLocation.add(String.valueOf(location.getLatitude()));
+            aLocation.add(String.valueOf(location.getLongitude()));
+            aLocation.add(String.valueOf(location.getAccuracy()));
+            aLocation.add(String.valueOf(time));
+            UnlockService.foundLocation.add(aLocation);
 
             Log.v("LOCATION: ", location.toString());
             dataStore.insertLocation(
@@ -71,7 +81,7 @@ public class LocationService extends Service {
 
     @Override
     public void onCreate() {
-        Toast.makeText(this, "network service onCreate", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "network service onCreate", Toast.LENGTH_SHORT).show();
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
@@ -99,7 +109,7 @@ public class LocationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "network service starting", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "network service starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -123,6 +133,6 @@ public class LocationService extends Service {
             return;
         }
         locationManager.removeUpdates(locationListener);
-        Toast.makeText(this, "network service done", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "network service done", Toast.LENGTH_SHORT).show();
     }
 }

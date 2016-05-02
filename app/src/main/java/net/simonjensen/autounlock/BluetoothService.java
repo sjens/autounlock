@@ -9,9 +9,15 @@ import android.os.Process;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 public class BluetoothService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
+
+    static final String SIMON_BEKEY = "7C:09:2B:EF:04:04";
 
     BluetoothAdapter bluetoothAdapter;
     DataStore dataStore;
@@ -28,6 +34,13 @@ public class BluetoothService extends Service {
                 String source = bluetoothDevice.getAddress();
                 int RSSI = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
                 Log.v("Bluetooth:", bluetoothDevice.getName() + bluetoothDevice.getAddress() + bluetoothDevice.getUuids() + RSSI);
+
+                List<String> aBluetoothDevice = new ArrayList<String>();
+                aBluetoothDevice.add(name);
+                aBluetoothDevice.add(source);
+                aBluetoothDevice.add(String.valueOf(RSSI));
+                aBluetoothDevice.add(String.valueOf(time));
+                UnlockService.foundBluetooth.add(aBluetoothDevice);
 
                 dataStore.insertBtle(name, source, RSSI, time);
             }
@@ -57,7 +70,7 @@ public class BluetoothService extends Service {
 
     @Override
     public void onCreate() {
-        Toast.makeText(this, "bluetooth service onCreate", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "bluetooth service onCreate", Toast.LENGTH_SHORT).show();
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
@@ -75,13 +88,17 @@ public class BluetoothService extends Service {
 
         dataStore = new DataStore(this);
 
+        startBluetoothDiscovery();
+    }
+
+    private void startBluetoothDiscovery() {
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(broadcastReceiver, filter); // Don't forget to unregister during onDestroy
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "bluetooth service starting", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "bluetooth service starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -103,6 +120,5 @@ public class BluetoothService extends Service {
     public void onDestroy() {
         dataStore.close();
         unregisterReceiver(broadcastReceiver);
-        Toast.makeText(this, "bluetooth service done", Toast.LENGTH_SHORT).show();
     }
 }

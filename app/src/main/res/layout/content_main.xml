@@ -43,4 +43,12 @@
             android:layout_below="@id/wifistart"
             android:text="Start Bluetooth Service"
             android:onClick="onButtonClickBluetooth" />
+
+    <Button
+            android:id="@+id/allstart"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_below="@id/bluetoothstart"
+            android:text="Start All Services"
+            android:onClick="onButtonClickAll" />
 </RelativeLayout>

@@ -10,11 +10,19 @@ import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class UnlockService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
 
     DataStore dataStore;
+
+    public static List<List<String>> foundBluetooth = new ArrayList<List<String>>();
+    public static List<List<String>> foundWifi = new ArrayList<List<String>>();
+    public static List<List<String>> foundLocation = new ArrayList<List<String>>();
+    public static List<List<String>> recordedAccelerometer = new ArrayList<List<String>>();
 
     // Binder given to clients
     private final IBinder localBinder = new LocalBinder();
@@ -84,7 +92,7 @@ public class UnlockService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -113,7 +121,6 @@ public class UnlockService extends Service {
     }
 
     public void startWifiService() {
-        Log.v("start wifi", "");
         Intent wifiIntent = new Intent(this, WifiService.class);
         startService(wifiIntent);
     }
@@ -123,9 +130,13 @@ public class UnlockService extends Service {
         startService(bluetoothIntent);
     }
 
+    public void startDecision() {
+        Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
+    }
+
     @Override
     public void onDestroy() {
         dataStore.close();
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
     }
 }
