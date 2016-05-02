@@ -17,12 +17,14 @@ public class UnlockService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
 
-    public static DataStore dataStore;
+    static DataStore dataStore;
 
-    public static List<List<String>> foundBluetooth = new ArrayList<List<String>>();
-    public static List<List<String>> foundWifi = new ArrayList<List<String>>();
-    public static List<List<String>> foundLocation = new ArrayList<List<String>>();
-    public static List<List<String>> recordedAccelerometer = new ArrayList<List<String>>();
+    static List<List<String>> foundBluetooth = new ArrayList<List<String>>();
+    static List<List<String>> foundWifi = new ArrayList<List<String>>();
+    static List<List<String>> foundLocation = new ArrayList<List<String>>();
+    static List<List<String>> recordedAccelerometer = new ArrayList<List<String>>();
+
+    public static DataBuffer<List> dataBuffer = new DataBuffer<List>(1000);
 
     // Binder given to clients
     private final IBinder localBinder = new LocalBinder();
