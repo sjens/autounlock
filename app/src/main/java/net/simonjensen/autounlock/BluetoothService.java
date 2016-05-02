@@ -20,7 +20,6 @@ public class BluetoothService extends Service {
     static final String SIMON_BEKEY = "7C:09:2B:EF:04:04";
 
     BluetoothAdapter bluetoothAdapter;
-    //DataStore dataStore;
 
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -86,8 +85,6 @@ public class BluetoothService extends Service {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         bluetoothAdapter.startDiscovery();
 
-        //dataStore = new DataStore(this);
-
         startBluetoothDiscovery();
     }
 
@@ -118,7 +115,6 @@ public class BluetoothService extends Service {
 
     @Override
     public void onDestroy() {
-        //dataStore.close();
         unregisterReceiver(broadcastReceiver);
     }
 }

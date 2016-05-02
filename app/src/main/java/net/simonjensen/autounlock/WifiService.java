@@ -37,7 +37,7 @@ public class WifiService extends Service {
                     aWifiDevice.add(RSSI);
                     aWifiDevice.add(String.valueOf(time));
                     UnlockService.foundWifi.add(aWifiDevice);
-                    Log.v("TEST", UnlockService.foundWifi.toString());
+                    //Log.v("TEST", UnlockService.foundWifi.toString());
 
                     UnlockService.dataStore.insertWifi(SSID, MAC, RSSI, time);
                 }

@@ -34,6 +34,11 @@ public class MainActivity extends Activity {
         //Intent unlockIntent = new Intent(this, UnlockService.class);
         //startService(unlockIntent);
         //bindService(unlockIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+
+        // Ask for location permission on startup if not granted.
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        }
     }
 
     @Override
@@ -50,11 +55,6 @@ public class MainActivity extends Activity {
      * this method with the android:onClick attribute) */
     public void onButtonClickAccel(View v) {
         if (bound) {
-            // Call a method from the LocalService.
-            // However, if this call were something that might hang, then this request should
-            // occur in a separate thread to avoid slowing down the activity performance.
-            //int num = unlockService.getRandomNumber();
-            //Toast.makeText(this, "number: " + num, Toast.LENGTH_SHORT).show();
             unlockService.startAccelService();
             Toast.makeText(this, "AccelerometerService started", Toast.LENGTH_SHORT).show();
         }
@@ -62,59 +62,22 @@ public class MainActivity extends Activity {
 
     public void onButtonClickNetwork(View v) {
         // Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-
-                // Show an expanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
-            } else {
-
-                // No explanation needed, we can request the permission.
-
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        1);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
-        } else {
-            unlockService.startLoactionService();
-        }
+        unlockService.startLoactionService();
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case 1: {
-                // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    Log.v("yay", "yay");
-                    //unlockService.startLoactionService();
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
+                    Log.v("Permission", "Location permission grannted, yay");
 
                 } else {
                     Toast.makeText(this, "The app needs access to location in order to function.", Toast.LENGTH_SHORT).show();
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
                 }
                 return;
             }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
         }
     }
 
