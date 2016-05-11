@@ -17,6 +17,7 @@ public class AccelerometerService extends Service implements SensorEventListener
     IBinder binder;      // interface for clients that bind
     boolean allowRebind; // indicates whether onRebind should be used
 
+    SensorManager sensorManager;
     private Sensor accelerometer;
     private Sensor magnetometer;
 
@@ -78,7 +79,7 @@ public class AccelerometerService extends Service implements SensorEventListener
     @Override
     public void onCreate() {
         // The service is being created
-        SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
@@ -106,6 +107,8 @@ public class AccelerometerService extends Service implements SensorEventListener
     }
     @Override
     public void onDestroy() {
+        sensorManager.unregisterListener(this, accelerometer);
+        sensorManager.unregisterListener(this, magnetometer);
         // The service is no longer used and is being destroyed
     }
 }
