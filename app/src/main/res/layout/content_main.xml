@@ -21,20 +21,48 @@
             android:onClick="onButtonClickAccel" />
 
     <Button
-            android:id="@+id/networkstart"
+            android:id="@+id/accstop"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Stop"
+            android:onClick="onButtonClickAccelStop"
+            android:layout_above="@+id/locationstart"
+            android:layout_alignParentEnd="true"/>
+
+    <Button
+            android:id="@+id/locationstart"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:layout_below="@id/accstart"
-            android:text="Start Network Service"
-            android:onClick="onButtonClickNetwork" />
+            android:text="Start Location Service"
+            android:onClick="onButtonClickLocation" />
+
+    <Button
+            android:id="@+id/locationstop"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Stop"
+            android:onClick="onButtonClickLocationStop"
+            android:layout_alignTop="@+id/locationstart"
+            android:layout_alignStart="@+id/accstop"/>
 
     <Button
             android:id="@+id/wifistart"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:layout_below="@id/networkstart"
             android:text="Start Wifi Service"
-            android:onClick="onButtonClickWifi" />
+            android:onClick="onButtonClickWifi"
+            android:layout_below="@+id/locationstart"
+            android:layout_alignParentStart="true"/>
+
+    <Button
+            android:id="@+id/wifistop"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Stop"
+            android:onClick="onButtonClickWifiStop"
+            android:layout_below="@+id/locationstop"
+            android:layout_alignParentEnd="true"/>
 
     <Button
             android:id="@+id/bluetoothstart"
@@ -43,4 +71,30 @@
             android:layout_below="@id/wifistart"
             android:text="Start Bluetooth Service"
             android:onClick="onButtonClickBluetooth" />
+
+    <Button
+            android:id="@+id/bluetoothstop"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Stop"
+            android:onClick="onButtonClickBluetoothStop"
+            android:layout_below="@+id/wifistop"
+            android:layout_alignParentEnd="true"/>
+
+    <Button
+            android:id="@+id/allstart"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_below="@id/bluetoothstart"
+            android:text="Start All Services"
+            android:onClick="onButtonClickAll" />
+
+    <Button
+            android:id="@+id/allstop"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Stop"
+            android:onClick="onButtonClickAllStop"
+            android:layout_below="@+id/bluetoothstop"
+            android:layout_alignParentEnd="true"/>
 </RelativeLayout>

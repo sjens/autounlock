@@ -10,11 +10,29 @@ import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class UnlockService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
 
-    DataStore dataStore;
+    private Intent accelerometerIntent;
+    private Intent locationIntent;
+    private Intent wifiIntent;
+    private Intent bluetoothIntent;
+
+    UnlockLoop unlockLoop = new UnlockLoop();
+    Thread dataCollect = new Thread(unlockLoop);
+
+    static DataStore dataStore;
+
+    static List<List<String>> recordedBluetooth = new ArrayList<List<String>>();
+    static List<List<String>> recordedWifi = new ArrayList<List<String>>();
+    static List<List<String>> recordedLocation = new ArrayList<List<String>>();
+    static List<List<String>> recordedAccelerometer = new ArrayList<List<String>>();
+
+    public static DataBuffer<List> dataBuffer = new DataBuffer<List>(1000);
 
     // Binder given to clients
     private final IBinder localBinder = new LocalBinder();
@@ -47,7 +65,7 @@ public class UnlockService extends Service {
             }
             // Stop the service using the startId, so that we don't stop
             // the service in the middle of handling another job
-            stopSelf(msg.arg1);
+            //stopSelf(msg.arg1);
         }
     }
 
@@ -80,11 +98,20 @@ public class UnlockService extends Service {
         startForeground(1337, notification);
 
         dataStore = new DataStore(this);
+
+        Log.v("UnlockService", "Service created");
+
+        accelerometerIntent = new Intent(this, AccelerometerService.class);
+        locationIntent = new Intent(this, LocationService.class);
+        wifiIntent = new Intent(this, WifiService.class);
+        bluetoothIntent = new Intent(this, BluetoothService.class);
+
+        startUnlockLoop();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
 
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
@@ -102,30 +129,50 @@ public class UnlockService extends Service {
         return localBinder;
     }
 
-    public void startAccelService() {
-        Intent accelIntent = new Intent(this, AccelerometerService.class);
-        startService(accelIntent);
+    public void startAccelerometerService() {
+        startService(accelerometerIntent);
+    }
+
+    public void stopAccelerometerService() {
+        stopService(accelerometerIntent);
     }
 
     public void startLoactionService() {
-        Intent locationIntent = new Intent(this, LocationService.class);
         startService(locationIntent);
     }
 
+    public void stopLocationService() {
+        stopService(locationIntent);
+    }
+
     public void startWifiService() {
-        Log.v("start wifi", "");
-        Intent wifiIntent = new Intent(this, WifiService.class);
         startService(wifiIntent);
     }
 
+    public void stopWifiService() {
+        stopService(wifiIntent);
+    }
+
     public void startBluetoothService() {
-        Intent bluetoothIntent = new Intent(this, BluetoothService.class);
         startService(bluetoothIntent);
+    }
+
+    public void stopBluetoothService() {
+        stopService(bluetoothIntent);
+    }
+
+    public void startDecision() {
+        Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
+    }
+
+    public void startUnlockLoop() {
+        dataCollect.start();
     }
 
     @Override
     public void onDestroy() {
-        dataStore.close();
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        Log.v("UnlockService", "Service destroyed");
+        //dataStore.close();
+        //Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
     }
 }
