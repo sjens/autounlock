@@ -16,6 +16,8 @@ import java.util.List;
 public class UnlockService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
+    UnlockLoop unlockLoop = new UnlockLoop();
+    Thread dataCollect = new Thread(unlockLoop);
 
     static DataStore dataStore;
 
@@ -57,7 +59,7 @@ public class UnlockService extends Service {
             }
             // Stop the service using the startId, so that we don't stop
             // the service in the middle of handling another job
-            stopSelf(msg.arg1);
+            //stopSelf(msg.arg1);
         }
     }
 
@@ -92,6 +94,7 @@ public class UnlockService extends Service {
         dataStore = new DataStore(this);
 
         Log.v("UnlockService", "Service created");
+        dataCollect.start();
     }
 
     @Override

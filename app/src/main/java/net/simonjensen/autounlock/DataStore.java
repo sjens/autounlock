@@ -18,7 +18,6 @@ public class DataStore {
     static final String BLUETOOTH_SOURCE = "Source";
     static final String BLUETOOTH_RSSI = "RSSI";
 
-
     static final String WIFI_TABLE = "wifi";
     static final String WIFI_SSID = "SSID";
     static final String WIFI_MAC = "MAC";

@@ -15,7 +15,7 @@ import java.util.List;
 public class AccelerometerService extends Service implements SensorEventListener {
     int mStartMode;       // indicates how to behave if the service is killed
     IBinder mBinder;      // interface for clients that bind
-    boolean mAllowRebind; // indicates whether onRebind should be used
+    boolean mAllowRebind = false; // indicates whether onRebind should be used
 
     private Sensor accelerometer;
     private Sensor magnetometer;
