@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WifiService extends Service {
-    int mStartMode;       // indicates how to behave if the service is killed
-    IBinder mBinder;      // interface for clients that bind
-    boolean mAllowRebind = false; // indicates whether onRebind should be used
+    int startMode;       // indicates how to behave if the service is killed
+    IBinder binder;      // interface for clients that bind
+    boolean allowRebind; // indicates whether onRebind should be used
 
     WifiManager wifiManager;
 
@@ -38,8 +38,8 @@ public class WifiService extends Service {
                     aWifiDevice.add(MAC);
                     aWifiDevice.add(RSSI);
                     aWifiDevice.add(String.valueOf(time));
-                    UnlockService.foundWifi.add(aWifiDevice);
-                    //Log.v("TEST", UnlockService.foundWifi.toString());
+                    UnlockService.recordedWifi.add(aWifiDevice);
+                    //Log.v("TEST", UnlockService.recordedWifi.toString());
 
                     UnlockService.dataStore.insertWifi(SSID, MAC, RSSI, time);
                 }
@@ -57,17 +57,17 @@ public class WifiService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // The service is starting, due to a call to startService()
-        return mStartMode;
+        return startMode;
     }
     @Override
     public IBinder onBind(Intent intent) {
         // A client is binding to the service with bindService()
-        return mBinder;
+        return binder;
     }
     @Override
     public boolean onUnbind(Intent intent) {
         // All clients have unbound with unbindService()
-        return mAllowRebind;
+        return allowRebind;
     }
     @Override
     public void onRebind(Intent intent) {
@@ -76,6 +76,7 @@ public class WifiService extends Service {
     }
     @Override
     public void onDestroy() {
+        unregisterReceiver(broadcastReceiver);
         // The service is no longer used and is being destroyed
     }
 }

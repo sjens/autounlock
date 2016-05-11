@@ -10,31 +10,37 @@ public class UnlockLoop implements Runnable {
     public void run() {
         while (true) {
             Log.v("klj", "threading");
-            Log.v("foundWifi", UnlockService.foundWifi.toString());
+            Log.v("recordedWifi", UnlockService.recordedWifi.toString());
 
-            List<List<String>> prevFoundBluetooth = new ArrayList<List<String>>();
-            List<List<String>> prevFoundWifi = new ArrayList<List<String>>();
-            List<List<String>> prevFoundLocation = new ArrayList<List<String>>();
+            List<List<String>> prevRecordedBluetooth = new ArrayList<List<String>>();
+            List<List<String>> prevRecordedWifi = new ArrayList<List<String>>();
+            List<List<String>> prevRecordedLocation = new ArrayList<List<String>>();
             List<List<String>> prevRecordedAccelerometer = new ArrayList<List<String>>();
 
-            prevFoundBluetooth = UnlockService.foundBluetooth;
-            UnlockService.foundBluetooth = new ArrayList<List<String>>();
+            prevRecordedBluetooth = UnlockService.recordedBluetooth;
+            UnlockService.recordedBluetooth = new ArrayList<List<String>>();
 
-            prevFoundWifi = UnlockService.foundWifi;
-            UnlockService.foundWifi = new ArrayList<List<String>>();
+            prevRecordedWifi = UnlockService.recordedWifi;
+            UnlockService.recordedWifi = new ArrayList<List<String>>();
 
-            prevFoundLocation = UnlockService.foundLocation;
-            UnlockService.foundLocation = new ArrayList<List<String>>();
+            prevRecordedLocation = UnlockService.recordedLocation;
+            UnlockService.recordedLocation = new ArrayList<List<String>>();
 
             prevRecordedAccelerometer = UnlockService.recordedAccelerometer;
             UnlockService.recordedAccelerometer = new ArrayList<List<String>>();
 
             List<List> dataBlob = new ArrayList<List>();
-            dataBlob.add(prevFoundBluetooth);
-            dataBlob.add(prevFoundWifi);
-            dataBlob.add(prevFoundLocation);
+            dataBlob.add(prevRecordedBluetooth);
+            dataBlob.add(prevRecordedWifi);
+            dataBlob.add(prevRecordedLocation);
             dataBlob.add(prevRecordedAccelerometer);
             UnlockService.dataBuffer.add(dataBlob);
+
+            for (int i = 0; i < prevRecordedBluetooth.size(); i++) {
+                if (prevRecordedBluetooth.get(i).get(1).equals(BluetoothService.SIMON_BEKEY)) {
+                    Log.v("Start Decision", "BeKey found");
+                }
+            }
 
             Log.v("dataBuffer", UnlockService.dataBuffer.toString());
             try {

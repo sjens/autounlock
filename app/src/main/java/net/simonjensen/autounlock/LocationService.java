@@ -17,9 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocationService extends Service {
-    int mStartMode;       // indicates how to behave if the service is killed
-    IBinder mBinder;      // interface for clients that bind
-    boolean mAllowRebind = false; // indicates whether onRebind should be used
+    int startMode;       // indicates how to behave if the service is killed
+    IBinder binder;      // interface for clients that bind
+    boolean allowRebind; // indicates whether onRebind should be used
 
     LocationManager locationManager;
 
@@ -35,7 +35,7 @@ public class LocationService extends Service {
             aLocation.add(String.valueOf(location.getLongitude()));
             aLocation.add(String.valueOf(location.getAccuracy()));
             aLocation.add(String.valueOf(time));
-            UnlockService.foundLocation.add(aLocation);
+            UnlockService.recordedLocation.add(aLocation);
 
             Log.v("LOCATION: ", location.toString());
             UnlockService.dataStore.insertLocation(
@@ -72,17 +72,17 @@ public class LocationService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // The service is starting, due to a call to startService()
-        return mStartMode;
+        return startMode;
     }
     @Override
     public IBinder onBind(Intent intent) {
         // A client is binding to the service with bindService()
-        return mBinder;
+        return binder;
     }
     @Override
     public boolean onUnbind(Intent intent) {
         // All clients have unbound with unbindService()
-        return mAllowRebind;
+        return allowRebind;
     }
     @Override
     public void onRebind(Intent intent) {

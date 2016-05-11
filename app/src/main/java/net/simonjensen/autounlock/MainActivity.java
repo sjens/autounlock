@@ -55,14 +55,26 @@ public class MainActivity extends Activity {
      * this method with the android:onClick attribute) */
     public void onButtonClickAccel(View v) {
         if (bound) {
-            unlockService.startAccelService();
-            Toast.makeText(this, "AccelerometerService started", Toast.LENGTH_SHORT).show();
+            unlockService.startAccelerometerService();
         }
     }
 
-    public void onButtonClickNetwork(View v) {
-        // Here, thisActivity is the current activity
-        unlockService.startLoactionService();
+    public void onButtonClickAccelStop(View v) {
+        if (bound) {
+            unlockService.stopAccelerometerService();
+        }
+    }
+
+    public void onButtonClickLocation(View v) {
+        if (bound) {
+            unlockService.startLoactionService();
+        }
+    }
+
+    public void onButtonClickLocationStop(View v) {
+        if (bound) {
+            unlockService.stopLocationService();
+        }
     }
 
     @Override
@@ -84,23 +96,43 @@ public class MainActivity extends Activity {
     public void onButtonClickWifi(View v) {
         if (bound) {
             unlockService.startWifiService();
-            Toast.makeText(this, "WifiService started", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void onButtonClickWifiStop(View v) {
+        if (bound) {
+            unlockService.stopWifiService();
         }
     }
 
     public void onButtonClickBluetooth(View v) {
         if (bound) {
             unlockService.startBluetoothService();
-            Toast.makeText(this, "BluetoothService started", Toast.LENGTH_SHORT).show();
         }
     }
 
+    public void onButtonClickBluetoothStop(View v) {
+        if (bound) {
+            unlockService.stopBluetoothService();
+        }
+    }
+
+
     public void onButtonClickAll(View v) {
         if (bound) {
-            unlockService.startBluetoothService();
-            unlockService.startWifiService();
-            unlockService.startAccelService();
+            unlockService.startAccelerometerService();
             unlockService.startLoactionService();
+            unlockService.startWifiService();
+            unlockService.startBluetoothService();
+        }
+    }
+
+    public void onButtonClickAllStop(View v) {
+        if (bound) {
+            unlockService.stopAccelerometerService();
+            unlockService.stopLocationService();
+            unlockService.stopWifiService();
+            unlockService.stopBluetoothService();
         }
     }
 

@@ -40,6 +40,6 @@ public class DataBuffer<T> {
     }
 
     public String toString() {
-        return "CustomCircularBuffer(size=" + buffer.length + ", head=" + head + ", tail=" + tail + ")";
+        return "DataBuffer(size=" + buffer.length + ", head=" + head + ", tail=" + tail + ")";
     }
 }

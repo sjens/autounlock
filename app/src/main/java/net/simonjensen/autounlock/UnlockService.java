@@ -16,14 +16,20 @@ import java.util.List;
 public class UnlockService extends Service {
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
+
+    private Intent accelerometerIntent;
+    private Intent locationIntent;
+    private Intent wifiIntent;
+    private Intent bluetoothIntent;
+
     UnlockLoop unlockLoop = new UnlockLoop();
     Thread dataCollect = new Thread(unlockLoop);
 
     static DataStore dataStore;
 
-    static List<List<String>> foundBluetooth = new ArrayList<List<String>>();
-    static List<List<String>> foundWifi = new ArrayList<List<String>>();
-    static List<List<String>> foundLocation = new ArrayList<List<String>>();
+    static List<List<String>> recordedBluetooth = new ArrayList<List<String>>();
+    static List<List<String>> recordedWifi = new ArrayList<List<String>>();
+    static List<List<String>> recordedLocation = new ArrayList<List<String>>();
     static List<List<String>> recordedAccelerometer = new ArrayList<List<String>>();
 
     public static DataBuffer<List> dataBuffer = new DataBuffer<List>(1000);
@@ -94,7 +100,13 @@ public class UnlockService extends Service {
         dataStore = new DataStore(this);
 
         Log.v("UnlockService", "Service created");
-        dataCollect.start();
+
+        accelerometerIntent = new Intent(this, AccelerometerService.class);
+        locationIntent = new Intent(this, LocationService.class);
+        wifiIntent = new Intent(this, WifiService.class);
+        bluetoothIntent = new Intent(this, BluetoothService.class);
+
+        startUnlockLoop();
     }
 
     @Override
@@ -117,28 +129,44 @@ public class UnlockService extends Service {
         return localBinder;
     }
 
-    public void startAccelService() {
-        Intent accelIntent = new Intent(this, AccelerometerService.class);
-        startService(accelIntent);
+    public void startAccelerometerService() {
+        startService(accelerometerIntent);
+    }
+
+    public void stopAccelerometerService() {
+        stopService(accelerometerIntent);
     }
 
     public void startLoactionService() {
-        Intent locationIntent = new Intent(this, LocationService.class);
         startService(locationIntent);
     }
 
+    public void stopLocationService() {
+        stopService(locationIntent);
+    }
+
     public void startWifiService() {
-        Intent wifiIntent = new Intent(this, WifiService.class);
         startService(wifiIntent);
     }
 
+    public void stopWifiService() {
+        stopService(wifiIntent);
+    }
+
     public void startBluetoothService() {
-        Intent bluetoothIntent = new Intent(this, BluetoothService.class);
         startService(bluetoothIntent);
+    }
+
+    public void stopBluetoothService() {
+        stopService(bluetoothIntent);
     }
 
     public void startDecision() {
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
+    }
+
+    public void startUnlockLoop() {
+        dataCollect.start();
     }
 
     @Override
