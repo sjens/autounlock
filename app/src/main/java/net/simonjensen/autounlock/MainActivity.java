@@ -155,6 +155,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void onButtonClickAddGeofence(View v) {
+        if (bound) {
+            unlockService.addGeofence();
+        }
+    }
+
+    public void onButtonClickRemoveGeofence(View v) {
+        if (bound) {
+            unlockService.removeGeofence();
+        }
+    }
+
     /** Defines callbacks for service binding, passed to bindService() */
     private ServiceConnection serviceConnection = new ServiceConnection() {
 
