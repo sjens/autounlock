@@ -22,17 +22,16 @@ public class UnlockService extends Service {
     private Intent wifiIntent;
     private Intent bluetoothIntent;
 
-    UnlockLoop unlockLoop = new UnlockLoop();
-    Thread dataCollect = new Thread(unlockLoop);
-
-    static DataStore dataStore;
+    private UnlockLoop unlockLoop;
+    private Thread dataCollect;
 
     static List<List<String>> recordedBluetooth = new ArrayList<List<String>>();
     static List<List<String>> recordedWifi = new ArrayList<List<String>>();
     static List<List<String>> recordedLocation = new ArrayList<List<String>>();
     static List<List<String>> recordedAccelerometer = new ArrayList<List<String>>();
 
-    public static DataBuffer<List> dataBuffer = new DataBuffer<List>(1000);
+    static DataBuffer<List> dataBuffer;
+    static DataStore dataStore;
 
     // Binder given to clients
     private final IBinder localBinder = new LocalBinder();
@@ -105,8 +104,6 @@ public class UnlockService extends Service {
         locationIntent = new Intent(this, LocationService.class);
         wifiIntent = new Intent(this, WifiService.class);
         bluetoothIntent = new Intent(this, BluetoothService.class);
-
-        startUnlockLoop();
     }
 
     @Override
@@ -166,7 +163,22 @@ public class UnlockService extends Service {
     }
 
     public void startUnlockLoop() {
+        dataBuffer = new DataBuffer<List>(1000);
+        unlockLoop = new UnlockLoop();
+        dataCollect = new Thread(unlockLoop);
         dataCollect.start();
+    }
+
+    public void stopUnlockLoop() {
+        Log.v("UnlockService", "Trying to stop unlockLoop");
+        if (dataCollect != null) {
+            unlockLoop.terminate();
+            try {
+                dataCollect.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
