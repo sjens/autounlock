@@ -308,6 +308,8 @@ public class UnlockService extends Service implements
     public void populateGeofenceList() {
         for (Map.Entry<String, LatLng> entry : Constants.BAY_AREA_LANDMARKS.entrySet()) {
 
+            Log.v("Populate geofence list", entry.toString());
+
             geofences.add(new Geofence.Builder()
                     // Set the request ID of the geofence. This is a string to identify this
                     // geofence.
