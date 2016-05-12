@@ -29,6 +29,8 @@ public class AccelerometerService extends Service implements SensorEventListener
     private float[] orientation = new float[3];
     private float currentDegree = 0f;
 
+    int i = 0;
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor == accelerometer) {
@@ -47,9 +49,13 @@ public class AccelerometerService extends Service implements SensorEventListener
             long time = System.currentTimeMillis();
 
             currentDegree = -azimuthInDegrees;
-            Log.v("ON SENSOR CHANGED: ", String.valueOf((float)(Math.toDegrees(orientation[0])+360)%360) + " "
-                    + String.valueOf((float)(Math.toDegrees(orientation[1])+360)%360) + " "
-                    + String.valueOf((float)(Math.toDegrees(orientation[2])+360)%360));
+
+            if (i >= 20) {
+                Log.v("ON SENSOR CHANGED: ", String.valueOf((float)(Math.toDegrees(orientation[0])+360)%360) + " "
+                        + String.valueOf((float)(Math.toDegrees(orientation[1])+360)%360) + " "
+                        + String.valueOf((float)(Math.toDegrees(orientation[2])+360)%360));
+                i = 0;
+            }
 
             String accelerometerX = String.valueOf(previousAccelerometer[0]);
             String accelerometerY = String.valueOf(previousAccelerometer[1]);
@@ -67,7 +73,10 @@ public class AccelerometerService extends Service implements SensorEventListener
             anAccelerometerEvent.add(rotationZ);
             UnlockService.recordedAccelerometer.add(anAccelerometerEvent);
 
-            UnlockService.dataStore.insertAccelerometer(accelerometerX, accelerometerY, accelerometerZ, rotationX, rotationY, rotationZ, time);
+            UnlockService.dataStore.insertAccelerometer(
+                    accelerometerX, accelerometerY, accelerometerZ,
+                    rotationX, rotationY, rotationZ, time);
+            i++;
         }
     }
 

@@ -173,11 +173,6 @@ public class UnlockService extends Service {
         Log.v("UnlockService", "Trying to stop unlockLoop");
         if (dataCollect != null) {
             unlockLoop.terminate();
-            try {
-                dataCollect.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
     }
 

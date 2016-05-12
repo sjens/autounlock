@@ -19,6 +19,7 @@ public class UnlockLoop implements Runnable {
             Log.v("klj", "threading");
             Log.v("recordedBluetooth", prevRecordedBluetooth.toString());
 
+            // In order to not have empty lists in the DataBuffer, previous data will be used if no new data has been found.
             if (!UnlockService.recordedBluetooth.isEmpty() || prevRecordedBluetooth.isEmpty()) {
                 prevRecordedBluetooth = UnlockService.recordedBluetooth;
                 UnlockService.recordedBluetooth = new ArrayList<List<String>>();
