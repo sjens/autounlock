@@ -38,7 +38,7 @@ public class UnlockService extends Service implements
     private Intent wifiIntent;
     private Intent bluetoothIntent;
 
-    private UnlockLoop unlockLoop;
+    private UnlockServiceLooper unlockServiceLooper;
     private Thread dataCollect;
 
     static List<List<String>> recordedBluetooth = new ArrayList<List<String>>();
@@ -181,6 +181,12 @@ public class UnlockService extends Service implements
 
         // If we get killed, after returning from here, restart
         return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        googleApiClient.disconnect();
+        Log.v("UnlockService", "Service destroyed");
     }
 
     @Override
@@ -337,7 +343,13 @@ public class UnlockService extends Service implements
     }
 
     public void startAccelerometerService() {
-        startService(accelerometerIntent);
+        Log.v(TAG, "Starting AccelerometerService");
+        Thread accelerometerServiceThread = new Thread() {
+            public void run() {
+                startService(accelerometerIntent);
+            }
+        };
+        accelerometerServiceThread.start();
     }
 
     public void stopAccelerometerService() {
@@ -374,15 +386,15 @@ public class UnlockService extends Service implements
 
     public void startUnlockLoop() {
         dataBuffer = new DataBuffer<List>(1000);
-        unlockLoop = new UnlockLoop();
-        dataCollect = new Thread(unlockLoop);
+        unlockServiceLooper = new UnlockServiceLooper();
+        dataCollect = new Thread(unlockServiceLooper);
         dataCollect.start();
     }
 
     public void stopUnlockLoop() {
-        Log.v("UnlockService", "Trying to stop unlockLoop");
+        Log.v("UnlockService", "Trying to stop unlockServiceLooper");
         if (dataCollect != null) {
-            unlockLoop.terminate();
+            unlockServiceLooper.terminate();
         }
     }
 
@@ -424,11 +436,5 @@ public class UnlockService extends Service implements
             // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
             logSecurityException(securityException);
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        googleApiClient.disconnect();
-        Log.v("UnlockService", "Service destroyed");
     }
 }

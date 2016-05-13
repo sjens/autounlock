@@ -5,7 +5,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnlockLoop implements Runnable {
+public class UnlockServiceLooper implements Runnable {
     private volatile boolean running = true;
 
     @Override
