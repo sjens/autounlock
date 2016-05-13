@@ -357,7 +357,13 @@ public class UnlockService extends Service implements
     }
 
     public void startLoactionService() {
-        startService(locationIntent);
+        Log.v(TAG, "Starting LocationService");
+        Thread locationServiceThread = new Thread() {
+            public void run() {
+                startService(locationIntent);
+            }
+        };
+        locationServiceThread.start();
     }
 
     public void stopLocationService() {
@@ -365,7 +371,13 @@ public class UnlockService extends Service implements
     }
 
     public void startWifiService() {
-        startService(wifiIntent);
+        Log.v(TAG, "Starting WifiService");
+        Thread wifiServiceThread = new Thread() {
+            public void run() {
+                startService(wifiIntent);
+            }
+        };
+        wifiServiceThread.start();
     }
 
     public void stopWifiService() {
@@ -373,7 +385,13 @@ public class UnlockService extends Service implements
     }
 
     public void startBluetoothService() {
-        startService(bluetoothIntent);
+        Log.v(TAG, "Starting BluetoothService");
+        Thread bluetoothServiceThread = new Thread() {
+            public void run() {
+                startService(bluetoothIntent);
+            }
+        };
+        bluetoothServiceThread.start();
     }
 
     public void stopBluetoothService() {
@@ -384,14 +402,14 @@ public class UnlockService extends Service implements
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
     }
 
-    public void startUnlockLoop() {
+    public void startDataBufferCollection() {
         dataBuffer = new DataBuffer<List>(1000);
         unlockServiceLooper = new UnlockServiceLooper();
         dataCollect = new Thread(unlockServiceLooper);
         dataCollect.start();
     }
 
-    public void stopUnlockLoop() {
+    public void stopDataBufferCollection() {
         Log.v("UnlockService", "Trying to stop unlockServiceLooper");
         if (dataCollect != null) {
             unlockServiceLooper.terminate();

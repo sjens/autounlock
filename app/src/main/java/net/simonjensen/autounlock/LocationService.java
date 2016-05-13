@@ -95,6 +95,7 @@ public class LocationService extends Service {
     @Override
     public void onDestroy() {
         // The service is no longer used and is being destroyed
+        Log.v("LocationService", "Stopping");
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }

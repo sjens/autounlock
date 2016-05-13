@@ -116,9 +116,9 @@ public class AccelerometerService extends Service implements SensorEventListener
     }
     @Override
     public void onDestroy() {
+        // The service is no longer used and is being destroyed
         Log.v("AccelerometerService", "Stopping");
         sensorManager.unregisterListener(this, accelerometer);
         sensorManager.unregisterListener(this, magnetometer);
-        // The service is no longer used and is being destroyed
     }
 }

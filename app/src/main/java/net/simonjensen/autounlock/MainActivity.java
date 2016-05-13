@@ -127,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickAll(View v) {
         if (bound) {
+            unlockService.startDataBufferCollection();
             unlockService.startAccelerometerService();
             unlockService.startLoactionService();
             unlockService.startWifiService();
@@ -136,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickAllStop(View v) {
         if (bound) {
+            unlockService.stopDataBufferCollection();
             unlockService.stopAccelerometerService();
             unlockService.stopLocationService();
             unlockService.stopWifiService();
@@ -145,13 +147,13 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickDataBuffer(View v) {
         if (bound) {
-            unlockService.startUnlockLoop();
+            unlockService.startDataBufferCollection();
         }
     }
 
     public void onButtonClickDataBufferStop(View v) {
         if (bound) {
-            unlockService.stopUnlockLoop();
+            unlockService.stopDataBufferCollection();
         }
     }
 
