@@ -1,18 +1,22 @@
 package net.simonjensen.autounlock;
 
 import android.Manifest;
-import android.app.Activity;
-import android.content.*;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
     UnlockService unlockService;
     boolean bound = false;
 
@@ -22,6 +26,9 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
         dataStore = new DataStore(this);
     }
 
@@ -120,6 +127,7 @@ public class MainActivity extends Activity {
 
     public void onButtonClickAll(View v) {
         if (bound) {
+            unlockService.startDataBufferCollection();
             unlockService.startAccelerometerService();
             unlockService.startLoactionService();
             unlockService.startWifiService();
@@ -129,10 +137,41 @@ public class MainActivity extends Activity {
 
     public void onButtonClickAllStop(View v) {
         if (bound) {
+            unlockService.stopDataBufferCollection();
             unlockService.stopAccelerometerService();
             unlockService.stopLocationService();
             unlockService.stopWifiService();
             unlockService.stopBluetoothService();
+        }
+    }
+
+    public void onButtonClickDataBuffer(View v) {
+        if (bound) {
+            unlockService.startDataBufferCollection();
+        }
+    }
+
+    public void onButtonClickDataBufferStop(View v) {
+        if (bound) {
+            unlockService.stopDataBufferCollection();
+        }
+    }
+
+    public void onButtonClickAddGeofence(View v) {
+        if (bound) {
+            unlockService.addGeofence();
+        }
+    }
+
+    public void onButtonClickRegisterGeofence(View v) {
+        if (bound) {
+            unlockService.registerGeofences();
+        }
+    }
+
+    public void onButtonClickUnregisterGeofence(View v) {
+        if (bound) {
+            unlockService.unregisterGeofences();
         }
     }
 

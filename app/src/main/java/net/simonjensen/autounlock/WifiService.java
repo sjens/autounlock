@@ -76,7 +76,8 @@ public class WifiService extends Service {
     }
     @Override
     public void onDestroy() {
-        unregisterReceiver(broadcastReceiver);
         // The service is no longer used and is being destroyed
+        Log.v("WifiService", "Stopping");
+        unregisterReceiver(broadcastReceiver);
     }
 }

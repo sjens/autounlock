@@ -97,4 +97,47 @@
             android:onClick="onButtonClickAllStop"
             android:layout_below="@+id/bluetoothstop"
             android:layout_alignParentEnd="true"/>
+
+    <Button
+            android:id="@+id/databufferstart"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_below="@id/allstart"
+            android:text="Start Data Buffer"
+            android:onClick="onButtonClickDataBuffer" />
+
+    <Button
+            android:id="@+id/databufferstop"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Stop"
+            android:onClick="onButtonClickDataBufferStop"
+            android:layout_below="@+id/allstop"
+            android:layout_alignParentEnd="true"/>
+
+    <Button
+            android:id="@+id/addgeofence"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_below="@id/databufferstart"
+            android:text="Add geofence"
+            android:onClick="onButtonClickAddGeofence" />
+
+    <Button
+            android:id="@+id/registergeofence"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Register Geofence"
+            android:onClick="onButtonClickRegisterGeofence"
+            android:layout_below="@+id/addgeofence"
+            android:layout_alignParentStart="true"/>
+
+    <Button
+            android:id="@+id/unregistergeofence"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Unregister Geofence"
+            android:onClick="onButtonClickUnregisterGeofence"
+            android:layout_alignTop="@+id/registergeofence"
+            android:layout_alignParentEnd="true"/>
 </RelativeLayout>

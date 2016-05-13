@@ -143,7 +143,6 @@ public class DataStore {
         }
 
         private void createDatastore(SQLiteDatabase database) {
-            database = databaseHelper.getWritableDatabase();
             database.execSQL("CREATE TABLE " + BLUETOOTH_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + BLUETOOTH_NAME + " TEXT, "
@@ -181,8 +180,6 @@ public class DataStore {
                     + LOCATION_LONGITUDE + " FLOAT, "
                     + LOCATION_ACCURACY + " FLOAT, "
                     + TIMESTAMP + " LONG)");
-
-            database.close();
         }
     }
 }
