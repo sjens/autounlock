@@ -127,8 +127,8 @@
             android:id="@+id/removegeofence"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:text="Remove"
+            android:text="Register/unregister Geofence"
             android:onClick="onButtonClickRemoveGeofence"
-            android:layout_below="@+id/databufferstop"
-            android:layout_alignParentEnd="true"/>
+            android:layout_below="@+id/addgeofence"
+            android:layout_alignParentStart="true"/>
 </RelativeLayout>

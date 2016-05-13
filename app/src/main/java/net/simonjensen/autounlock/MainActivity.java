@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickRemoveGeofence(View v) {
         if (bound) {
-            unlockService.removeGeofence();
+            unlockService.registerGeofences();
         }
     }
 
