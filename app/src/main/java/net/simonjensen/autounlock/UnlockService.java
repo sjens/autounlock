@@ -436,6 +436,7 @@ public class UnlockService extends Service implements
             @Override
             public void onLocationChanged(Location location) {
                 LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                // Name should be BeKey MAC address
                 populateGeofenceList("test", currentLocation, 100f);
             }
 
