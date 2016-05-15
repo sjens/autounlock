@@ -140,4 +140,22 @@
             android:onClick="onButtonClickUnregisterGeofence"
             android:layout_below="@+id/registergeofence"
             android:layout_alignParentStart="true"/>
+
+    <Button
+            android:id="@+id/exportdb"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Export Datastore"
+            android:onClick="onButtonClickExportDatastore"
+            android:layout_below="@+id/unregistergeofence"
+            android:layout_alignParentStart="true"/>
+
+    <Button
+            android:id="@+id/newdb"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="New Datastore"
+            android:onClick="onButtonClickNewDB"
+            android:layout_below="@+id/unregistergeofence"
+            android:layout_alignEnd="@+id/databufferstop"/>
 </RelativeLayout>

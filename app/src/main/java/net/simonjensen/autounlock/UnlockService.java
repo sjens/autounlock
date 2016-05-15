@@ -59,22 +59,22 @@ public class UnlockService extends Service implements
     LocationManager locationManager;
     LocationListener locationListener;
     /**
-     * The list of geofences used in this sample.
+     * The list of geofenceArrayList used in this sample.
      */
-    protected ArrayList<Geofence> geofences;
+    protected ArrayList<Geofence> geofenceArrayList;
 
     /**
-     * Used to keep track of whether geofences were added.
+     * Used to keep track of whether geofenceArrayList were added.
      */
     private boolean geofencesAdded;
 
     /**
-     * Used when requesting to add or remove geofences.
+     * Used when requesting to add or remove geofenceArrayList.
      */
     private PendingIntent geofencePendingIntent;
 
     /**
-     * Used to persist application state about whether geofences were added.
+     * Used to persist application state about whether geofenceArrayList were added.
      */
     private SharedPreferences sharedPreferences;
 
@@ -156,18 +156,18 @@ public class UnlockService extends Service implements
         wifiIntent = new Intent(this, WifiService.class);
         bluetoothIntent = new Intent(this, BluetoothService.class);
 
-        // Empty list for storing geofences.
-        geofences = new ArrayList<Geofence>();
+        // Empty list for storing geofenceArrayList.
+        geofenceArrayList = new ArrayList<Geofence>();
 
         // Initially set the PendingIntent used in addGeofences() and removeGeofences() to null.
         geofencePendingIntent = null;
 
         // Retrieve an instance of the SharedPreferences object.
-        sharedPreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME,
+        sharedPreferences = getSharedPreferences("net.simonjensen.autounlock",
                 MODE_PRIVATE);
 
         // Get the value of mGeofencesAdded from SharedPreferences. Set to false as a default.
-        geofencesAdded = sharedPreferences.getBoolean(Constants.GEOFENCES_ADDED_KEY, false);
+        geofencesAdded = sharedPreferences.getBoolean("net.simonjensen.autounlock.GEOFENCES_ADDED_KEY", false);
 
         // Kick off the request to build GoogleApiClient.
         buildGoogleApiClient();
@@ -236,7 +236,7 @@ public class UnlockService extends Service implements
     }
 
     /**
-     * Builds and returns a GeofencingRequest. Specifies the list of geofences to be monitored.
+     * Builds and returns a GeofencingRequest. Specifies the list of geofenceArrayList to be monitored.
      * Also specifies how the geofence notifications are initially triggered.
      */
     private GeofencingRequest getGeofencingRequest() {
@@ -247,8 +247,8 @@ public class UnlockService extends Service implements
         // is already inside that geofence.
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
 
-        // Add the geofences to be monitored by geofencing service.
-        builder.addGeofences(geofences);
+        // Add the geofenceArrayList to be monitored by geofencing service.
+        builder.addGeofences(geofenceArrayList);
 
         // Return a GeofencingRequest.
         return builder.build();
@@ -256,7 +256,7 @@ public class UnlockService extends Service implements
 
     private void logSecurityException(SecurityException securityException) {
         Log.e(TAG, "Invalid location permission. " +
-                "You need to use ACCESS_FINE_LOCATION with geofences", securityException);
+                "You need to use ACCESS_FINE_LOCATION with geofenceArrayList", securityException);
     }
 
     /**
@@ -274,11 +274,11 @@ public class UnlockService extends Service implements
             // Update state and save in shared preferences.
             geofencesAdded = !geofencesAdded;
             SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean(Constants.GEOFENCES_ADDED_KEY, geofencesAdded);
+            editor.putBoolean("net.simonjensen.autounlock.GEOFENCES_ADDED_KEY", geofencesAdded);
             editor.apply();
 
-            // Update the UI. Adding geofences enables the Remove Geofences button, and removing
-            // geofences enables the Add Geofences button.
+            // Update the UI. Adding geofenceArrayList enables the Remove Geofences button, and removing
+            // geofenceArrayList enables the Add Geofences button.
             //setButtonsEnabledState();
 
             Toast.makeText(
@@ -298,7 +298,7 @@ public class UnlockService extends Service implements
     /**
      * Gets a PendingIntent to send with the request to add or remove Geofences. Location Services
      * issues the Intent inside this PendingIntent whenever a geofence transition occurs for the
-     * current list of geofences.
+     * current list of geofenceArrayList.
      *
      * @return A PendingIntent for the IntentService that handles geofence transitions.
      */
@@ -314,14 +314,17 @@ public class UnlockService extends Service implements
     }
 
     /**
-     * This sample hard codes geofence data. A real app might dynamically create geofences based on
+     * This sample hard codes geofence data. A real app might dynamically create geofenceArrayList based on
      * the user's location.
      */
     public void populateGeofenceList(String name, LatLng location, Float radius) {
 
         Log.v("Populate geofence list", "Name: " + name + " Location: " + location);
 
-        geofences.add(new Geofence.Builder()
+        int expireInHours = 12;
+        long expireInMilliseconds = expireInHours * 60 * 60 * 1000;
+
+        geofenceArrayList.add(new Geofence.Builder()
                 // Set the request ID of the geofence. This is a string to identify this
                 // geofence.
                 .setRequestId(name)
@@ -336,7 +339,8 @@ public class UnlockService extends Service implements
 
                 // Set the expiration duration of the geofence. This geofence gets automatically
                 // removed after this period of time.
-                .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+                // this is in milliseconds * 60 * 60 * 1000 for hours
+                .setExpirationDuration(expireInMilliseconds)
 
                 // Set the transition types of interest. Alerts are only generated for these
                 // transition. We track entry and exit transitions in this sample.
@@ -459,7 +463,7 @@ public class UnlockService extends Service implements
     }
 
     public void registerGeofences() {
-        Log.v("geofences", geofences.toString());
+        Log.v("geofenceArrayList", geofenceArrayList.toString());
         if (!googleApiClient.isConnected()) {
             Toast.makeText(this, getString(R.string.not_connected), Toast.LENGTH_SHORT).show();
             return;
@@ -487,7 +491,7 @@ public class UnlockService extends Service implements
             return;
         }
         try {
-            // Remove geofences.
+            // Remove geofenceArrayList.
             LocationServices.GeofencingApi.removeGeofences(
                     googleApiClient,
                     // This is the same pending intent that was used in addGeofences().
@@ -497,5 +501,9 @@ public class UnlockService extends Service implements
             // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
             logSecurityException(securityException);
         }
+    }
+
+    public void newDatastore() {
+        dataStore.newDatastore();
     }
 }

@@ -40,7 +40,6 @@ public class WifiService extends Service {
                     aWifiDevice.add(RSSI);
                     aWifiDevice.add(String.valueOf(time));
                     UnlockService.recordedWifi.add(aWifiDevice);
-                    //Log.v("TEST", UnlockService.recordedWifi.toString());
 
                     UnlockService.dataStore.insertWifi(SSID, MAC, RSSI, time);
                 }
@@ -53,7 +52,9 @@ public class WifiService extends Service {
         // The service is being created
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         registerReceiver(broadcastReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        wifiManager.createWifiLock(String.valueOf(WifiManager.WIFI_MODE_SCAN_ONLY)).acquire();
         wifiManager.startScan();
+
         PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WifiService");
         wakeLock.acquire();
@@ -82,6 +83,7 @@ public class WifiService extends Service {
     public void onDestroy() {
         // The service is no longer used and is being destroyed
         Log.v("WifiService", "Stopping");
+        wifiManager.createWifiLock(String.valueOf(WifiManager.WIFI_MODE_SCAN_ONLY)).release();
         unregisterReceiver(broadcastReceiver);
     }
 }

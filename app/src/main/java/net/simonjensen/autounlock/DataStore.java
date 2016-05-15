@@ -31,9 +31,6 @@ public class DataStore {
     static final String ROTATION_Y = "rotation_y";
     static final String ROTATION_Z = "rotation_z";
 
-    static final String MAGNET_TABLE = "magnetometer";
-    static final String MAGNET_DEGREE = "degree";
-
     static final String LOCATION_TABLE = "location";
     static final String LOCATION_PROVIDER = "provider";
     static final String LOCATION_LATITUDE = "latitude";
@@ -51,7 +48,17 @@ public class DataStore {
         database.close();
     }
 
-    //: I cannot see why it should not work.
+    public void newDatastore() {
+        database = databaseHelper.getWritableDatabase();
+
+        database.delete(BLUETOOTH_TABLE, null, null);
+        database.delete(WIFI_TABLE, null, null);
+        database.delete(ACCELEROMETER_TABLE, null, null);
+        database.delete(LOCATION_TABLE, null, null);
+
+        database.close();
+    }
+
     public void insertBtle(String name, String btleSource, int btleRSSI, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(BLUETOOTH_NAME, name);
@@ -90,16 +97,6 @@ public class DataStore {
         database.close();
     }
 
-    // Likely unneeded.
-    public void insertMagnetometer(String degree, long timestamp) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(MAGNET_DEGREE, degree);
-        contentValues.put(TIMESTAMP, timestamp);
-        database = databaseHelper.getWritableDatabase();
-        database.replace(MAGNET_TABLE, null, contentValues);
-        database.close();
-    }
-
     public void insertLocation(String provider, double latitude, double longitude, float accuracy, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(LOCATION_PROVIDER, provider);
@@ -131,11 +128,7 @@ public class DataStore {
                 Log.w("Datastore", "Database upgrade from old: " + oldVersion + " to: " +
                         newVersion);
                 database = databaseHelper.getWritableDatabase();
-                database.execSQL("DROP TABLE IF EXISTS " + BLUETOOTH_TABLE);
-                database.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE);
-                database.execSQL("DROP TABLE IF EXISTS " + ACCELEROMETER_TABLE);
-                database.execSQL("DROP TABLE IF EXISTS " + MAGNET_TABLE);
-                database.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
+                dropDatastore();
                 createDatastore(database);
                 database.close();
                 return;
@@ -167,12 +160,6 @@ public class DataStore {
                     + ROTATION_Z + " TEXT, "
                     + TIMESTAMP + " LONG)");
 
-            // This is currently unused. Likeley to be deleted.
-            database.execSQL("CREATE TABLE " + MAGNET_TABLE + " ("
-                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + MAGNET_DEGREE + " TEXT, "
-                    + TIMESTAMP + " LONG)");
-
             database.execSQL("CREATE TABLE " + LOCATION_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + LOCATION_PROVIDER + " TEXT, "
@@ -180,6 +167,13 @@ public class DataStore {
                     + LOCATION_LONGITUDE + " FLOAT, "
                     + LOCATION_ACCURACY + " FLOAT, "
                     + TIMESTAMP + " LONG)");
+        }
+
+        private void dropDatastore() {
+            database.execSQL("DROP TABLE IF EXISTS " + BLUETOOTH_TABLE);
+            database.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE);
+            database.execSQL("DROP TABLE IF EXISTS " + ACCELEROMETER_TABLE);
+            database.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
         }
     }
 }

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -15,6 +16,11 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.nio.channels.FileChannel;
 
 public class MainActivity extends AppCompatActivity {
     UnlockService unlockService;
@@ -38,13 +44,15 @@ public class MainActivity extends AppCompatActivity {
         // Bind to LocalService
         ComponentName unlockService = startService(new Intent(this, UnlockService.class));
         bindService(new Intent(this, UnlockService.class), serviceConnection, Context.BIND_AUTO_CREATE);
-        //Intent unlockIntent = new Intent(this, UnlockService.class);
-        //startService(unlockIntent);
-        //bindService(unlockIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
-        // Ask for location permission on startup if not granted.
+        // Check for location permission on startup if not granted.
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        } else
+
+        // Check for permission to write to external storage.
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         }
     }
 
@@ -172,6 +180,43 @@ public class MainActivity extends AppCompatActivity {
     public void onButtonClickUnregisterGeofence(View v) {
         if (bound) {
             unlockService.unregisterGeofences();
+        }
+    }
+
+    public void onButtonClickExportDatastore(View v) {
+        try {
+            File data = Environment.getDataDirectory();
+
+            try {
+                String datastorePath = "//data//net.simonjensen.autounlock//databases//datastore.db";
+                String exportPath = String.valueOf(System.currentTimeMillis()) + ".db";
+
+                File outputDirectory = new File("/sdcard/AutoUnlock/");
+                outputDirectory.mkdirs();
+
+                File datastore = new File(data, datastorePath);
+                File export = new File(outputDirectory, exportPath);
+
+                FileChannel source = new FileInputStream(datastore).getChannel();
+                FileChannel destination = new FileOutputStream(export).getChannel();
+
+                destination.transferFrom(source, 0, source.size());
+                source.close();
+                destination.close();
+
+                Log.v("Export Datastore", "Datastore exported to " + exportPath);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            // do something
+        }
+    }
+
+    public void onButtonClickNewDB(View v) {
+        Log.v("New Datastore", "Deleting data in datastore");
+        if (bound) {
+            unlockService.newDatastore();
         }
     }
 
