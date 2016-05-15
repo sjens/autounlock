@@ -1,12 +1,14 @@
 package net.simonjensen.autounlock;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -93,6 +95,9 @@ public class AccelerometerService extends Service implements SensorEventListener
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AccelerometerService");
+        wakeLock.acquire();
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {

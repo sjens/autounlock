@@ -327,6 +327,7 @@ public class UnlockService extends Service implements
                 .setRequestId(name)
 
                 // Set the circular region of this geofence.
+                // radius in meters
                 .setCircularRegion(
                         location.latitude,
                         location.longitude,
@@ -431,13 +432,13 @@ public class UnlockService extends Service implements
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
         locationManager.requestSingleUpdate(criteria, new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                 // Name should be BeKey MAC address
-                populateGeofenceList("test", currentLocation, 100f);
+                populateGeofenceList("test", currentLocation, 50f);
             }
 
             @Override
@@ -458,6 +459,7 @@ public class UnlockService extends Service implements
     }
 
     public void registerGeofences() {
+        Log.v("geofences", geofences.toString());
         if (!googleApiClient.isConnected()) {
             Toast.makeText(this, getString(R.string.not_connected), Toast.LENGTH_SHORT).show();
             return;

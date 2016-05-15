@@ -138,6 +138,6 @@
             android:layout_width="wrap_content"
             android:text="Unregister Geofence"
             android:onClick="onButtonClickUnregisterGeofence"
-            android:layout_alignTop="@+id/registergeofence"
-            android:layout_alignParentEnd="true"/>
+            android:layout_below="@+id/registergeofence"
+            android:layout_alignParentStart="true"/>
 </RelativeLayout>

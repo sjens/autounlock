@@ -8,6 +8,7 @@ import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -53,6 +54,9 @@ public class WifiService extends Service {
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         registerReceiver(broadcastReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         wifiManager.startScan();
+        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WifiService");
+        wakeLock.acquire();
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {

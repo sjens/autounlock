@@ -10,6 +10,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
@@ -70,7 +71,10 @@ public class LocationService extends Service {
         Log.v("LocationService", "Starting location gathering");
         // Register the listener with the Location Manager to receive location updates
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 1, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 1, locationListener);
+        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LocationService");
+        wakeLock.acquire();
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {

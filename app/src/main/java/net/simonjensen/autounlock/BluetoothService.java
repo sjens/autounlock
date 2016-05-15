@@ -1,13 +1,21 @@
 package net.simonjensen.autounlock;
 
+import android.annotation.TargetApi;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -21,40 +29,54 @@ public class BluetoothService extends Service {
     static final String SIMON_BEKEY = "7C:09:2B:EF:04:04";
 
     BluetoothAdapter bluetoothAdapter;
+    ScanSettings scanSettings;
 
-    private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            long time = System.currentTimeMillis();
-            // When discovery finds a device
-            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                // Get the BluetoothDevice object from the Intent
-                BluetoothDevice bluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                String name = bluetoothDevice.getName();
-                String source = bluetoothDevice.getAddress();
-                int RSSI = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
-                Log.v("Bluetooth:", bluetoothDevice.getName() + bluetoothDevice.getAddress() + bluetoothDevice.getUuids() + RSSI);
+    //Scan call back function
+    private ScanCallback scanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+            Log.v("Bluetooth", result.getDevice().getName()
+                    + result.getDevice().getAddress()
+                    + result.getDevice().getUuids()
+                    + result.getRssi()
+                    + result.getTimestampNanos());
 
-                List<String> aBluetoothDevice = new ArrayList<String>();
-                aBluetoothDevice.add(name);
-                aBluetoothDevice.add(source);
-                aBluetoothDevice.add(String.valueOf(RSSI));
-                aBluetoothDevice.add(String.valueOf(time));
-                UnlockService.recordedBluetooth.add(aBluetoothDevice);
+            String name = result.getDevice().getName();
+            String source = result.getDevice().getAddress();
+            int RSSI = result.getRssi();
+            long time = result.getTimestampNanos();
 
-                UnlockService.dataStore.insertBtle(name, source, RSSI, time);
-            }
+            List<String> aBluetoothDevice = new ArrayList<String>();
+            aBluetoothDevice.add(name);
+            aBluetoothDevice.add(source);
+            aBluetoothDevice.add(String.valueOf(RSSI));
+            aBluetoothDevice.add(String.valueOf(time));
+            UnlockService.recordedBluetooth.add(aBluetoothDevice);
+
+            UnlockService.dataStore.insertBtle(name, source, RSSI, time);
         }
     };
 
+    @TargetApi(Build.VERSION_CODES.M)
     @Override
     public void onCreate() {
         // The service is being created
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        bluetoothAdapter.startDiscovery();
+        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothAdapter = bluetoothManager.getAdapter();
+        scanSettings = new ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
+                .setReportDelay(0)
+                .build();
 
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(broadcastReceiver, filter); // Don't forget to unregister during onDestroy
+        bluetoothAdapter.getBluetoothLeScanner().startScan(null, scanSettings, scanCallback);
+
+        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "BluetoothService");
+        wakeLock.acquire();
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -80,6 +102,6 @@ public class BluetoothService extends Service {
     public void onDestroy() {
         // The service is no longer used and is being destroyed
         Log.v("BluetoothService", "Stopping");
-        unregisterReceiver(broadcastReceiver);
+        bluetoothAdapter.getBluetoothLeScanner().stopScan(scanCallback);
     }
 }
