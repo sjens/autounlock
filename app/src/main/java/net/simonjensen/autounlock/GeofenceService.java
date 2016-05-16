@@ -172,11 +172,11 @@ public class GeofenceService extends IntentService {
     private String getTransitionString(int transitionType) {
         switch (transitionType) {
             case Geofence.GEOFENCE_TRANSITION_ENTER:
-                return getString(R.string.geofence_transition_entered);
+                return "Entered geofence";
             case Geofence.GEOFENCE_TRANSITION_EXIT:
-                return getString(R.string.geofence_transition_exited);
+                return "Exited geofence";
             default:
-                return getString(R.string.unknown_geofence_transition);
+                return "Unknown geofence transition";
         }
     }
 }

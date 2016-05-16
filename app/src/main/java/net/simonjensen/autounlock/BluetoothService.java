@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BluetoothService extends Service {
+    static String TAG = "BluetoothService";
+
     int startMode;       // indicates how to behave if the service is killed
     IBinder binder;      // interface for clients that bind
     boolean allowRebind; // indicates whether onRebind should be used
@@ -40,9 +42,9 @@ public class BluetoothService extends Service {
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
             Log.v("Bluetooth", result.getDevice().getName()
-                    + result.getDevice().getAddress()
-                    + result.getRssi()
-                    + result.getTimestampNanos());
+                    + " " + result.getDevice().getAddress()
+                    + " " + result.getRssi()
+                    + " " + result.getTimestampNanos());
 
             String name = result.getDevice().getName();
             String source = result.getDevice().getAddress();
@@ -63,6 +65,20 @@ public class BluetoothService extends Service {
         // The service is being created
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
+
+        // Enabling bluetooth if not enabled.
+        if (!bluetoothAdapter.isEnabled()) {
+            Log.v(TAG, "Bluetooth is off, turning on");
+            bluetoothAdapter.enable();
+
+            // Waiting for bluetooth adapter to turn on.
+            while (true) {
+                if (bluetoothAdapter.isEnabled()) {
+                    break;
+                }
+            }
+        }
+
         scanSettings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
