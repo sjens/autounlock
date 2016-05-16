@@ -1,5 +1,3 @@
-// Geofencing from https://github.com/googlesamples/android-play-location/tree/master/Geofencing
-
 package net.simonjensen.autounlock;
 
 import android.Manifest;
@@ -32,8 +30,7 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnlockService extends Service implements
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status> {
+public class UnlockService extends Service {
 
     private static final String TAG = "UnlockService";
 
@@ -56,32 +53,7 @@ public class UnlockService extends Service implements
     static DataBuffer<List> dataBuffer;
     static DataStore dataStore;
 
-    LocationManager locationManager;
-    LocationListener locationListener;
-    /**
-     * The list of geofenceArrayList used in this sample.
-     */
-    protected ArrayList<Geofence> geofenceArrayList;
-
-    /**
-     * Used to keep track of whether geofenceArrayList were added.
-     */
-    private boolean geofencesAdded;
-
-    /**
-     * Used when requesting to add or remove geofenceArrayList.
-     */
-    private PendingIntent geofencePendingIntent;
-
-    /**
-     * Used to persist application state about whether geofenceArrayList were added.
-     */
-    private SharedPreferences sharedPreferences;
-
-    /**
-     * Provides the entry point to Google Play services.
-     */
-    protected GoogleApiClient googleApiClient;
+    private net.simonjensen.autounlock.Geofence geofence;
 
     // Binder given to clients
     private final IBinder localBinder = new LocalBinder();
@@ -156,21 +128,7 @@ public class UnlockService extends Service implements
         wifiIntent = new Intent(this, WifiService.class);
         bluetoothIntent = new Intent(this, BluetoothService.class);
 
-        // Empty list for storing geofenceArrayList.
-        geofenceArrayList = new ArrayList<Geofence>();
-
-        // Initially set the PendingIntent used in addGeofences() and removeGeofences() to null.
-        geofencePendingIntent = null;
-
-        // Retrieve an instance of the SharedPreferences object.
-        sharedPreferences = getSharedPreferences("net.simonjensen.autounlock",
-                MODE_PRIVATE);
-
-        // Get the value of mGeofencesAdded from SharedPreferences. Set to false as a default.
-        geofencesAdded = sharedPreferences.getBoolean("net.simonjensen.autounlock.GEOFENCES_ADDED_KEY", false);
-
-        // Kick off the request to build GoogleApiClient.
-        buildGoogleApiClient();
+        geofence = new net.simonjensen.autounlock.Geofence(this);
     }
 
     @Override
@@ -183,7 +141,7 @@ public class UnlockService extends Service implements
         msg.arg1 = startId;
         serviceHandler.sendMessage(msg);
 
-        googleApiClient.connect();
+        geofence.connect();
 
         // If we get killed, after returning from here, restart
         return START_STICKY;
@@ -191,7 +149,7 @@ public class UnlockService extends Service implements
 
     @Override
     public void onDestroy() {
-        googleApiClient.disconnect();
+        geofence.disconnect();
         Log.v("UnlockService", "Service destroyed");
     }
 
@@ -199,156 +157,6 @@ public class UnlockService extends Service implements
     public IBinder onBind(Intent intent) {
         // localBinder is used for bound services
         return localBinder;
-    }
-
-    /**
-     * Builds a GoogleApiClient. Uses the {@code #addApi} method to request the LocationServices API.
-     */
-    protected synchronized void buildGoogleApiClient() {
-        googleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
-
-    /**
-     * Runs when a GoogleApiClient object successfully connects.
-     */
-    @Override
-    public void onConnected(Bundle connectionHint) {
-        Log.i(TAG, "Connected to GoogleApiClient");
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult result) {
-        // Refer to the javadoc for ConnectionResult to see what error codes might be returned in
-        // onConnectionFailed.
-        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + result.getErrorCode());
-    }
-
-    @Override
-    public void onConnectionSuspended(int cause) {
-        // The connection to Google Play services was lost for some reason.
-        Log.i(TAG, "Connection suspended");
-
-        // onConnected() will be called again automatically when the service reconnects
-    }
-
-    /**
-     * Builds and returns a GeofencingRequest. Specifies the list of geofenceArrayList to be monitored.
-     * Also specifies how the geofence notifications are initially triggered.
-     */
-    private GeofencingRequest getGeofencingRequest() {
-        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-
-        // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
-        // GEOFENCE_TRANSITION_ENTER notification when the geofence is added and if the device
-        // is already inside that geofence.
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
-
-        // Add the geofenceArrayList to be monitored by geofencing service.
-        builder.addGeofences(geofenceArrayList);
-
-        // Return a GeofencingRequest.
-        return builder.build();
-    }
-
-    private void logSecurityException(SecurityException securityException) {
-        Log.e(TAG, "Invalid location permission. " +
-                "You need to use ACCESS_FINE_LOCATION with geofenceArrayList", securityException);
-    }
-
-    /**
-     * Runs when the result of calling addGeofences() and removeGeofences() becomes available.
-     * Either method can complete successfully or with an error.
-     * <p>
-     * Since this activity implements the {@link ResultCallback} interface, we are required to
-     * define this method.
-     *
-     * @param status The Status returned through a PendingIntent when addGeofences() or
-     *               removeGeofences() get called.
-     */
-    public void onResult(Status status) {
-        if (status.isSuccess()) {
-            // Update state and save in shared preferences.
-            geofencesAdded = !geofencesAdded;
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean("net.simonjensen.autounlock.GEOFENCES_ADDED_KEY", geofencesAdded);
-            editor.apply();
-
-            // Update the UI. Adding geofenceArrayList enables the Remove Geofences button, and removing
-            // geofenceArrayList enables the Add Geofences button.
-            //setButtonsEnabledState();
-
-            Toast.makeText(
-                    this,
-                    getString(geofencesAdded ? R.string.geofences_added :
-                            R.string.geofences_removed),
-                    Toast.LENGTH_SHORT
-            ).show();
-        } else {
-            // Get the status code for the error and log it using a user-friendly message.
-            String errorMessage = GeofenceErrorMessages.getErrorString(this,
-                    status.getStatusCode());
-            Log.e(TAG, errorMessage);
-        }
-    }
-
-    /**
-     * Gets a PendingIntent to send with the request to add or remove Geofences. Location Services
-     * issues the Intent inside this PendingIntent whenever a geofence transition occurs for the
-     * current list of geofenceArrayList.
-     *
-     * @return A PendingIntent for the IntentService that handles geofence transitions.
-     */
-    private PendingIntent getGeofencePendingIntent() {
-        // Reuse the PendingIntent if we already have it.
-        if (geofencePendingIntent != null) {
-            return geofencePendingIntent;
-        }
-        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
-        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling
-        // addGeofences() and removeGeofences().
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    }
-
-    /**
-     * This sample hard codes geofence data. A real app might dynamically create geofenceArrayList based on
-     * the user's location.
-     */
-    public void populateGeofenceList(String name, LatLng location, Float radius) {
-
-        Log.v("Populate geofence list", "Name: " + name + " Location: " + location);
-
-        int expireInHours = 12;
-        long expireInMilliseconds = expireInHours * 60 * 60 * 1000;
-
-        geofenceArrayList.add(new Geofence.Builder()
-                // Set the request ID of the geofence. This is a string to identify this
-                // geofence.
-                .setRequestId(name)
-
-                // Set the circular region of this geofence.
-                // radius in meters
-                .setCircularRegion(
-                        location.latitude,
-                        location.longitude,
-                        radius
-                )
-
-                // Set the expiration duration of the geofence. This geofence gets automatically
-                // removed after this period of time.
-                // this is in milliseconds * 60 * 60 * 1000 for hours
-                .setExpirationDuration(expireInMilliseconds)
-
-                // Set the transition types of interest. Alerts are only generated for these
-                // transition. We track entry and exit transitions in this sample.
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                        Geofence.GEOFENCE_TRANSITION_EXIT)
-
-                // Create the geofence.
-                .build());
     }
 
     public void startAccelerometerService() {
@@ -426,81 +234,15 @@ public class UnlockService extends Service implements
     }
 
     public void addGeofence() {
-        // Necessary permission check
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-        locationManager.requestSingleUpdate(criteria, new LocationListener() {
-            @Override
-            public void onLocationChanged(Location location) {
-                LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                // Name should be BeKey MAC address
-                populateGeofenceList("test", currentLocation, 50f);
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(String provider) {
-
-            }
-        }, null);
+        geofence.addGeofence(this);
     }
 
     public void registerGeofences() {
-        Log.v("geofenceArrayList", geofenceArrayList.toString());
-        if (!googleApiClient.isConnected()) {
-            Toast.makeText(this, getString(R.string.not_connected), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        try {
-            LocationServices.GeofencingApi.addGeofences(
-                    googleApiClient,
-                    // The GeofenceRequest object.
-                    getGeofencingRequest(),
-                    // A pending intent that that is reused when calling removeGeofences(). This
-                    // pending intent is used to generate an intent when a matched geofence
-                    // transition is observed.
-                    getGeofencePendingIntent()
-            ).setResultCallback(this); // Result processed in onResult().
-        } catch (SecurityException securityException) {
-            // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
-            logSecurityException(securityException);
-        }
+        geofence.registerGeofences(this);
     }
 
     public void unregisterGeofences() {
-        if (!googleApiClient.isConnected()) {
-            Toast.makeText(this, getString(R.string.not_connected), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        try {
-            // Remove geofenceArrayList.
-            LocationServices.GeofencingApi.removeGeofences(
-                    googleApiClient,
-                    // This is the same pending intent that was used in addGeofences().
-                    getGeofencePendingIntent()
-            ).setResultCallback(this); // Result processed in onResult().
-        } catch (SecurityException securityException) {
-            // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
-            logSecurityException(securityException);
-        }
+        geofence.unregisterGeofences(this);
     }
 
     public void newDatastore() {

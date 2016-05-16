@@ -2,15 +2,6 @@
     <string name="app_name">AutoUnlock</string>
     <string name="action_settings">Settings</string>
 
-    <!-- Copied from https://github.com/googlesamples/android-play-location/blob/master/Geofencing/app/src/main/res/values/strings.xml -->
-
-    <!-- Buttons strings -->
-    <string name="add_geofences">Add geofences</string>
-    <string name="remove_geofences">Remove geofences</string>
-
-    <string name="geofences_added">Geofences added</string>
-    <string name="geofences_removed">Geofences removed</string>
-
     <!-- Error strings -->
     <string name="not_connected">GoogleApiClient no yet connected. Try again.</string>
     <string name="geofence_not_available">Geofence service is not available now</string>

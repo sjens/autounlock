@@ -1,21 +1,3 @@
-/**
- * Copyright 2014 Google Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-// https://github.com/googlesamples/android-play-location/tree/master/Geofencing
-
 package net.simonjensen.autounlock;
 
 import android.app.IntentService;
@@ -23,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.support.v4.app.NotificationCompat;
@@ -31,27 +14,21 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofenceStatusCodes;
 import com.google.android.gms.location.GeofencingEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Listener for geofence transition changes.
- *
- * Receives geofence transition events from Location Services in the form of an Intent containing
- * the transition type and geofence id(s) that triggered the transition. Creates a notification
- * as the output.
- */
-public class GeofenceTransitionsIntentService extends IntentService {
+public class GeofenceService extends IntentService {
 
-    protected static final String TAG = "GeofenceTransitionsIS";
+    static String TAG = "GeofenceService";
 
     /**
      * This constructor is required, and calls the super IntentService(String)
      * constructor with the name for a worker thread.
      */
-    public GeofenceTransitionsIntentService() {
+    public GeofenceService() {
         // Use the TAG to name the worker thread.
         super(TAG);
     }
@@ -70,8 +47,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         if (geofencingEvent.hasError()) {
-            String errorMessage = GeofenceErrorMessages.getErrorString(this,
-                    geofencingEvent.getErrorCode());
+            String errorMessage = getErrorString(this, geofencingEvent.getErrorCode());
             Log.e(TAG, errorMessage);
             return;
         }
@@ -99,6 +75,20 @@ public class GeofenceTransitionsIntentService extends IntentService {
         } else {
             // Log the error.
             Log.e(TAG, getString(R.string.geofence_transition_invalid_type, geofenceTransition));
+        }
+    }
+
+    public static String getErrorString(Context context, int errorCode) {
+        Resources mResources = context.getResources();
+        switch (errorCode) {
+            case GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE:
+                return mResources.getString(R.string.geofence_not_available);
+            case GeofenceStatusCodes.GEOFENCE_TOO_MANY_GEOFENCES:
+                return mResources.getString(R.string.geofence_too_many_geofences);
+            case GeofenceStatusCodes.GEOFENCE_TOO_MANY_PENDING_INTENTS:
+                return mResources.getString(R.string.geofence_too_many_pending_intents);
+            default:
+                return mResources.getString(R.string.unknown_geofence_error);
         }
     }
 

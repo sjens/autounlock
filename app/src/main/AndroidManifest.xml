@@ -44,7 +44,7 @@
                 android:name=".BluetoothService"
                 android:enabled="true"/>
         <service
-                android:name=".GeofenceTransitionsIntentService"
+                android:name=".GeofenceService"
                 android:enabled="true"/>
     </application>
 
