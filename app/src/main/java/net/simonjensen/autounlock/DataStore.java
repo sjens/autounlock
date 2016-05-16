@@ -50,12 +50,10 @@ public class DataStore {
 
     public void newDatastore() {
         database = databaseHelper.getWritableDatabase();
-
         database.delete(BLUETOOTH_TABLE, null, null);
         database.delete(WIFI_TABLE, null, null);
         database.delete(ACCELEROMETER_TABLE, null, null);
         database.delete(LOCATION_TABLE, null, null);
-
         database.close();
     }
 
@@ -70,7 +68,7 @@ public class DataStore {
         database.close();
     }
 
-    public void insertWifi(String wifiSSID, String wifiMAC, String wifiRSSI, long timestamp) {
+    public void insertWifi(String wifiSSID, String wifiMAC, int wifiRSSI, long timestamp) {
         ContentValues contentValues = new ContentValues();
         //contentValues.put(ID, id);
         contentValues.put(WIFI_SSID, wifiSSID);
@@ -82,8 +80,8 @@ public class DataStore {
         database.close();
     }
 
-    public void insertAccelerometer(String accelerometerX, String accelerometerY, String accelerometerZ,
-                                    String rotationX, String rotationY, String rotationZ, long timestamp) {
+    public void insertAccelerometer(float accelerometerX, float accelerometerY, float accelerometerZ,
+                                    float rotationX, float rotationY, float rotationZ, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(ACCELEROMETER_X, accelerometerX);
         contentValues.put(ACCELEROMETER_Y, accelerometerY);
@@ -147,16 +145,16 @@ public class DataStore {
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + WIFI_SSID + " TEXT, "
                     + WIFI_MAC + " TEXT, "
-                    + WIFI_RSSI + " TEXT, "
+                    + WIFI_RSSI + " INTEGER, "
                     + TIMESTAMP + " LONG)");
 
             database.execSQL("CREATE TABLE " + ACCELEROMETER_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + ACCELEROMETER_X + " TEXT, "
-                    + ACCELEROMETER_Y + " TEXT, "
-                    + ACCELEROMETER_Z + " TEXT, "
-                    + ROTATION_X + " TEXT, "
-                    + ROTATION_Y + " TEXT, "
+                    + ACCELEROMETER_X + " FLOAT, "
+                    + ACCELEROMETER_Y + " FLOAT, "
+                    + ACCELEROMETER_Z + " FLOAT, "
+                    + ROTATION_X + " FLOAT, "
+                    + ROTATION_Y + " FLOAT, "
                     + ROTATION_Z + " TEXT, "
                     + TIMESTAMP + " LONG)");
 

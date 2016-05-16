@@ -10,34 +10,34 @@ public class UnlockServiceLooper implements Runnable {
 
     @Override
     public void run() {
-        List<List<String>> prevRecordedBluetooth = new ArrayList<List<String>>();
-        List<List<String>> prevRecordedWifi = new ArrayList<List<String>>();
-        List<List<String>> prevRecordedLocation = new ArrayList<List<String>>();
-        List<List<String>> prevRecordedAccelerometer = new ArrayList<List<String>>();
+        List<BluetoothData> prevRecordedBluetooth = new ArrayList<BluetoothData>();
+        List<WifiData> prevRecordedWifi = new ArrayList<WifiData>();
+        List<LocationData> prevRecordedLocation = new ArrayList<LocationData>();
+        List<AccelerometerData> prevRecordedAccelerometer = new ArrayList<AccelerometerData>();
 
         while (running) {
             Log.v("klj", "threading");
-            Log.v("recordedBluetooth", prevRecordedBluetooth.toString());
+            Log.v("recordedWifi", prevRecordedWifi.toString());
 
             // In order to not have empty lists in the DataBuffer, previous data will be used if no new data has been found.
             if (!UnlockService.recordedBluetooth.isEmpty() || prevRecordedBluetooth.isEmpty()) {
                 prevRecordedBluetooth = UnlockService.recordedBluetooth;
-                UnlockService.recordedBluetooth = new ArrayList<List<String>>();
+                UnlockService.recordedBluetooth = new ArrayList<BluetoothData>();
             }
 
             if (!UnlockService.recordedWifi.isEmpty() || prevRecordedWifi.isEmpty()) {
                 prevRecordedWifi = UnlockService.recordedWifi;
-                UnlockService.recordedWifi = new ArrayList<List<String>>();
+                UnlockService.recordedWifi = new ArrayList<WifiData>();
             }
 
             if (!UnlockService.recordedLocation.isEmpty() || prevRecordedLocation.isEmpty()) {
                 prevRecordedLocation = UnlockService.recordedLocation;
-                UnlockService.recordedLocation = new ArrayList<List<String>>();
+                UnlockService.recordedLocation = new ArrayList<LocationData>();
             }
 
             if (!UnlockService.recordedAccelerometer.isEmpty() || prevRecordedAccelerometer.isEmpty()) {
                 prevRecordedAccelerometer = UnlockService.recordedAccelerometer;
-                UnlockService.recordedAccelerometer = new ArrayList<List<String>>();
+                UnlockService.recordedAccelerometer = new ArrayList<AccelerometerData>();
             }
 
             List<List> dataBlob = new ArrayList<List>();
@@ -47,8 +47,8 @@ public class UnlockServiceLooper implements Runnable {
             dataBlob.add(prevRecordedAccelerometer);
             UnlockService.dataBuffer.add(dataBlob);
 
-            for (int i = 0; i < prevRecordedBluetooth.size(); i++) {
-                if (prevRecordedBluetooth.get(i).get(1).equals(BluetoothService.SIMON_BEKEY)) {
+            for (int i = 0; i < UnlockService.recordedBluetooth.size(); i++) {
+                if (UnlockService.recordedBluetooth.get(i).getName().equals(BluetoothService.SIMON_BEKEY)) {
                     Log.v("Start Decision", "BeKey found");
                 }
             }

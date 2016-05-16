@@ -31,6 +31,9 @@ public class BluetoothService extends Service {
     BluetoothAdapter bluetoothAdapter;
     ScanSettings scanSettings;
 
+    PowerManager powerManager;
+    PowerManager.WakeLock wakeLock;
+
     //Scan call back function
     private ScanCallback scanCallback = new ScanCallback() {
         @Override
@@ -38,7 +41,6 @@ public class BluetoothService extends Service {
             super.onScanResult(callbackType, result);
             Log.v("Bluetooth", result.getDevice().getName()
                     + result.getDevice().getAddress()
-                    + result.getDevice().getUuids()
                     + result.getRssi()
                     + result.getTimestampNanos());
 
@@ -47,11 +49,8 @@ public class BluetoothService extends Service {
             int RSSI = result.getRssi();
             long time = result.getTimestampNanos();
 
-            List<String> aBluetoothDevice = new ArrayList<String>();
-            aBluetoothDevice.add(name);
-            aBluetoothDevice.add(source);
-            aBluetoothDevice.add(String.valueOf(RSSI));
-            aBluetoothDevice.add(String.valueOf(time));
+            BluetoothData aBluetoothDevice;
+            aBluetoothDevice = new BluetoothData(name, source, RSSI, time);
             UnlockService.recordedBluetooth.add(aBluetoothDevice);
 
             UnlockService.dataStore.insertBtle(name, source, RSSI, time);
@@ -74,8 +73,8 @@ public class BluetoothService extends Service {
 
         bluetoothAdapter.getBluetoothLeScanner().startScan(null, scanSettings, scanCallback);
 
-        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "BluetoothService");
+        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, "BluetoothService");
         wakeLock.acquire();
     }
     @Override
@@ -103,5 +102,6 @@ public class BluetoothService extends Service {
         // The service is no longer used and is being destroyed
         Log.v("BluetoothService", "Stopping");
         bluetoothAdapter.getBluetoothLeScanner().stopScan(scanCallback);
+        wakeLock.release();
     }
 }

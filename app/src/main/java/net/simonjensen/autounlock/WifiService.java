@@ -21,6 +21,9 @@ public class WifiService extends Service {
 
     WifiManager wifiManager;
 
+    PowerManager powerManager;
+    PowerManager.WakeLock wakeLock;
+
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -32,13 +35,9 @@ public class WifiService extends Service {
                     Log.v("Wifi", String.valueOf(scanResults.get(i)));
                     String SSID = scanResults.get(i).SSID;
                     String MAC = scanResults.get(i).BSSID;
-                    String RSSI = String.valueOf(scanResults.get(i).level);
+                    int RSSI = scanResults.get(i).level;
 
-                    List<String> aWifiDevice = new ArrayList<String>();
-                    aWifiDevice.add(SSID);
-                    aWifiDevice.add(MAC);
-                    aWifiDevice.add(RSSI);
-                    aWifiDevice.add(String.valueOf(time));
+                    WifiData aWifiDevice = new WifiData(SSID, MAC, RSSI);
                     UnlockService.recordedWifi.add(aWifiDevice);
 
                     UnlockService.dataStore.insertWifi(SSID, MAC, RSSI, time);
@@ -55,8 +54,8 @@ public class WifiService extends Service {
         wifiManager.createWifiLock(String.valueOf(WifiManager.WIFI_MODE_SCAN_ONLY)).acquire();
         wifiManager.startScan();
 
-        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WifiService");
+        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WifiService");
         wakeLock.acquire();
     }
     @Override
@@ -82,8 +81,9 @@ public class WifiService extends Service {
     @Override
     public void onDestroy() {
         // The service is no longer used and is being destroyed
-        Log.v("WifiService", "Stopping");
-        wifiManager.createWifiLock(String.valueOf(WifiManager.WIFI_MODE_SCAN_ONLY)).release();
+        Log.v("WifiService", "Stopping, do we still have wifi lock?");
+        //wifiManager.createWifiLock(String.valueOf(WifiManager.WIFI_MODE_SCAN_ONLY)).release();
+        wakeLock.release();
         unregisterReceiver(broadcastReceiver);
     }
 }

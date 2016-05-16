@@ -23,6 +23,9 @@ public class AccelerometerService extends Service implements SensorEventListener
     private Sensor accelerometer;
     private Sensor magnetometer;
 
+    PowerManager powerManager;
+    PowerManager.WakeLock wakeLock;
+
     private float[] previousAccelerometer = new float[3];
     private float[] previousMagnetometer = new float[3];
     private boolean previousAccelerometerSet = false;
@@ -59,20 +62,17 @@ public class AccelerometerService extends Service implements SensorEventListener
                 i = 0;
             }
 
-            String accelerometerX = String.valueOf(previousAccelerometer[0]);
-            String accelerometerY = String.valueOf(previousAccelerometer[1]);
-            String accelerometerZ = String.valueOf(previousAccelerometer[2]);
-            String rotationX = String.valueOf((float)(Math.toDegrees(orientation[0])+360)%360);
-            String rotationY = String.valueOf((float)(Math.toDegrees(orientation[1])+360)%360);
-            String rotationZ = String.valueOf((float)(Math.toDegrees(orientation[2])+360)%360);
+            float accelerometerX = previousAccelerometer[0];
+            float accelerometerY = previousAccelerometer[1];
+            float accelerometerZ = previousAccelerometer[2];
+            float rotationX = (float)(Math.toDegrees(orientation[0])+360)%360;
+            float rotationY = (float)(Math.toDegrees(orientation[1])+360)%360;
+            float rotationZ = (float)(Math.toDegrees(orientation[2])+360)%360;
 
-            List<String> anAccelerometerEvent = new ArrayList<String>();
-            anAccelerometerEvent.add(accelerometerX);
-            anAccelerometerEvent.add(accelerometerY);
-            anAccelerometerEvent.add(accelerometerZ);
-            anAccelerometerEvent.add(rotationX);
-            anAccelerometerEvent.add(rotationY);
-            anAccelerometerEvent.add(rotationZ);
+            AccelerometerData anAccelerometerEvent = new AccelerometerData(
+                    accelerometerX, accelerometerY, accelerometerZ,
+                    rotationX, rotationY, rotationZ, time);
+
             UnlockService.recordedAccelerometer.add(anAccelerometerEvent);
 
             UnlockService.dataStore.insertAccelerometer(
@@ -95,8 +95,9 @@ public class AccelerometerService extends Service implements SensorEventListener
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
-        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AccelerometerService");
+
+        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "AccelerometerService");
         wakeLock.acquire();
     }
     @Override
@@ -125,5 +126,6 @@ public class AccelerometerService extends Service implements SensorEventListener
         Log.v("AccelerometerService", "Stopping");
         sensorManager.unregisterListener(this, accelerometer);
         sensorManager.unregisterListener(this, magnetometer);
+        wakeLock.release();
     }
 }

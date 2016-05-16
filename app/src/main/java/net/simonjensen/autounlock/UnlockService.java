@@ -48,10 +48,10 @@ public class UnlockService extends Service implements
     private UnlockServiceLooper unlockServiceLooper;
     private Thread dataCollect;
 
-    static List<List<String>> recordedBluetooth = new ArrayList<List<String>>();
-    static List<List<String>> recordedWifi = new ArrayList<List<String>>();
-    static List<List<String>> recordedLocation = new ArrayList<List<String>>();
-    static List<List<String>> recordedAccelerometer = new ArrayList<List<String>>();
+    static List<BluetoothData> recordedBluetooth = new ArrayList<BluetoothData>();
+    static List<WifiData> recordedWifi = new ArrayList<WifiData>();
+    static List<LocationData> recordedLocation = new ArrayList<LocationData>();
+    static List<AccelerometerData> recordedAccelerometer = new ArrayList<AccelerometerData>();
 
     static DataBuffer<List> dataBuffer;
     static DataStore dataStore;

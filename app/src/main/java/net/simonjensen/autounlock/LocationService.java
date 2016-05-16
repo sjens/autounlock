@@ -18,24 +18,43 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LocationService extends Service {
+    String TAG = "LocatoinService";
+
     int startMode;       // indicates how to behave if the service is killed
     IBinder binder;      // interface for clients that bind
     boolean allowRebind; // indicates whether onRebind should be used
 
     LocationManager locationManager;
+    Location previousLocation;
+
+    PowerManager powerManager;
+    PowerManager.WakeLock wakeLock;
 
     // Define a listener that responds to location updates
     LocationListener locationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
+
+            if (previousLocation == null) {
+                insertLocationData(location);
+                previousLocation = location;
+            }else if (location.getProvider().equals("network")
+                    && previousLocation.getProvider().equals("gps")
+                    && System.currentTimeMillis() - previousLocation.getTime() < 6000) {
+                Log.v(TAG, "Ignoring network location");
+            } else {
+                Log.v("Timediff", String.valueOf(System.currentTimeMillis() - previousLocation.getTime()));
+                previousLocation = location;
+                insertLocationData(location);
+            }
+        }
+
+        public void insertLocationData(Location location) {
             // Called when a new location is found by the network location provider.
             long time = System.currentTimeMillis();
 
-            List<String> aLocation = new ArrayList<String>();
-            aLocation.add(location.getProvider());
-            aLocation.add(String.valueOf(location.getLatitude()));
-            aLocation.add(String.valueOf(location.getLongitude()));
-            aLocation.add(String.valueOf(location.getAccuracy()));
-            aLocation.add(String.valueOf(time));
+            LocationData aLocation;
+            aLocation = new LocationData(location.getProvider(),
+                    location.getLatitude(), location.getLongitude(), location.getAccuracy(), time);
             UnlockService.recordedLocation.add(aLocation);
 
             Log.v("LOCATION: ", location.toString());
@@ -57,6 +76,20 @@ public class LocationService extends Service {
         }
     };
 
+    private void switchToGPS() {
+        Log.v("LocationService", "Switching to GPS");
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        locationManager.removeUpdates(locationListener);
+
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 1, locationListener);
+    }
+
     @Override
     public void onCreate() {
         // The service is being created
@@ -72,37 +105,50 @@ public class LocationService extends Service {
         // Register the listener with the Location Manager to receive location updates
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 1, locationListener);
-        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LocationService");
+
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 1, locationListener);
+
+        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LocationService");
         wakeLock.acquire();
     }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // The service is starting, due to a call to startService()
         return startMode;
     }
+
     @Override
     public IBinder onBind(Intent intent) {
         // A client is binding to the service with bindService()
         return binder;
     }
+
     @Override
     public boolean onUnbind(Intent intent) {
         // All clients have unbound with unbindService()
         return allowRebind;
     }
+
     @Override
     public void onRebind(Intent intent) {
         // A client is binding to the service with bindService(),
         // after onUnbind() has already been called
     }
+
     @Override
     public void onDestroy() {
         // The service is no longer used and is being destroyed
         Log.v("LocationService", "Stopping");
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         locationManager.removeUpdates(locationListener);
+        wakeLock.release();
     }
 }
