@@ -52,14 +52,14 @@ public class WifiService extends Service {
     @Override
     public void onCreate() {
         // The service is being created
+        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, "WifiService");
+        wakeLock.acquire();
+
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         registerReceiver(broadcastReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         wifiManager.createWifiLock(String.valueOf(WifiManager.WIFI_MODE_SCAN_ONLY)).acquire();
         wifiManager.startScan();
-
-        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "WifiService");
-        wakeLock.acquire();
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {

@@ -15,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.File;
@@ -25,8 +26,31 @@ import java.nio.channels.FileChannel;
 public class MainActivity extends AppCompatActivity {
     UnlockService unlockService;
     boolean bound = false;
+    static boolean geofencAdded = false;
+    static int allButton = 0;
 
     DataStore dataStore;
+
+    Button startAccelerometer;
+    Button stopAccelerometer;
+
+    Button startLocation;
+    Button stopLocation;
+
+    Button startWifi;
+    Button stopWifi;
+
+    Button startBluetooth;
+    Button stopBluetooth;
+
+    Button startAll;
+    Button stopAll;
+
+    Button startBuffer;
+    Button stopBuffer;
+
+    Button registerGeofence;
+    Button unregisterGeofence;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +58,35 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        startAccelerometer = (Button) findViewById(R.id.accstart);
+        stopAccelerometer = (Button) findViewById(R.id.accstop);
+        stopAccelerometer.setEnabled(false);
+
+        startLocation = (Button) findViewById(R.id.locationstart);
+        stopLocation = (Button) findViewById(R.id.locationstop);
+        stopLocation.setEnabled(false);
+
+        startWifi = (Button) findViewById(R.id.wifistart);
+        stopWifi = (Button) findViewById(R.id.wifistop);
+        stopWifi.setEnabled(false);
+
+        startBluetooth = (Button) findViewById(R.id.bluetoothstart);
+        stopBluetooth = (Button) findViewById(R.id.bluetoothstop);
+        stopBluetooth.setEnabled(false);
+
+        startAll = (Button) findViewById(R.id.allstart);
+        stopAll = (Button) findViewById(R.id.allstop);
+        stopAll.setEnabled(false);
+
+        startBuffer = (Button) findViewById(R.id.databufferstart);
+        stopBuffer = (Button) findViewById(R.id.databufferstop);
+        stopBuffer.setEnabled(false);
+
+        registerGeofence = (Button) findViewById(R.id.registergeofence);
+        unregisterGeofence = (Button) findViewById(R.id.unregistergeofence);
+        registerGeofence.setEnabled(false);
+        unregisterGeofence.setEnabled(false);
 
         dataStore = new DataStore(this);
     }
@@ -71,24 +124,52 @@ public class MainActivity extends AppCompatActivity {
     public void onButtonClickAccel(View v) {
         if (bound) {
             unlockService.startAccelerometerService();
+            startAccelerometer.setEnabled(false);
+            stopAccelerometer.setEnabled(true);
+            startAll.setEnabled(false);
+            stopAll.setEnabled(true);
+            allButton += 1;
         }
     }
 
     public void onButtonClickAccelStop(View v) {
         if (bound) {
             unlockService.stopAccelerometerService();
+            startAccelerometer.setEnabled(true);
+            stopAccelerometer.setEnabled(false);
+            if (allButton == 1) {
+                startAll.setEnabled(true);
+                stopAll.setEnabled(false);
+                allButton -= 1;
+            } else {
+                allButton -= 1;
+            }
         }
     }
 
     public void onButtonClickLocation(View v) {
         if (bound) {
             unlockService.startLoactionService();
+            startLocation.setEnabled(false);
+            stopLocation.setEnabled(true);
+            startAll.setEnabled(false);
+            stopAll.setEnabled(true);
+            allButton += 1;
         }
     }
 
     public void onButtonClickLocationStop(View v) {
         if (bound) {
             unlockService.stopLocationService();
+            startLocation.setEnabled(true);
+            stopLocation.setEnabled(false);
+            if (allButton == 1) {
+                startAll.setEnabled(true);
+                stopAll.setEnabled(false);
+                allButton -= 1;
+            } else {
+                allButton -= 1;
+            }
         }
     }
 
@@ -111,24 +192,52 @@ public class MainActivity extends AppCompatActivity {
     public void onButtonClickWifi(View v) {
         if (bound) {
             unlockService.startWifiService();
+            startWifi.setEnabled(false);
+            stopWifi.setEnabled(true);
+            startAll.setEnabled(false);
+            stopAll.setEnabled(true);
+            allButton += 1;
         }
     }
 
     public void onButtonClickWifiStop(View v) {
         if (bound) {
             unlockService.stopWifiService();
+            startWifi.setEnabled(true);
+            stopWifi.setEnabled(false);
+            if (allButton == 1) {
+                startAll.setEnabled(true);
+                stopAll.setEnabled(false);
+                allButton -= 1;
+            } else {
+                allButton -= 1;
+            }
         }
     }
 
     public void onButtonClickBluetooth(View v) {
         if (bound) {
             unlockService.startBluetoothService();
+            startBluetooth.setEnabled(false);
+            stopBluetooth.setEnabled(true);
+            startAll.setEnabled(false);
+            stopAll.setEnabled(true);
+            allButton += 1;
         }
     }
 
     public void onButtonClickBluetoothStop(View v) {
         if (bound) {
             unlockService.stopBluetoothService();
+            startBluetooth.setEnabled(true);
+            stopBluetooth.setEnabled(false);
+            if (allButton == 1) {
+                startAll.setEnabled(true);
+                stopAll.setEnabled(false);
+                allButton -= 1;
+            } else {
+                allButton -= 1;
+            }
         }
     }
 
@@ -140,6 +249,19 @@ public class MainActivity extends AppCompatActivity {
             unlockService.startLoactionService();
             unlockService.startWifiService();
             unlockService.startBluetoothService();
+            startBuffer.setEnabled(false);
+            stopBuffer.setEnabled(true);
+            startAccelerometer.setEnabled(false);
+            stopAccelerometer.setEnabled(true);
+            startLocation.setEnabled(false);
+            stopLocation.setEnabled(true);
+            startWifi.setEnabled(false);
+            stopWifi.setEnabled(true);
+            startBluetooth.setEnabled(false);
+            stopBluetooth.setEnabled(true);
+            startAll.setEnabled(false);
+            stopAll.setEnabled(true);
+            allButton = 5;
         }
     }
 
@@ -150,36 +272,70 @@ public class MainActivity extends AppCompatActivity {
             unlockService.stopLocationService();
             unlockService.stopWifiService();
             unlockService.stopBluetoothService();
+            startBuffer.setEnabled(true);
+            stopBuffer.setEnabled(false);
+            startAccelerometer.setEnabled(true);
+            stopAccelerometer.setEnabled(false);
+            startLocation.setEnabled(true);
+            stopLocation.setEnabled(false);
+            startWifi.setEnabled(true);
+            stopWifi.setEnabled(false);
+            startBluetooth.setEnabled(true);
+            stopBluetooth.setEnabled(false);
+            startAll.setEnabled(true);
+            stopAll.setEnabled(false);
+            allButton = 0;
         }
     }
 
     public void onButtonClickDataBuffer(View v) {
         if (bound) {
             unlockService.startDataBufferCollection();
+            startBuffer.setEnabled(false);
+            stopBuffer.setEnabled(true);
+            startAll.setEnabled(false);
+            stopAll.setEnabled(true);
+            allButton += 1;
         }
     }
 
     public void onButtonClickDataBufferStop(View v) {
         if (bound) {
             unlockService.stopDataBufferCollection();
+            startBuffer.setEnabled(true);
+            stopBuffer.setEnabled(false);
+            if (allButton == 1) {
+                startAll.setEnabled(true);
+                stopAll.setEnabled(false);
+                allButton -= 1;
+            } else {
+                allButton -= 1;
+            }
         }
     }
 
     public void onButtonClickAddGeofence(View v) {
         if (bound) {
             unlockService.addGeofence();
+            if (!geofencAdded) {
+                registerGeofence.setEnabled(true);
+            }
         }
     }
 
     public void onButtonClickRegisterGeofence(View v) {
         if (bound) {
             unlockService.registerGeofences();
+            registerGeofence.setEnabled(false);
+            unregisterGeofence.setEnabled(true);
         }
     }
 
     public void onButtonClickUnregisterGeofence(View v) {
         if (bound) {
             unlockService.unregisterGeofences();
+            registerGeofence.setEnabled(true);
+            unregisterGeofence.setEnabled(false);
         }
     }
 

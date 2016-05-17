@@ -52,7 +52,7 @@ public class UnlockServiceLooper implements Runnable {
 
             Log.v("dataBuffer", UnlockService.dataBuffer.toString());
             try {
-                Thread.sleep(500);
+                Thread.sleep(2000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

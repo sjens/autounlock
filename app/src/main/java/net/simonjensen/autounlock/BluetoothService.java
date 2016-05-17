@@ -65,6 +65,10 @@ public class BluetoothService extends Service {
     @Override
     public void onCreate() {
         // The service is being created
+        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, "BluetoothService");
+        wakeLock.acquire();
+
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
 
@@ -90,10 +94,6 @@ public class BluetoothService extends Service {
                 .build();
 
         bluetoothAdapter.getBluetoothLeScanner().startScan(null, scanSettings, scanCallback);
-
-        powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, "BluetoothService");
-        wakeLock.acquire();
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
