@@ -43,6 +43,9 @@ public class WifiService extends Service {
                     UnlockService.dataStore.insertWifi(SSID, MAC, RSSI, time);
                 }
             }
+
+            // We force the device to scan for wifi when we have finished the previous scan.
+            wifiManager.startScan();
         }
     };
 
