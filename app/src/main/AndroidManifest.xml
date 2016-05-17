@@ -46,6 +46,7 @@
         <service
                 android:name=".GeofenceService"
                 android:enabled="true"/>
+
     </application>
 
 </manifest>

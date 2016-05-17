@@ -16,8 +16,11 @@ public class UnlockServiceLooper implements Runnable {
         List<AccelerometerData> prevRecordedAccelerometer = new ArrayList<AccelerometerData>();
 
         while (running) {
-            Log.v("klj", "threading");
-            Log.v("recordedWifi", prevRecordedWifi.toString());
+            for (int i = 0; i < UnlockService.recordedBluetooth.size(); i++) {
+                if (UnlockService.recordedBluetooth.get(i).getSource().equals(BluetoothService.RASMUS_BEKEY)) {
+                    Log.e("Start Decision", "BeKey found");
+                }
+            }
 
             // In order to not have empty lists in the DataBuffer, previous data will be used if no new data has been found.
             if (!UnlockService.recordedBluetooth.isEmpty() || prevRecordedBluetooth.isEmpty()) {
@@ -47,15 +50,9 @@ public class UnlockServiceLooper implements Runnable {
             dataBlob.add(prevRecordedAccelerometer);
             UnlockService.dataBuffer.add(dataBlob);
 
-            for (int i = 0; i < UnlockService.recordedBluetooth.size(); i++) {
-                if (UnlockService.recordedBluetooth.get(i).getName().equals(BluetoothService.SIMON_BEKEY)) {
-                    Log.v("Start Decision", "BeKey found");
-                }
-            }
-
             Log.v("dataBuffer", UnlockService.dataBuffer.toString());
             try {
-                Thread.sleep(2000);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

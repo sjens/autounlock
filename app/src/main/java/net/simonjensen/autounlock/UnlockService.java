@@ -202,6 +202,10 @@ public class UnlockService extends Service {
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
     }
 
+    public void notifyDecision() {
+
+    }
+
     public void startDataBufferCollection() {
         dataBuffer = new DataBuffer<List>(1000);
         unlockServiceLooper = new UnlockServiceLooper();
@@ -229,6 +233,6 @@ public class UnlockService extends Service {
     }
 
     public void newDatastore() {
-        dataStore.newDatastore();
+        dataStore.deleteDatastore();
     }
 }

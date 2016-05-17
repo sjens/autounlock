@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AccelerometerService extends Service implements SensorEventListener {
+    static String TAG = "AccelerometerService";
+
     int startMode;       // indicates how to behave if the service is killed
     IBinder binder;      // interface for clients that bind
     boolean allowRebind; // indicates whether onRebind should be used
@@ -55,10 +57,17 @@ public class AccelerometerService extends Service implements SensorEventListener
 
             currentDegree = -azimuthInDegrees;
 
-            if (i >= 20) {
-                Log.v("ON SENSOR CHANGED: ", String.valueOf((float)(Math.toDegrees(orientation[0])+360)%360) + " "
-                        + String.valueOf((float)(Math.toDegrees(orientation[1])+360)%360) + " "
-                        + String.valueOf((float)(Math.toDegrees(orientation[2])+360)%360));
+            float movementVector[] = new float[3];
+
+            movementVector[0]=rotation[0]*previousAccelerometer[0]+rotation[1]*previousAccelerometer[1]+rotation[2]*previousAccelerometer[2];
+            movementVector[1]=rotation[3]*previousAccelerometer[0]+rotation[4]*previousAccelerometer[1]+rotation[5]*previousAccelerometer[2];
+            movementVector[2]=rotation[6]*previousAccelerometer[0]+rotation[7]*previousAccelerometer[1]+rotation[8]*previousAccelerometer[2];
+
+            if (i >= 30) {
+                Log.v(TAG, "resultX " + movementVector[0] + " resultY " + movementVector[1] + " resultZ " + movementVector[2]);
+                //Log.v("ON SENSOR CHANGED: ", String.valueOf((float)(Math.toDegrees(orientation[0])+360)%360) + " "
+                //        + String.valueOf((float)(Math.toDegrees(orientation[1])+360)%360) + " "
+                //        + String.valueOf((float)(Math.toDegrees(orientation[2])+360)%360));
                 i = 0;
             }
 

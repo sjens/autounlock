@@ -48,7 +48,7 @@ public class DataStore {
         database.close();
     }
 
-    public void newDatastore() {
+    public void deleteDatastore() {
         database = databaseHelper.getWritableDatabase();
         database.delete(BLUETOOTH_TABLE, null, null);
         database.delete(WIFI_TABLE, null, null);

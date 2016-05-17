@@ -24,20 +24,18 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
-public class Geofence implements
+class Geofence implements
         GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status> {
 
     static String TAG = "Geofence";
 
-    public ArrayList<com.google.android.gms.location.Geofence> geofenceArrayList;
+    private ArrayList<com.google.android.gms.location.Geofence> geofenceArrayList;
 
-    LocationManager locationManager;
+    private LocationManager locationManager;
+    private GoogleApiClient googleApiClient;
+    PendingIntent pendingIntent;
 
-    GoogleApiClient googleApiClient;
-
-    public PendingIntent pendingIntent;
-
-    public Geofence(Context context) {
+    Geofence(Context context) {
         geofenceArrayList = new ArrayList<com.google.android.gms.location.Geofence>();
 
         googleApiClient = new GoogleApiClient.Builder(context)
