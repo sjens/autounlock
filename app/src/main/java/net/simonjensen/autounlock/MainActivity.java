@@ -31,26 +31,26 @@ public class MainActivity extends AppCompatActivity {
 
     DataStore dataStore;
 
-    Button startAccelerometer;
-    Button stopAccelerometer;
+    static Button startAccelerometer;
+    static Button stopAccelerometer;
 
-    Button startLocation;
-    Button stopLocation;
+    static Button startLocation;
+    static Button stopLocation;
 
-    Button startWifi;
-    Button stopWifi;
+    static Button startWifi;
+    static Button stopWifi;
 
-    Button startBluetooth;
-    Button stopBluetooth;
+    static Button startBluetooth;
+    static Button stopBluetooth;
 
-    Button startAll;
-    Button stopAll;
+    static Button startAll;
+    static Button stopAll;
 
-    Button startBuffer;
-    Button stopBuffer;
+    static Button startBuffer;
+    static Button stopBuffer;
 
-    Button registerGeofence;
-    Button unregisterGeofence;
+    static Button registerGeofence;
+    static Button unregisterGeofence;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
