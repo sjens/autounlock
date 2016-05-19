@@ -88,7 +88,7 @@ public class BluetoothService extends Service {
         scanSettings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-                .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                //.setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
                 .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
                 .setReportDelay(0)
                 .build();
