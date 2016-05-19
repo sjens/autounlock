@@ -85,12 +85,9 @@ public class AccelerometerService extends Service implements SensorEventListener
                 + rotation[8] * previousLinearAcceleration[2];
 
         for (int i = 0; i < movementVector.length; i++) {
-            // Low pass filter in attempt to remove noise from sensors.
-            if (movementVector[i] < 0.1) {
+            // High-pass filter in attempt to remove noise from sensors.
+            if (movementVector[i] < 0.15) {
                 movementVector[i] = (float) 0;
-                // Remember direction of movement from linear acceleration.
-            } else if (previousLinearAcceleration[i] < 0) {
-                movementVector[i] = movementVector[i] * (float) -1;
             }
         }
 

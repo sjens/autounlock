@@ -37,6 +37,9 @@ public class DataStore {
     static final String LOCATION_LONGITUDE = "longitude";
     static final String LOCATION_ACCURACY = "accuracy";
 
+    static final String BUFFER_TABLE = "buffer";
+    static final String DATA = "data";
+
     private SQLiteDatabase database;
     private DatabaseHelper databaseHelper;
 
@@ -54,6 +57,7 @@ public class DataStore {
         database.delete(WIFI_TABLE, null, null);
         database.delete(ACCELEROMETER_TABLE, null, null);
         database.delete(LOCATION_TABLE, null, null);
+        database.delete(BUFFER_TABLE, null, null);
         database.close();
     }
 
@@ -104,6 +108,15 @@ public class DataStore {
         contentValues.put(TIMESTAMP, timestamp);
         database = databaseHelper.getWritableDatabase();
         database.replace(LOCATION_TABLE, null, contentValues);
+        database.close();
+    }
+
+    public void insertBuffer(long timestamp, String data) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(TIMESTAMP, timestamp);
+        contentValues.put(DATA, data);
+        database = databaseHelper.getWritableDatabase();
+        database.replace(BUFFER_TABLE, null, contentValues);
         database.close();
     }
 
@@ -165,6 +178,10 @@ public class DataStore {
                     + LOCATION_LONGITUDE + " FLOAT, "
                     + LOCATION_ACCURACY + " FLOAT, "
                     + TIMESTAMP + " LONG)");
+
+            database.execSQL("CREATE TABLE " + BUFFER_TABLE + " ("
+                    + TIMESTAMP + " LONG PRIMARY KEY, "
+                    + DATA + " TEXT)");
         }
 
         private void dropDatastore() {
@@ -172,6 +189,7 @@ public class DataStore {
             database.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE);
             database.execSQL("DROP TABLE IF EXISTS " + ACCELEROMETER_TABLE);
             database.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
+            database.execSQL("DROP TABLE IF EXISTS " + BUFFER_TABLE);
         }
     }
 }

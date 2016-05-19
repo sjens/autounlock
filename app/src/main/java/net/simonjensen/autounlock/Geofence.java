@@ -58,7 +58,7 @@ class Geofence implements
         Log.v("Populate geofence list", "Name: " + name + " Location: " + location);
 
         // Calculate hours to milliseconds
-        int expireInHours = 12;
+        int expireInHours = 720;
         long expireInMilliseconds = expireInHours * 60 * 60 * 1000;
 
         geofenceArrayList.add(new com.google.android.gms.location.Geofence.Builder()

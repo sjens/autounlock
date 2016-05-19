@@ -10,10 +10,10 @@ public class UnlockServiceLooper implements Runnable {
 
     @Override
     public void run() {
-        List<BluetoothData> prevRecordedBluetooth = new ArrayList<BluetoothData>();
-        List<WifiData> prevRecordedWifi = new ArrayList<WifiData>();
-        List<LocationData> prevRecordedLocation = new ArrayList<LocationData>();
         List<AccelerometerData> prevRecordedAccelerometer = new ArrayList<AccelerometerData>();
+        List<BluetoothData> prevRecordedBluetooth = new ArrayList<BluetoothData>();
+        List<LocationData> prevRecordedLocation = new ArrayList<LocationData>();
+        List<WifiData> prevRecordedWifi = new ArrayList<WifiData>();
 
         while (running) {
             for (int i = 0; i < UnlockService.recordedBluetooth.size(); i++) {
@@ -23,14 +23,14 @@ public class UnlockServiceLooper implements Runnable {
             }
 
             // In order to not have empty lists in the DataBuffer, previous data will be used if no new data has been found.
+            if (!UnlockService.recordedAccelerometer.isEmpty() || prevRecordedAccelerometer.isEmpty()) {
+                prevRecordedAccelerometer = UnlockService.recordedAccelerometer;
+                UnlockService.recordedAccelerometer = new ArrayList<AccelerometerData>();
+            }
+
             if (!UnlockService.recordedBluetooth.isEmpty() || prevRecordedBluetooth.isEmpty()) {
                 prevRecordedBluetooth = UnlockService.recordedBluetooth;
                 UnlockService.recordedBluetooth = new ArrayList<BluetoothData>();
-            }
-
-            if (!UnlockService.recordedWifi.isEmpty() || prevRecordedWifi.isEmpty()) {
-                prevRecordedWifi = UnlockService.recordedWifi;
-                UnlockService.recordedWifi = new ArrayList<WifiData>();
             }
 
             if (!UnlockService.recordedLocation.isEmpty() || prevRecordedLocation.isEmpty()) {
@@ -38,19 +38,41 @@ public class UnlockServiceLooper implements Runnable {
                 UnlockService.recordedLocation = new ArrayList<LocationData>();
             }
 
-            if (!UnlockService.recordedAccelerometer.isEmpty() || prevRecordedAccelerometer.isEmpty()) {
-                prevRecordedAccelerometer = UnlockService.recordedAccelerometer;
-                UnlockService.recordedAccelerometer = new ArrayList<AccelerometerData>();
+            if (!UnlockService.recordedWifi.isEmpty() || prevRecordedWifi.isEmpty()) {
+                prevRecordedWifi = UnlockService.recordedWifi;
+                UnlockService.recordedWifi = new ArrayList<WifiData>();
             }
 
             List<List> dataBlob = new ArrayList<List>();
-            dataBlob.add(prevRecordedBluetooth);
-            dataBlob.add(prevRecordedWifi);
-            dataBlob.add(prevRecordedLocation);
             dataBlob.add(prevRecordedAccelerometer);
+            dataBlob.add(prevRecordedBluetooth);
+            dataBlob.add(prevRecordedLocation);
+            dataBlob.add(prevRecordedWifi);
+
             UnlockService.dataBuffer.add(dataBlob);
 
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < prevRecordedAccelerometer.size(); i++) {
+                stringBuilder.append(prevRecordedAccelerometer.get(i).toString());
+            }
+
+            for (int i = 0; i < prevRecordedBluetooth.size(); i++) {
+                stringBuilder.append(prevRecordedBluetooth.get(i).toString());
+            }
+
+            for (int i = 0; i < prevRecordedLocation.size(); i++) {
+                stringBuilder.append(prevRecordedLocation.get(i).toString());
+            }
+
+            for (int i = 0; i < prevRecordedWifi.size(); i++) {
+                stringBuilder.append(prevRecordedWifi.get(i).toString());
+            }
+
+            UnlockService.dataStore.insertBuffer(System.currentTimeMillis(), stringBuilder.toString());
+
             Log.v("dataBuffer", UnlockService.dataBuffer.toString());
+
+            Log.v("StringOUT", stringBuilder.toString());
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
