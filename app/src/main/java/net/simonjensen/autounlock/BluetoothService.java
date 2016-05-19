@@ -61,6 +61,24 @@ public class BluetoothService extends Service {
         }
     };
 
+    private void setScanSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            scanSettings = new ScanSettings.Builder()
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    // The following require Marshmallow.
+                    .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+                    .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+                    .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
+                    .setReportDelay(0)
+                    .build();
+        } else {
+            scanSettings = new ScanSettings.Builder()
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    .setReportDelay(0)
+                    .build();
+        }
+    }
+
     @TargetApi(Build.VERSION_CODES.M)
     @Override
     public void onCreate() {
@@ -85,36 +103,35 @@ public class BluetoothService extends Service {
             }
         }
 
-        scanSettings = new ScanSettings.Builder()
-                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-                .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-                //.setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
-                .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
-                .setReportDelay(0)
-                .build();
+        setScanSettings();
 
         bluetoothAdapter.getBluetoothLeScanner().startScan(null, scanSettings, scanCallback);
     }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // The service is starting, due to a call to startService()
         return startMode;
     }
+
     @Override
     public IBinder onBind(Intent intent) {
         // A client is binding to the service with bindService()
         return binder;
     }
+
     @Override
     public boolean onUnbind(Intent intent) {
         // All clients have unbound with unbindService()
         return allowRebind;
     }
+
     @Override
     public void onRebind(Intent intent) {
         // A client is binding to the service with bindService(),
         // after onUnbind() has already been called
     }
+
     @Override
     public void onDestroy() {
         // The service is no longer used and is being destroyed
