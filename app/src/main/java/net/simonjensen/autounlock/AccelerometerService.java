@@ -11,9 +11,6 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class AccelerometerService extends Service implements SensorEventListener {
     static String TAG = "AccelerometerService";
 
@@ -22,107 +19,105 @@ public class AccelerometerService extends Service implements SensorEventListener
     boolean allowRebind; // indicates whether onRebind should be used
 
     SensorManager sensorManager;
-    private Sensor accelerometer;
-    private Sensor magnetometer;
+    private Sensor rotationVector;
     private Sensor linearAcceleration;
 
     PowerManager powerManager;
     PowerManager.WakeLock wakeLock;
 
-    private float[] previousAccelerometer = new float[3];
-    private float[] previousMagnetometer = new float[3];
+    private float[] previousRotationVector = new float[5];
     private float[] previousLinearAcceleration = new float[3];
-    private boolean previousAccelerometerSet = false;
-    private boolean previousMagnetometerSet = false;
+    private boolean previousRotationVectorSet = false;
     private boolean previousLinearAccelerationSet = false;
-    private float[] rotation = new float[9];
-    private float[] orientation = new float[3];
-    private float currentDegree = 0f;
+    private float[] rotationMatrix = new float[9];
+    private float[] result = new float[9];
+    private float[] speed =new float[3];
 
     int i = 0;
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor == accelerometer) {
-            System.arraycopy(event.values, 0, previousAccelerometer, 0, event.values.length);
-            previousAccelerometerSet = true;
-        } else if (event.sensor == magnetometer) {
-            System.arraycopy(event.values, 0, previousMagnetometer, 0, event.values.length);
-            previousMagnetometerSet = true;
+        if (event.sensor == rotationVector) {
+            System.arraycopy(event.values, 0, previousRotationVector, 0, event.values.length);
+            previousRotationVectorSet = true;
         } else if (event.sensor == linearAcceleration) {
             System.arraycopy(event.values, 0, previousLinearAcceleration, 0, event.values.length);
             previousLinearAccelerationSet = true;
         }
 
         // Only process data if all needed data is available.
-        if (previousAccelerometerSet && previousMagnetometerSet && previousLinearAccelerationSet) {
+        if (previousRotationVectorSet && previousLinearAccelerationSet) {
             processSensorData();
         }
     }
 
+    public void calculateAngles(float[] result, float[] rotationVector){
+        //caculate rotationMatrix matrix from rotationMatrix vector first
+        SensorManager.getRotationMatrixFromVector(rotationMatrix, rotationVector);
+
+        //calculate Euler angles now
+        SensorManager.getOrientation(rotationMatrix, result);
+
+        //The results are in radians, need to convert it to degrees
+        convertToDegrees(result);
+    }
+
+    private void convertToDegrees(float[] vector){
+        for (int i = 0; i < vector.length; i++){
+            vector[i] = Math.round(Math.toDegrees(vector[i]));
+        }
+    }
+
     private void processSensorData() {
-        SensorManager.getRotationMatrix(rotation, null, previousAccelerometer, previousMagnetometer);
-        SensorManager.getOrientation(rotation, orientation);
-        float azimuthInRadians = orientation[0];
-        float azimuthInDegrees = (float)(Math.toDegrees(azimuthInRadians)+360)%360;
+        //SensorManager.getRotationMatrix(rotationMatrix, null, previousLinearAcceleration, previousMagnetometer);
+
+        calculateAngles(result, previousLinearAcceleration);
+
+        //Log.v(TAG, result[0] + " " + result[1] + " " + result[2]);
 
         long time = System.currentTimeMillis();
 
-        currentDegree = -azimuthInDegrees;
-
         float movementVector[] = new float[3];
 
-        movementVector[0] = rotation[0] * previousLinearAcceleration[0]
-                + rotation[1] * previousLinearAcceleration[1]
-                + rotation[2] * previousLinearAcceleration[2];
+        movementVector[0] = rotationMatrix[0] * previousLinearAcceleration[0]
+                + rotationMatrix[1] * previousLinearAcceleration[1]
+                + rotationMatrix[2] * previousLinearAcceleration[2];
 
-        movementVector[1] = rotation[3] * previousLinearAcceleration[0]
-                + rotation[4] * previousLinearAcceleration[1]
-                + rotation[5] * previousLinearAcceleration[2];
+        movementVector[1] = rotationMatrix[3] * previousLinearAcceleration[0]
+                + rotationMatrix[4] * previousLinearAcceleration[1]
+                + rotationMatrix[5] * previousLinearAcceleration[2];
 
-        movementVector[2] = rotation[6] * previousLinearAcceleration[0]
-                + rotation[7] * previousLinearAcceleration[1]
-                + rotation[8] * previousLinearAcceleration[2];
+        movementVector[2] = rotationMatrix[6] * previousLinearAcceleration[0]
+                + rotationMatrix[7] * previousLinearAcceleration[1]
+                + rotationMatrix[8] * previousLinearAcceleration[2];
 
-        for (int i = 0; i < movementVector.length; i++) {
+/*        for (int i = 0; i < movementVector.length; i++) {
             // High-pass filter in attempt to remove noise from sensors.
             if (movementVector[i] < 0.15) {
                 movementVector[i] = (float) 0;
             }
-        }
+        }*/
 
-        if (i >= 30) {
-            //Log.v("ON SENSOR CHANGED: ", String.valueOf((float)(Math.toDegrees(orientation[0])+360)%360) + " "
-            //        + String.valueOf((float)(Math.toDegrees(orientation[1])+360)%360) + " "
-            //        + String.valueOf((float)(Math.toDegrees(orientation[2])+360)%360));
-            i = 0;
-        }
-
-        //Log.v(TAG, "NEW");
-        //Log.v(TAG, "accelerometer" + previousAccelerometer[0] + " " + previousAccelerometer[1] + " " + previousAccelerometer[2]);
-        //Log.v(TAG, rotation[0] + " " + rotation[1] + " " + rotation[2]);
-        //Log.v(TAG, rotation[3] + " " + rotation[4] + " " + rotation[5]);
-        //Log.v(TAG, rotation[6] + " " + rotation[7] + " " + rotation[8]);
-        Log.v(TAG, "resultX " + movementVector[0] + " resultY " + movementVector[1] + " resultZ " + movementVector[2]);
-        //Log.v(TAG, "linearAccelerationX " + previousLinearAcceleration[0] + " linearAccelerationY " + previousLinearAcceleration[1] + " linearAccelerationZ " + previousLinearAcceleration[2]);
-
-        float accelerometerX = previousAccelerometer[0];
-        float accelerometerY = previousAccelerometer[1];
-        float accelerometerZ = previousAccelerometer[2];
-        float rotationX = (float)(Math.toDegrees(orientation[0])+360)%360;
-        float rotationY = (float)(Math.toDegrees(orientation[1])+360)%360;
-        float rotationZ = (float)(Math.toDegrees(orientation[2])+360)%360;
+        float accelerationX = previousLinearAcceleration[0];
+        float accelerationY = previousLinearAcceleration[1];
+        float accelerationZ = previousLinearAcceleration[2];
+        speed[0] = speed[0] + previousLinearAcceleration[0];
+        speed[1] = speed[1] + previousLinearAcceleration[1];
+        speed[2] = speed[2] + previousLinearAcceleration[2];
 
         AccelerometerData anAccelerometerEvent = new AccelerometerData(
-                accelerometerX, accelerometerY, accelerometerZ,
-                rotationX, rotationY, rotationZ, time);
+                accelerationX, accelerationY, accelerationZ,
+                speed[0], speed[1], speed[2], time);
+
+        Log.e(TAG, "new observation");
+        Log.v(TAG, "LEFT/RIGHT: " + previousLinearAcceleration[0] + " UP/DOWN: " + previousLinearAcceleration[1] + " FORWARD/BACK: " + previousLinearAcceleration[2]);
+        Log.v(TAG, "SLR: " + speed[0] + " SUD: " + speed[1] + " SFB: " + speed[2]);
 
         UnlockService.recordedAccelerometer.add(anAccelerometerEvent);
 
         UnlockService.dataStore.insertAccelerometer(
-                accelerometerX, accelerometerY, accelerometerZ,
-                rotationX, rotationY, rotationZ, time);
-        i++;
+                accelerationX, accelerationY, accelerationZ,
+                speed[0], speed[1], speed[2], time);
     }
 
     @Override
@@ -138,11 +133,9 @@ public class AccelerometerService extends Service implements SensorEventListener
         wakeLock.acquire();
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        rotationVector = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         linearAcceleration = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        sensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, rotationVector, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, linearAcceleration, SensorManager.SENSOR_DELAY_NORMAL);
     }
     @Override
@@ -169,8 +162,7 @@ public class AccelerometerService extends Service implements SensorEventListener
     public void onDestroy() {
         // The service is no longer used and is being destroyed
         Log.v("AccelerometerService", "Stopping");
-        sensorManager.unregisterListener(this, accelerometer);
-        sensorManager.unregisterListener(this, magnetometer);
+        sensorManager.unregisterListener(this, rotationVector);
         sensorManager.unregisterListener(this, linearAcceleration);
         wakeLock.release();
     }

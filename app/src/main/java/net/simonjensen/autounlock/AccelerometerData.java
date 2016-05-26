@@ -1,71 +1,71 @@
 package net.simonjensen.autounlock;
 
 public class AccelerometerData {
-    float accelerometerX;
-    float accelerometerY;
-    float accelerometerZ;
-    float rotationX;
-    float rotationY;
-    float rotationZ;
+    float accelerationX;
+    float accelerationY;
+    float accelerationZ;
+    float speedX;
+    float speedY;
+    float speedZ;
     long time;
 
-    public AccelerometerData(float accelerometerX, float accelerometerY, float accelerometerZ,
-                             float rotationX, float rotationY, float rotationZ, long time) {
-        this.accelerometerX = accelerometerX;
-        this.accelerometerY = accelerometerY;
-        this.accelerometerZ = accelerometerZ;
-        this.rotationX = rotationX;
-        this.rotationY = rotationY;
-        this.rotationZ = rotationZ;
+    public AccelerometerData(float accelerationX, float accelerationY, float accelerationZ,
+                             float speedX, float speedY, float speedZ, long time) {
+        this.accelerationX = accelerationX;
+        this.accelerationY = accelerationY;
+        this.accelerationZ = accelerationZ;
+        this.speedX = speedX;
+        this.speedY = speedY;
+        this.speedZ = speedZ;
         this.time = time;
     }
 
-    public float getAccelerometerX() {
-        return accelerometerX;
+    public float getAccelerationX() {
+        return accelerationX;
     }
 
-    public void setAccelerometerX(float accelerometerX) {
-        this.accelerometerX = accelerometerX;
+    public void setAccelerationX(float accelerationX) {
+        this.accelerationX = accelerationX;
     }
 
-    public float getAccelerometerY() {
-        return accelerometerY;
+    public float getAccelerationY() {
+        return accelerationY;
     }
 
-    public void setAccelerometerY(float accelerometerY) {
-        this.accelerometerY = accelerometerY;
+    public void setAccelerationY(float accelerationY) {
+        this.accelerationY = accelerationY;
     }
 
-    public float getAccelerometerZ() {
-        return accelerometerZ;
+    public float getAccelerationZ() {
+        return accelerationZ;
     }
 
-    public void setAccelerometerZ(float accelerometerZ) {
-        this.accelerometerZ = accelerometerZ;
+    public void setAccelerationZ(float accelerationZ) {
+        this.accelerationZ = accelerationZ;
     }
 
-    public float getRotationX() {
-        return rotationX;
+    public float getSpeedX() {
+        return speedX;
     }
 
-    public void setRotationX(float rotationX) {
-        this.rotationX = rotationX;
+    public void setSpeedX(float speedX) {
+        this.speedX = speedX;
     }
 
-    public float getRotationY() {
-        return rotationY;
+    public float getSpeedY() {
+        return speedY;
     }
 
-    public void setRotationY(float rotationY) {
-        this.rotationY = rotationY;
+    public void setSpeedY(float speedY) {
+        this.speedY = speedY;
     }
 
-    public float getRotationZ() {
-        return rotationZ;
+    public float getSpeedZ() {
+        return speedZ;
     }
 
-    public void setRotationZ(float rotationZ) {
-        this.rotationZ = rotationZ;
+    public void setSpeedZ(float speedZ) {
+        this.speedZ = speedZ;
     }
 
     public long getTime() {
@@ -79,12 +79,12 @@ public class AccelerometerData {
     @Override
     public String toString() {
         return "AccelerometerData{" +
-                "accelerometerX=" + accelerometerX +
-                ", accelerometerY=" + accelerometerY +
-                ", accelerometerZ=" + accelerometerZ +
-                ", rotationX=" + rotationX +
-                ", rotationY=" + rotationY +
-                ", rotationZ=" + rotationZ +
+                "accelerationX=" + accelerationX +
+                ", accelerationY=" + accelerationY +
+                ", accelerationZ=" + accelerationZ +
+                ", speedX=" + speedX +
+                ", speedY=" + speedY +
+                ", speedZ=" + speedZ +
                 ", time=" + time +
                 '}';
     }

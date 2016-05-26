@@ -14,6 +14,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
@@ -92,7 +93,7 @@ class Geofence implements
                 "You need to use ACCESS_FINE_LOCATION with geofenceArrayList", securityException);
     }
 
-    public void addGeofence(Context context) {
+    public void addGeofence(final Context context) {
         // Necessary permission check
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED
@@ -110,6 +111,7 @@ class Geofence implements
                 LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
                 // Name should be BeKey MAC address
                 populateGeofenceList("test", currentLocation, 50f);
+                Toast.makeText(context, "Location added", Toast.LENGTH_SHORT).show();
             }
 
             @Override

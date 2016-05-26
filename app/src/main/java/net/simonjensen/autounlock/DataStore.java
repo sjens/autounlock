@@ -24,12 +24,12 @@ public class DataStore {
     static final String WIFI_RSSI = "RSSI";
 
     static final String ACCELEROMETER_TABLE = "accelerometer";
-    static final String ACCELEROMETER_X = "accelerometer_x";
-    static final String ACCELEROMETER_Y = "accelerometer_y";
-    static final String ACCELEROMETER_Z = "accelerometer_z";
-    static final String ROTATION_X = "rotation_x";
-    static final String ROTATION_Y = "rotation_y";
-    static final String ROTATION_Z = "rotation_z";
+    static final String ACCELERATION_X = "acceleration_x";
+    static final String ACCELERATION_Y = "acceleration_y";
+    static final String ACCELERATION_Z = "acceleration_z";
+    static final String SPEED_X = "speed_x";
+    static final String SPEED_Y = "speed_y";
+    static final String SPEED_Z = "speed_z";
 
     static final String LOCATION_TABLE = "location";
     static final String LOCATION_PROVIDER = "provider";
@@ -97,14 +97,14 @@ public class DataStore {
     }
 
     public void insertAccelerometer(float accelerometerX, float accelerometerY, float accelerometerZ,
-                                    float rotationX, float rotationY, float rotationZ, long timestamp) {
+                                    float speedX, float speedY, float speedZ, long timestamp) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(ACCELEROMETER_X, accelerometerX);
-        contentValues.put(ACCELEROMETER_Y, accelerometerY);
-        contentValues.put(ACCELEROMETER_Z, accelerometerZ);
-        contentValues.put(ROTATION_X, rotationX);
-        contentValues.put(ROTATION_Y, rotationY);
-        contentValues.put(ROTATION_Z, rotationZ);
+        contentValues.put(ACCELERATION_X, accelerometerX);
+        contentValues.put(ACCELERATION_Y, accelerometerY);
+        contentValues.put(ACCELERATION_Z, accelerometerZ);
+        contentValues.put(SPEED_X, speedX);
+        contentValues.put(SPEED_Y, speedY);
+        contentValues.put(SPEED_Z, speedZ);
         contentValues.put(TIMESTAMP, timestamp);
 
         try {
@@ -193,12 +193,12 @@ public class DataStore {
 
             database.execSQL("CREATE TABLE " + ACCELEROMETER_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + ACCELEROMETER_X + " FLOAT, "
-                    + ACCELEROMETER_Y + " FLOAT, "
-                    + ACCELEROMETER_Z + " FLOAT, "
-                    + ROTATION_X + " FLOAT, "
-                    + ROTATION_Y + " FLOAT, "
-                    + ROTATION_Z + " TEXT, "
+                    + ACCELERATION_X + " FLOAT, "
+                    + ACCELERATION_Y + " FLOAT, "
+                    + ACCELERATION_Z + " FLOAT, "
+                    + SPEED_X + " FLOAT, "
+                    + SPEED_Y + " FLOAT, "
+                    + SPEED_Z + " FLOAT, "
                     + TIMESTAMP + " LONG)");
 
             database.execSQL("CREATE TABLE " + LOCATION_TABLE + " ("
