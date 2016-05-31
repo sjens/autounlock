@@ -19,84 +19,68 @@ public class AccelerometerService extends Service implements SensorEventListener
     boolean allowRebind; // indicates whether onRebind should be used
 
     SensorManager sensorManager;
-    private Sensor rotationVector;
+    private Sensor gravity;
+    private Sensor magneticField;
     private Sensor linearAcceleration;
 
     PowerManager powerManager;
     PowerManager.WakeLock wakeLock;
 
-    private float[] previousRotationVector = new float[5];
-    private float[] previousLinearAcceleration = new float[3];
-    private boolean previousRotationVectorSet = false;
+    private float[] previousGravity = new float[3];
+    private float[] previousMagneticField = new float[3];
+    private float[] previousLinearAcceleration = new float[4];
+    private boolean previousGravitySet = false;
+    private boolean previousMagneticFieldSet = false;
     private boolean previousLinearAccelerationSet = false;
-    private float[] rotationMatrix = new float[9];
-    private float[] result = new float[9];
+    
+    private float[] rotationMatrixInverted = new float[16];
+    private float[] rotationMatrix = new float[16];
     private float[] speed =new float[3];
 
     int i = 0;
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor == rotationVector) {
-            System.arraycopy(event.values, 0, previousRotationVector, 0, event.values.length);
-            previousRotationVectorSet = true;
+        if (event.sensor == gravity) {
+            System.arraycopy(event.values, 0, previousGravity, 0, event.values.length);
+            previousGravitySet = true;
+        } else if (event.sensor == magneticField) {
+            System.arraycopy(event.values, 0, previousMagneticField, 0, event.values.length);
+            previousMagneticFieldSet = true;
         } else if (event.sensor == linearAcceleration) {
             System.arraycopy(event.values, 0, previousLinearAcceleration, 0, event.values.length);
             previousLinearAccelerationSet = true;
         }
 
         // Only process data if all needed data is available.
-        if (previousRotationVectorSet && previousLinearAccelerationSet) {
-            processSensorData();
+        if (previousGravitySet && previousMagneticFieldSet && previousLinearAccelerationSet) {
+            rotateCoordinates();
         }
     }
 
-    public void calculateAngles(float[] result, float[] rotationVector){
-        //caculate rotationMatrix matrix from rotationMatrix vector first
-        SensorManager.getRotationMatrixFromVector(rotationMatrix, rotationVector);
+    private void rotateCoordinates() {
+        // Get the rotation matrix based on gravity and magnetic field.
+        SensorManager.getRotationMatrix(rotationMatrix, null, previousGravity, previousMagneticField);
 
-        //calculate Euler angles now
-        SensorManager.getOrientation(rotationMatrix, result);
+        // Invert the rotation matrix.
+        android.opengl.Matrix.invertM(rotationMatrixInverted, 0, rotationMatrix, 0);
 
-        //The results are in radians, need to convert it to degrees
-        convertToDegrees(result);
-    }
+        // Multiply the linear acceleration onto the inverted rotation matrix to get linear acceleration in
+        // earth coordinates.
+        android.opengl.Matrix.multiplyMV(previousLinearAcceleration, 0, rotationMatrixInverted, 0, previousLinearAcceleration, 0);
 
-    private void convertToDegrees(float[] vector){
-        for (int i = 0; i < vector.length; i++){
-            vector[i] = Math.round(Math.toDegrees(vector[i]));
+        //Attempt to filter noise when there is no movement.
+        for (int i = 0; i < previousLinearAcceleration.length; i++) {
+            if (previousLinearAcceleration[i] < 0.5 && previousLinearAcceleration[i] > -0.5) {
+                previousLinearAcceleration[i] = 0f;
+            }
         }
+
+        processSensorData();
     }
 
     private void processSensorData() {
-        //SensorManager.getRotationMatrix(rotationMatrix, null, previousLinearAcceleration, previousMagnetometer);
-
-        calculateAngles(result, previousLinearAcceleration);
-
-        //Log.v(TAG, result[0] + " " + result[1] + " " + result[2]);
-
         long time = System.currentTimeMillis();
-
-        float movementVector[] = new float[3];
-
-        movementVector[0] = rotationMatrix[0] * previousLinearAcceleration[0]
-                + rotationMatrix[1] * previousLinearAcceleration[1]
-                + rotationMatrix[2] * previousLinearAcceleration[2];
-
-        movementVector[1] = rotationMatrix[3] * previousLinearAcceleration[0]
-                + rotationMatrix[4] * previousLinearAcceleration[1]
-                + rotationMatrix[5] * previousLinearAcceleration[2];
-
-        movementVector[2] = rotationMatrix[6] * previousLinearAcceleration[0]
-                + rotationMatrix[7] * previousLinearAcceleration[1]
-                + rotationMatrix[8] * previousLinearAcceleration[2];
-
-/*        for (int i = 0; i < movementVector.length; i++) {
-            // High-pass filter in attempt to remove noise from sensors.
-            if (movementVector[i] < 0.15) {
-                movementVector[i] = (float) 0;
-            }
-        }*/
 
         float accelerationX = previousLinearAcceleration[0];
         float accelerationY = previousLinearAcceleration[1];
@@ -110,8 +94,8 @@ public class AccelerometerService extends Service implements SensorEventListener
                 speed[0], speed[1], speed[2], time);
 
         Log.e(TAG, "new observation");
-        Log.v(TAG, "LEFT/RIGHT: " + previousLinearAcceleration[0] + " UP/DOWN: " + previousLinearAcceleration[1] + " FORWARD/BACK: " + previousLinearAcceleration[2]);
-        Log.v(TAG, "SLR: " + speed[0] + " SUD: " + speed[1] + " SFB: " + speed[2]);
+        Log.v(TAG, "EAST/WEST: " + previousLinearAcceleration[0] + " NORTH/SOUTH: " + previousLinearAcceleration[1] + " UP/DOWN: " + previousLinearAcceleration[2]);
+        Log.v(TAG, "SEW: " + speed[0] + " SNS: " + speed[1] + " SUD: " + speed[2]);
 
         UnlockService.recordedAccelerometer.add(anAccelerometerEvent);
 
@@ -133,9 +117,11 @@ public class AccelerometerService extends Service implements SensorEventListener
         wakeLock.acquire();
 
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        rotationVector = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        gravity = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+        magneticField = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         linearAcceleration = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
-        sensorManager.registerListener(this, rotationVector, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, gravity, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, magneticField, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, linearAcceleration, SensorManager.SENSOR_DELAY_NORMAL);
     }
     @Override
@@ -162,7 +148,8 @@ public class AccelerometerService extends Service implements SensorEventListener
     public void onDestroy() {
         // The service is no longer used and is being destroyed
         Log.v("AccelerometerService", "Stopping");
-        sensorManager.unregisterListener(this, rotationVector);
+        sensorManager.unregisterListener(this, gravity);
+        sensorManager.unregisterListener(this, magneticField);
         sensorManager.unregisterListener(this, linearAcceleration);
         wakeLock.release();
     }
