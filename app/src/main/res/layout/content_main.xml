@@ -5,20 +5,117 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin"
-        android:paddingBottom="@dimen/activity_vertical_margin"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:showIn="@layout/activity_main"
         tools:context="net.simonjensen.autounlock.MainActivity">
 
+    <RelativeLayout
+            android:id="@+id/feedbackControlsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/trainBackground"
+            android:padding="0dp"
+            android:visibility="gone" >
+        <RelativeLayout
+                android:id="@+id/feedbackControlsInfoContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/trainBackground"
+                android:padding="5dp"
+        >
+            <TextView
+                    android:id="@+id/btleMacHeaderTxt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Connected to"
+                    android:textSize="16dp"
+            />
+            <TextView
+                    android:id="@+id/btleRssiHeaderTxt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Signal Strength (RSSI)"
+                    android:textSize="16dp"
+                    android:layout_alignParentEnd="true"
+            />
+            <TextView
+                    android:id="@+id/btleMacValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="::1"
+                    android:textSize="24dp"
+                    android:layout_below="@+id/btleMacHeaderTxt"
+            />
+            <TextView
+                    android:id="@+id/btleRssiValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-90 db"
+                    android:textSize="24dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_below="@+id/btleMacHeaderTxt"
+            />
+        </RelativeLayout>
+        <Button
+                android:id="@+id/trueposbtn"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="True Positive"
+                android:onClick="onButtonClickTruePositive"
+                android:drawableLeft="@android:drawable/ic_menu_add"
+                android:layout_marginLeft="10dp"
+                android:layout_marginBottom="10dp"
+                android:padding="5dp"
+                android:background="@color/trainSuccess"
+                android:layout_below="@+id/feedbackControlsInfoContainer"
+        />
+        <Button
+                android:id="@+id/falseposbtn"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="False Positive"
+                android:onClick="onButtonClickFalsePositive"
+                android:layout_alignParentEnd="true"
+                android:drawableLeft="@android:drawable/ic_menu_delete"
+                android:layout_marginRight="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="@color/trainWarning"
+                android:layout_below="@+id/feedbackControlsInfoContainer"
+        />
+        <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:background="@color/trainBackgroundShadow"
+                android:layout_below="@+id/trueposbtn">
+        </View>
+    </RelativeLayout>
+<ScrollView
+        android:id="@+id/controlsContainerScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/feedbackControlsContainer"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+    >
+    <RelativeLayout
+            android:id="@+id/controlsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="2dp"
+    >
     <Button
             android:id="@+id/accstart"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:text="Start Acceleration Service"
-            android:onClick="onButtonClickAccel" />
+            android:onClick="onButtonClickAccel"
+            android:layout_alignStart="@+id/viewsContainer"
+    />
 
     <Button
             android:id="@+id/accstop"
@@ -158,4 +255,8 @@
             android:onClick="onButtonClickNewDB"
             android:layout_below="@+id/unregistergeofence"
             android:layout_alignEnd="@+id/databufferstop"/>
+
+
+    </RelativeLayout>
+</ScrollView>
 </RelativeLayout>

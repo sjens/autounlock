@@ -58,6 +58,11 @@ public class BluetoothService extends Service {
             UnlockService.recordedBluetooth.add(aBluetoothDevice);
 
             UnlockService.dataStore.insertBtle(name, source, RSSI, time);
+
+            Intent i = new Intent("BTLE_CONN");
+            i.putExtra("mac", source);
+            i.putExtra("rssi", RSSI);
+            sendBroadcast(i);
         }
     };
 

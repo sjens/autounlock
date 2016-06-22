@@ -37,6 +37,9 @@ public class DataStore {
     static final String LOCATION_LONGITUDE = "longitude";
     static final String LOCATION_ACCURACY = "accuracy";
 
+    static final String DECISION_TABLE = "decision";
+    static final String DECISION_DECISION = "decision";
+
     static final String BUFFER_TABLE = "buffer";
     static final String DATA = "data";
 
@@ -57,6 +60,7 @@ public class DataStore {
         database.delete(WIFI_TABLE, null, null);
         database.delete(ACCELEROMETER_TABLE, null, null);
         database.delete(LOCATION_TABLE, null, null);
+        database.delete(DECISION_TABLE, null, null);
         database.delete(BUFFER_TABLE, null, null);
         database.close();
     }
@@ -129,6 +133,21 @@ public class DataStore {
             database = databaseHelper.getWritableDatabase();
             database.beginTransaction();
             database.replace(LOCATION_TABLE, null, contentValues);
+            database.setTransactionSuccessful();
+        } finally {
+            database.endTransaction();
+        }
+    }
+
+    public void insertDecision(int decision, long timestamp) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DECISION_DECISION, decision);
+        contentValues.put(TIMESTAMP, timestamp);
+
+        try {
+            database = databaseHelper.getWritableDatabase();
+            database.beginTransaction();
+            database.replace(DECISION_TABLE, null, contentValues);
             database.setTransactionSuccessful();
         } finally {
             database.endTransaction();
@@ -209,6 +228,11 @@ public class DataStore {
                     + LOCATION_ACCURACY + " FLOAT, "
                     + TIMESTAMP + " LONG)");
 
+            database.execSQL("CREATE TABLE " + DECISION_TABLE + " ("
+                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + DECISION_DECISION + " INTEGER, "
+                    + TIMESTAMP + " LONG)");
+
             database.execSQL("CREATE TABLE " + BUFFER_TABLE + " ("
                     + TIMESTAMP + " LONG PRIMARY KEY, "
                     + DATA + " TEXT)");
@@ -219,6 +243,7 @@ public class DataStore {
             database.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE);
             database.execSQL("DROP TABLE IF EXISTS " + ACCELEROMETER_TABLE);
             database.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
+            database.execSQL("DROP TABLE IF EXISTS " + DECISION_TABLE);
             database.execSQL("DROP TABLE IF EXISTS " + BUFFER_TABLE);
         }
     }

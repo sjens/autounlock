@@ -235,4 +235,7 @@ public class UnlockService extends Service {
     public void newDatastore() {
         dataStore.deleteDatastore();
     }
+
+    public void newTruePositive() { long time = System.currentTimeMillis(); dataStore.insertDecision(1, time); }
+    public void newFalsePositive() { long time = System.currentTimeMillis(); dataStore.insertDecision(0, time); }
 }

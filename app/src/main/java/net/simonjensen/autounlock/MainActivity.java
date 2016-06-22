@@ -1,10 +1,7 @@
 package net.simonjensen.autounlock;
 
 import android.Manifest;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,6 +13,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -30,6 +28,9 @@ public class MainActivity extends AppCompatActivity {
     static int allButton = 0;
 
     DataStore dataStore;
+    View trainingView;
+    TextView trainingBtleMacValue;
+    TextView trainingBtleRssiValue;
 
     static Button startAccelerometer;
     static Button stopAccelerometer;
@@ -65,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
     static Button unregisterGeofence;
     static boolean registerGeofenceEnabled = false;
     static boolean unregisterGeofenceEnabled = false;
+
+    private BroadcastReceiver receiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +112,37 @@ public class MainActivity extends AppCompatActivity {
         unregisterGeofence.setEnabled(unregisterGeofenceEnabled);
 
         dataStore = new DataStore(this);
+
+        trainingView = findViewById(R.id.feedbackControlsContainer);
+        trainingBtleMacValue = (TextView) findViewById(R.id.btleMacValue);
+        trainingBtleRssiValue = (TextView) findViewById(R.id.btleRssiValue);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("BTLE_CONN");
+
+        receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Bundle extras = intent.getExtras();
+                String extraMac = extras.getString("mac");
+                int extraRSSI = extras.getInt("rssi");
+                trainingBtleMacValue.setText(extraMac);
+                trainingBtleRssiValue.setText(Integer.toString(extraRSSI));
+                trainingView.setVisibility(View.VISIBLE);
+                Log.v("IntentBroadcast", "MAC: " + extraMac);
+                Log.v("IntentBroadcast", "RSSI: " + extraRSSI);
+            }
+        };
+        registerReceiver(receiver, filter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (receiver != null) {
+            unregisterReceiver(receiver);
+            receiver = null;
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -136,6 +170,20 @@ public class MainActivity extends AppCompatActivity {
         if (bound) {
             unbindService(serviceConnection);
             bound = false;
+        }
+    }
+
+    public void onButtonClickTruePositive(View v) {
+        if (bound) {
+            unlockService.newTruePositive();
+            Log.d("Manual Decision", "True Positive");
+        }
+    }
+
+    public void onButtonClickFalsePositive(View v) {
+        if (bound) {
+            unlockService.newFalsePositive();
+            Log.d("Manual Decision", "False Positive");
         }
     }
 
