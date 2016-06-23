@@ -51,7 +51,7 @@ public class BluetoothService extends Service {
             String name = result.getDevice().getName();
             String source = result.getDevice().getAddress();
             int RSSI = result.getRssi();
-            long time = result.getTimestampNanos();
+            long time = System.currentTimeMillis();
 
             BluetoothData aBluetoothDevice;
             aBluetoothDevice = new BluetoothData(name, source, RSSI, time);
