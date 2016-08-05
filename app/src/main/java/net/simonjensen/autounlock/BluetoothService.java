@@ -3,23 +3,16 @@ package net.simonjensen.autounlock;
 import android.annotation.TargetApi;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class BluetoothService extends Service {
     static String TAG = "BluetoothService";
@@ -55,9 +48,9 @@ public class BluetoothService extends Service {
 
             BluetoothData aBluetoothDevice;
             aBluetoothDevice = new BluetoothData(name, source, RSSI, time);
-            UnlockService.recordedBluetooth.add(aBluetoothDevice);
+            CoreService.recordedBluetooth.add(aBluetoothDevice);
 
-            UnlockService.dataStore.insertBtle(name, source, RSSI, time);
+            CoreService.dataStore.insertBtle(name, source, RSSI, time);
 
             Intent i = new Intent("BTLE_CONN");
             i.putExtra("mac", source);

@@ -11,7 +11,6 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class WifiService extends Service {
@@ -38,9 +37,9 @@ public class WifiService extends Service {
                     int RSSI = scanResults.get(i).level;
 
                     WifiData aWifiDevice = new WifiData(SSID, MAC, RSSI);
-                    UnlockService.recordedWifi.add(aWifiDevice);
+                    CoreService.recordedWifi.add(aWifiDevice);
 
-                    UnlockService.dataStore.insertWifi(SSID, MAC, RSSI, time);
+                    CoreService.dataStore.insertWifi(SSID, MAC, RSSI, time);
                 }
             }
 

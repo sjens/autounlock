@@ -13,9 +13,9 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnlockService extends Service {
+public class CoreService extends Service {
 
-    private static final String TAG = "UnlockService";
+    private static final String TAG = "CoreService";
 
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
@@ -25,7 +25,7 @@ public class UnlockService extends Service {
     private Intent wifiIntent;
     private Intent bluetoothIntent;
 
-    private UnlockServiceLooper unlockServiceLooper;
+    private DataProcessor dataProcessor;
     private Thread dataCollect;
 
     static List<BluetoothData> recordedBluetooth = new ArrayList<BluetoothData>();
@@ -46,9 +46,9 @@ public class UnlockService extends Service {
      * runs in the same process as its clients, we don't need to deal with IPC.
      */
     public class LocalBinder extends Binder {
-        UnlockService getService() {
+        CoreService getService() {
             // Return this instance of LocalService so clients can call public methods
-            return UnlockService.this;
+            return CoreService.this;
         }
     }
 
@@ -104,7 +104,7 @@ public class UnlockService extends Service {
 
         dataStore = new DataStore(this);
 
-        Log.v("UnlockService", "Service created");
+        Log.v("CoreService", "Service created");
 
         accelerometerIntent = new Intent(this, AccelerometerService.class);
         locationIntent = new Intent(this, LocationService.class);
@@ -133,7 +133,7 @@ public class UnlockService extends Service {
     @Override
     public void onDestroy() {
         geofence.disconnect();
-        Log.v("UnlockService", "Service destroyed");
+        Log.v("CoreService", "Service destroyed");
     }
 
     @Override
@@ -208,15 +208,15 @@ public class UnlockService extends Service {
 
     public void startDataBufferCollection() {
         dataBuffer = new DataBuffer<List>(1000);
-        unlockServiceLooper = new UnlockServiceLooper();
-        dataCollect = new Thread(unlockServiceLooper);
+        dataProcessor = new DataProcessor();
+        dataCollect = new Thread(dataProcessor);
         dataCollect.start();
     }
 
     public void stopDataBufferCollection() {
-        Log.v("UnlockService", "Trying to stop unlockServiceLooper");
+        Log.v("CoreService", "Trying to stop dataProcessor");
         if (dataCollect != null) {
-            unlockServiceLooper.terminate();
+            dataProcessor.terminate();
         }
     }
 

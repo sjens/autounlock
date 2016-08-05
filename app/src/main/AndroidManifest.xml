@@ -9,7 +9,6 @@
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application
             android:allowBackup="true"
@@ -30,7 +29,7 @@
         </activity>
 
         <service
-                android:name=".UnlockService"
+                android:name=".CoreService"
                 android:enabled="true"/>
         <service
                 android:name=".AccelerometerService"

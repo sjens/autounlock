@@ -22,7 +22,7 @@ import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
 
 public class MainActivity extends AppCompatActivity {
-    UnlockService unlockService;
+    CoreService coreService;
     boolean bound = false;
     static boolean geofencAdded = false;
     static int allButton = 0;
@@ -149,8 +149,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         // Bind to LocalService
-        ComponentName unlockService = startService(new Intent(this, UnlockService.class));
-        bindService(new Intent(this, UnlockService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+        ComponentName unlockService = startService(new Intent(this, CoreService.class));
+        bindService(new Intent(this, CoreService.class), serviceConnection, Context.BIND_AUTO_CREATE);
 
         // Check for location permission on startup if not granted.
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -175,14 +175,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickTruePositive(View v) {
         if (bound) {
-            unlockService.newTruePositive();
+            coreService.newTruePositive();
             Log.d("Manual Decision", "True Positive");
         }
     }
 
     public void onButtonClickFalsePositive(View v) {
         if (bound) {
-            unlockService.newFalsePositive();
+            coreService.newFalsePositive();
             Log.d("Manual Decision", "False Positive");
         }
     }
@@ -198,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
      * this method with the android:onClick attribute) */
     public void onButtonClickAccel(View v) {
         if (bound) {
-            unlockService.startAccelerometerService();
+            coreService.startAccelerometerService();
             setStartAccelerometer();
 
             startAllEnabled = false;
@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickAccelStop(View v) {
         if (bound) {
-            unlockService.stopAccelerometerService();
+            coreService.stopAccelerometerService();
             setStopAccelerometer();
 
             if (allButton == 1) {
@@ -242,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickLocation(View v) {
         if (bound) {
-            unlockService.startLoactionService();
+            coreService.startLoactionService();
             setStartLocation();
 
             startAllEnabled = false;
@@ -262,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickLocationStop(View v) {
         if (bound) {
-            unlockService.stopLocationService();
+            coreService.stopLocationService();
             setStopLocation();
 
             if (allButton == 1) {
@@ -302,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickWifi(View v) {
         if (bound) {
-            unlockService.startWifiService();
+            coreService.startWifiService();
             setStartWifi();
 
             startAllEnabled = false;
@@ -322,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickWifiStop(View v) {
         if (bound) {
-            unlockService.stopWifiService();
+            coreService.stopWifiService();
             setStopWifi();
 
             if (allButton == 1) {
@@ -346,7 +346,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickBluetooth(View v) {
         if (bound) {
-            unlockService.startBluetoothService();
+            coreService.startBluetoothService();
             setStartBluetooth();
 
             startAllEnabled = false;
@@ -366,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickBluetoothStop(View v) {
         if (bound) {
-            unlockService.stopBluetoothService();
+            coreService.stopBluetoothService();
             setStopBluetooth();
 
             if (allButton == 1) {
@@ -396,11 +396,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickAll(View v) {
         if (bound) {
-            unlockService.startDataBufferCollection();
-            unlockService.startAccelerometerService();
-            unlockService.startLoactionService();
-            unlockService.startWifiService();
-            unlockService.startBluetoothService();
+            coreService.startDataBufferCollection();
+            coreService.startAccelerometerService();
+            coreService.startLoactionService();
+            coreService.startWifiService();
+            coreService.startBluetoothService();
 
             setStartAll();
 
@@ -423,11 +423,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickAllStop(View v) {
         if (bound) {
-            unlockService.stopDataBufferCollection();
-            unlockService.stopAccelerometerService();
-            unlockService.stopLocationService();
-            unlockService.stopWifiService();
-            unlockService.stopBluetoothService();
+            coreService.stopDataBufferCollection();
+            coreService.stopAccelerometerService();
+            coreService.stopLocationService();
+            coreService.stopWifiService();
+            coreService.stopBluetoothService();
 
             setStopAll();
 
@@ -444,7 +444,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickDataBuffer(View v) {
         if (bound) {
-            unlockService.startDataBufferCollection();
+            coreService.startDataBufferCollection();
             setStartBuffer();
 
             startAllEnabled = false;
@@ -464,7 +464,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickDataBufferStop(View v) {
         if (bound) {
-            unlockService.stopDataBufferCollection();
+            coreService.stopDataBufferCollection();
             setStopBuffer();
 
             if (allButton == 1) {
@@ -481,7 +481,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickAddGeofence(View v) {
         if (bound) {
-            unlockService.addGeofence();
+            coreService.addGeofence();
             if (!geofencAdded) {
                 registerGeofenceEnabled = true;
                 registerGeofence.setEnabled(registerGeofenceEnabled);
@@ -491,7 +491,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickRegisterGeofence(View v) {
         if (bound) {
-            unlockService.registerGeofences();
+            coreService.registerGeofences();
             registerGeofenceEnabled = false;
             registerGeofence.setEnabled(registerGeofenceEnabled);
             unregisterGeofenceEnabled = true;
@@ -501,7 +501,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickUnregisterGeofence(View v) {
         if (bound) {
-            unlockService.unregisterGeofences();
+            coreService.unregisterGeofences();
             registerGeofenceEnabled = true;
             registerGeofence.setEnabled(registerGeofenceEnabled);
             unregisterGeofenceEnabled = false;
@@ -542,7 +542,7 @@ public class MainActivity extends AppCompatActivity {
     public void onButtonClickNewDB(View v) {
         Log.v("New Datastore", "Deleting data in datastore");
         if (bound) {
-            unlockService.newDatastore();
+            coreService.newDatastore();
         }
     }
 
@@ -553,8 +553,8 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            UnlockService.LocalBinder binder = (UnlockService.LocalBinder) service;
-            unlockService = binder.getService();
+            CoreService.LocalBinder binder = (CoreService.LocalBinder) service;
+            coreService = binder.getService();
             bound = true;
         }
 

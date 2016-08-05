@@ -32,7 +32,7 @@ public class AccelerometerService extends Service implements SensorEventListener
     private boolean previousGravitySet = false;
     private boolean previousMagneticFieldSet = false;
     private boolean previousLinearAccelerationSet = false;
-    
+
     private float[] rotationMatrixInverted = new float[16];
     private float[] rotationMatrix = new float[16];
     private float[] speed =new float[3];
@@ -97,9 +97,9 @@ public class AccelerometerService extends Service implements SensorEventListener
         Log.v(TAG, "EAST/WEST: " + previousLinearAcceleration[0] + " NORTH/SOUTH: " + previousLinearAcceleration[1] + " UP/DOWN: " + previousLinearAcceleration[2]);
         Log.v(TAG, "SEW: " + speed[0] + " SNS: " + speed[1] + " SUD: " + speed[2]);
 
-        UnlockService.recordedAccelerometer.add(anAccelerometerEvent);
+        CoreService.recordedAccelerometer.add(anAccelerometerEvent);
 
-        UnlockService.dataStore.insertAccelerometer(
+        CoreService.dataStore.insertAccelerometer(
                 accelerationX, accelerationY, accelerationZ,
                 speed[0], speed[1], speed[2], time);
     }

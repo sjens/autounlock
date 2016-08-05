@@ -5,7 +5,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnlockServiceLooper implements Runnable {
+public class DataProcessor implements Runnable {
     private volatile boolean running = true;
 
     @Override
@@ -16,31 +16,31 @@ public class UnlockServiceLooper implements Runnable {
         List<WifiData> prevRecordedWifi = new ArrayList<WifiData>();
 
         while (running) {
-            for (int i = 0; i < UnlockService.recordedBluetooth.size(); i++) {
-                if (UnlockService.recordedBluetooth.get(i).getSource().equals(BluetoothService.RASMUS_BEKEY)) {
+            for (int i = 0; i < CoreService.recordedBluetooth.size(); i++) {
+                if (CoreService.recordedBluetooth.get(i).getSource().equals(BluetoothService.RASMUS_BEKEY)) {
                     Log.e("Start Decision", "BeKey found");
                 }
             }
 
             // In order to not have empty lists in the DataBuffer, previous data will be used if no new data has been found.
-            if (!UnlockService.recordedAccelerometer.isEmpty() || prevRecordedAccelerometer.isEmpty()) {
-                prevRecordedAccelerometer = UnlockService.recordedAccelerometer;
-                UnlockService.recordedAccelerometer = new ArrayList<AccelerometerData>();
+            if (!CoreService.recordedAccelerometer.isEmpty() || prevRecordedAccelerometer.isEmpty()) {
+                prevRecordedAccelerometer = CoreService.recordedAccelerometer;
+                CoreService.recordedAccelerometer = new ArrayList<AccelerometerData>();
             }
 
-            if (!UnlockService.recordedBluetooth.isEmpty() || prevRecordedBluetooth.isEmpty()) {
-                prevRecordedBluetooth = UnlockService.recordedBluetooth;
-                UnlockService.recordedBluetooth = new ArrayList<BluetoothData>();
+            if (!CoreService.recordedBluetooth.isEmpty() || prevRecordedBluetooth.isEmpty()) {
+                prevRecordedBluetooth = CoreService.recordedBluetooth;
+                CoreService.recordedBluetooth = new ArrayList<BluetoothData>();
             }
 
-            if (!UnlockService.recordedLocation.isEmpty() || prevRecordedLocation.isEmpty()) {
-                prevRecordedLocation = UnlockService.recordedLocation;
-                UnlockService.recordedLocation = new ArrayList<LocationData>();
+            if (!CoreService.recordedLocation.isEmpty() || prevRecordedLocation.isEmpty()) {
+                prevRecordedLocation = CoreService.recordedLocation;
+                CoreService.recordedLocation = new ArrayList<LocationData>();
             }
 
-            if (!UnlockService.recordedWifi.isEmpty() || prevRecordedWifi.isEmpty()) {
-                prevRecordedWifi = UnlockService.recordedWifi;
-                UnlockService.recordedWifi = new ArrayList<WifiData>();
+            if (!CoreService.recordedWifi.isEmpty() || prevRecordedWifi.isEmpty()) {
+                prevRecordedWifi = CoreService.recordedWifi;
+                CoreService.recordedWifi = new ArrayList<WifiData>();
             }
 
             List<List> dataBlob = new ArrayList<List>();
@@ -49,7 +49,7 @@ public class UnlockServiceLooper implements Runnable {
             dataBlob.add(prevRecordedLocation);
             dataBlob.add(prevRecordedWifi);
 
-            UnlockService.dataBuffer.add(dataBlob);
+            CoreService.dataBuffer.add(dataBlob);
 
             StringBuilder stringBuilder = new StringBuilder();
             for (int i = 0; i < prevRecordedAccelerometer.size(); i++) {
@@ -68,9 +68,9 @@ public class UnlockServiceLooper implements Runnable {
                 stringBuilder.append(prevRecordedWifi.get(i).toString());
             }
 
-            UnlockService.dataStore.insertBuffer(System.currentTimeMillis(), stringBuilder.toString());
+            CoreService.dataStore.insertBuffer(System.currentTimeMillis(), stringBuilder.toString());
 
-            Log.v("dataBuffer", UnlockService.dataBuffer.toString());
+            Log.v("dataBuffer", CoreService.dataBuffer.toString());
 
             Log.v("StringOUT", stringBuilder.toString());
             try {

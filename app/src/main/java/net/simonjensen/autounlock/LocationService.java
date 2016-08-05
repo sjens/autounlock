@@ -14,9 +14,6 @@ import android.os.PowerManager;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class LocationService extends Service {
     String TAG = "LocatoinService";
 
@@ -55,10 +52,10 @@ public class LocationService extends Service {
             LocationData aLocation;
             aLocation = new LocationData(location.getProvider(),
                     location.getLatitude(), location.getLongitude(), location.getAccuracy(), time);
-            UnlockService.recordedLocation.add(aLocation);
+            CoreService.recordedLocation.add(aLocation);
 
             Log.v("LOCATION: ", location.toString());
-            UnlockService.dataStore.insertLocation(
+            CoreService.dataStore.insertLocation(
                     location.getProvider(),
                     location.getLatitude(),
                     location.getLongitude(),
