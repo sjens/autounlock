@@ -27,6 +27,7 @@ public class CoreService extends Service {
 
     private DataProcessor dataProcessor;
     private Thread dataCollector;
+    private Heuristics heuristics;
 
     static List<BluetoothData> recordedBluetooth = new ArrayList<BluetoothData>();
     static List<WifiData> recordedWifi = new ArrayList<WifiData>();
@@ -198,8 +199,9 @@ public class CoreService extends Service {
         stopService(bluetoothIntent);
     }
 
-    void startDecision() {
+    void startDecision(String foundLock) {
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
+        heuristics.makeDecision(foundLock);
     }
 
     void notifyDecision() {

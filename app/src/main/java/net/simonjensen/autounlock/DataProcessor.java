@@ -15,10 +15,13 @@ public class DataProcessor implements Runnable {
         List<LocationData> prevRecordedLocation = new ArrayList<LocationData>();
         List<WifiData> prevRecordedWifi = new ArrayList<WifiData>();
 
+        CoreService coreService = new CoreService();
+
         while (running) {
             for (int i = 0; i < CoreService.recordedBluetooth.size(); i++) {
-                if (CoreService.recordedBluetooth.get(i).getSource().equals(BluetoothService.RASMUS_BEKEY)) {
+                if (CoreService.recordedBluetooth.get(i).getSource().equals(BluetoothService.SIMON_BEKEY)) {
                     Log.e("Start Decision", "BeKey found");
+                    coreService.startDecision(CoreService.recordedBluetooth.get(i).getSource());
                 }
             }
 

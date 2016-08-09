@@ -2,9 +2,13 @@ package net.simonjensen.autounlock;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.location.Location;
 import android.util.Log;
+
+import java.util.ArrayList;
 
 public class DataStore {
     static final String DATABASE_NAME = "datastore.db";
@@ -16,18 +20,22 @@ public class DataStore {
     static final String LOCK_TABLE = "lock";
     static final String LOCK_MAC = "MAC";
     static final String LOCK_PASSPHRASE = "passphrase";
+    static final String LOCK_LATITUDE = "latitude";
+    static final String LOCK_LONGITUDE = "longitude";
     static final String LOCK_INNER_GEOFENCE = "inner_geofence";
     static final String LOCK_OUTER_GEOFENCE = "outer_geofence";
 
     static final String BLUETOOTH_TABLE = "bluetooth";
     static final String BLUETOOTH_NAME = "name";
-    static final String BLUETOOTH_SOURCE = "Source";
+    static final String BLUETOOTH_SOURCE = "source";
     static final String BLUETOOTH_RSSI = "RSSI";
+    static final String BLUETOOTH_NEARBY_LOCK = "nearby_lock";
 
     static final String WIFI_TABLE = "wifi";
     static final String WIFI_SSID = "SSID";
     static final String WIFI_MAC = "MAC";
     static final String WIFI_RSSI = "RSSI";
+    static final String WIFI_NEARBY_LOCK = "nearby_lock";
 
     static final String ACCELEROMETER_TABLE = "accelerometer";
     static final String ACCELERATION_X = "acceleration_x";
@@ -71,10 +79,13 @@ public class DataStore {
         database.close();
     }
 
-    public void insertLockDetails(String lockMAC, String lockPassphrase, int lockInnerGeofence, int lockOuterGeofence, long timestamp) {
+    public void insertLockDetails(String lockMAC, String lockPassphrase, float lockLatitude, float lockLongitude,
+                                  int lockInnerGeofence, int lockOuterGeofence, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(LOCK_MAC, lockMAC);
         contentValues.put(LOCK_PASSPHRASE, lockPassphrase);
+        contentValues.put(LOCK_LATITUDE, lockLatitude);
+        contentValues.put(LOCK_LONGITUDE, lockLongitude);
         contentValues.put(LOCK_INNER_GEOFENCE, lockInnerGeofence);
         contentValues.put(LOCK_OUTER_GEOFENCE, lockOuterGeofence);
         contentValues.put(TIMESTAMP, timestamp);
@@ -89,18 +100,76 @@ public class DataStore {
         }
     }
 
-    public LockData getLockDetails(String lockMAC) {
+    public LockData getLockDetails(String foundLock) {
         LockData lockData;
+        LocationData locationData;
+        BluetoothData bluetoothData;
+        WifiData wifiData;
+
+        ArrayList<BluetoothData> nearbyBluetoothDevices = new ArrayList<>();
+        ArrayList<WifiData> nearbyWifiAccessPoints = new ArrayList<>();
+
+        Cursor cursor;
 
         try {
             database = databaseHelper.getReadableDatabase();
             database.beginTransaction();
+
+            String lockQuery = "SELECT * FROM " + LOCK_TABLE + " WHERE " + LOCK_MAC + " " + foundLock + ";";
+            cursor = database.rawQuery(lockQuery, null);
+            cursor.moveToFirst();
+            String lockMac = cursor.getString(cursor.getColumnIndex(LOCK_MAC));
+            String lockPassphrase = cursor.getString(cursor.getColumnIndex(LOCK_PASSPHRASE));
+            double lockLatitude = cursor.getDouble(cursor.getColumnIndex(LOCK_LATITUDE));
+            double lockLongitude = cursor.getDouble(cursor.getColumnIndex(LOCK_LONGITUDE));
+            int innerGeofence = cursor.getInt(cursor.getColumnIndex(LOCK_INNER_GEOFENCE));
+            int outerGeofence = cursor.getInt(cursor.getColumnIndex(LOCK_OUTER_GEOFENCE));
+            cursor.close();
+
+            String bluetoothQuery = "SELECT * FROM " + BLUETOOTH_TABLE + " WHERE "
+                    + BLUETOOTH_NEARBY_LOCK + " " + foundLock + ";";
+            cursor = database.rawQuery(bluetoothQuery, null);
+            cursor.moveToFirst();
+            for (int i = 0; i <= cursor.getColumnCount(); i++) {
+                String bluetoothName = cursor.getString(cursor.getColumnIndex(BLUETOOTH_NAME));
+                String bluetoothSource = cursor.getString(cursor.getColumnIndex(BLUETOOTH_SOURCE));
+                int bluetoothRSSI = cursor.getInt(cursor.getColumnIndex(BLUETOOTH_RSSI));
+                long bluetoothTimestamp = cursor.getLong(cursor.getColumnIndex(TIMESTAMP));
+
+                bluetoothData = new BluetoothData(bluetoothName, bluetoothSource, bluetoothRSSI, bluetoothTimestamp);
+                nearbyBluetoothDevices.add(bluetoothData);
+
+                if (!(cursor.isLast() || cursor.isAfterLast())) {
+                    cursor.moveToNext();
+                }
+            }
+            cursor.close();
+
+            String wifiQuery = "SELECT * FROM " + WIFI_TABLE + " WHERE "
+                    + WIFI_NEARBY_LOCK + " " + foundLock + ";";
+            cursor = database.rawQuery(wifiQuery, null);
+            cursor.moveToFirst();
+            for (int i = 0; i <= cursor.getColumnCount(); i++) {
+                String wifiSSID = cursor.getString(cursor.getColumnIndex(WIFI_SSID));
+                String wifiMAC = cursor.getString(cursor.getColumnIndex(WIFI_MAC));
+                int wifiRSSI = cursor.getInt(cursor.getColumnIndex(WIFI_RSSI));
+
+                wifiData = new WifiData(wifiSSID, wifiMAC, wifiRSSI);
+                nearbyWifiAccessPoints.add(wifiData);
+
+                if (!(cursor.isLast() || cursor.isAfterLast())) {
+                    cursor.moveToNext();
+                }
+            }
+            cursor.close();
+
+            locationData = new LocationData(lockLatitude, lockLongitude);
+            lockData = new LockData(lockMac, lockPassphrase, locationData,
+                    innerGeofence, outerGeofence, nearbyBluetoothDevices, nearbyWifiAccessPoints);
+            return lockData;
         } finally {
             database.endTransaction();
         }
-
-        lockData = new LockData(null, null, null, 0, 0, null, null);
-        return  lockData;
     }
 
     public void insertBtle(String name, String btleSource, int btleRSSI, long timestamp) {
@@ -237,6 +306,8 @@ public class DataStore {
             database.execSQL("CREATE TABLE " + LOCK_TABLE + " ("
                     + LOCK_MAC + " TEXT PRIMARY KEY, "
                     + LOCK_PASSPHRASE + " TEXT, "
+                    + LOCK_LATITUDE + " DOUBLE, "
+                    + LOCK_LONGITUDE + " DOUBLE, "
                     + LOCK_INNER_GEOFENCE + " TEXT, "
                     + LOCK_OUTER_GEOFENCE + " INTEGER, "
                     + TIMESTAMP + " LONG)");
@@ -246,6 +317,7 @@ public class DataStore {
                     + BLUETOOTH_NAME + " TEXT, "
                     + BLUETOOTH_SOURCE + " TEXT, "
                     + BLUETOOTH_RSSI + " INTEGER, "
+                    + "FOREIGN KEY(" + BLUETOOTH_NEARBY_LOCK + ") REFERENCES " + LOCK_TABLE + "(" + LOCK_MAC + "), "
                     + TIMESTAMP + " LONG)");
 
             database.execSQL("CREATE TABLE " + WIFI_TABLE + " ("
@@ -253,6 +325,7 @@ public class DataStore {
                     + WIFI_SSID + " TEXT, "
                     + WIFI_MAC + " TEXT, "
                     + WIFI_RSSI + " INTEGER, "
+                    + "FOREIGN KEY(" + WIFI_NEARBY_LOCK + ") REFERENCES " + LOCK_TABLE + "(" + LOCK_MAC + "), "
                     + TIMESTAMP + " LONG)");
 
             database.execSQL("CREATE TABLE " + ACCELEROMETER_TABLE + " ("
@@ -268,8 +341,8 @@ public class DataStore {
             database.execSQL("CREATE TABLE " + LOCATION_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + LOCATION_PROVIDER + " TEXT, "
-                    + LOCATION_LATITUDE + " FLOAT, "
-                    + LOCATION_LONGITUDE + " FLOAT, "
+                    + LOCATION_LATITUDE + " DOUBLE, "
+                    + LOCATION_LONGITUDE + " DOUBLE, "
                     + LOCATION_ACCURACY + " FLOAT, "
                     + TIMESTAMP + " LONG)");
 

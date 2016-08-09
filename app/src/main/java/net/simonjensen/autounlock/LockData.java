@@ -4,16 +4,16 @@ import android.location.Location;
 
 import java.util.ArrayList;
 
-public class LockData {
-    String MAC;
-    String passphrase;
-    Location location;
-    int innerGeofence;
-    int outerGeofence;
-    ArrayList<BluetoothData> nearbyBluetoothDevices;
-    ArrayList<WifiData> nearbyWifiAccessPoints;
+class LockData {
+    private String MAC;
+    private String passphrase;
+    private LocationData location;
+    private int innerGeofence;
+    private int outerGeofence;
+    private ArrayList<BluetoothData> nearbyBluetoothDevices;
+    private ArrayList<WifiData> nearbyWifiAccessPoints;
 
-    public LockData(String MAC, String passphrase, Location location, int innerGeofence, int outerGeofence, ArrayList<BluetoothData> nearbyBluetoothDevices, ArrayList<WifiData> nearbyWifiAccessPoints) {
+    LockData(String MAC, String passphrase, LocationData location, int innerGeofence, int outerGeofence, ArrayList<BluetoothData> nearbyBluetoothDevices, ArrayList<WifiData> nearbyWifiAccessPoints) {
         this.MAC = MAC;
         this.passphrase = passphrase;
         this.location = location;
@@ -39,11 +39,11 @@ public class LockData {
         this.passphrase = passphrase;
     }
 
-    public Location getLocation() {
+    public LocationData getLocation() {
         return location;
     }
 
-    public void setLocation(Location location) {
+    public void setLocation(LocationData location) {
         this.location = location;
     }
 

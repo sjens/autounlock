@@ -7,6 +7,11 @@ public class LocationData {
     float accuracy;
     long time;
 
+    public LocationData(double latitude, double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
     public LocationData(String provider, double latitude, double longitude, float accuracy, long time) {
         this.provider = provider;
         this.latitude = latitude;
