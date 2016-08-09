@@ -21,12 +21,12 @@ public class CoreService extends Service {
     private ServiceHandler serviceHandler;
 
     private Intent accelerometerIntent;
-    private Intent locationIntent;
-    private Intent wifiIntent;
     private Intent bluetoothIntent;
+    private Intent wifiIntent;
+    private Intent locationIntent;
 
     private DataProcessor dataProcessor;
-    private Thread dataCollect;
+    private Thread dataCollector;
 
     static List<BluetoothData> recordedBluetooth = new ArrayList<BluetoothData>();
     static List<WifiData> recordedWifi = new ArrayList<WifiData>();
@@ -45,7 +45,7 @@ public class CoreService extends Service {
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
      */
-    public class LocalBinder extends Binder {
+    class LocalBinder extends Binder {
         CoreService getService() {
             // Return this instance of LocalService so clients can call public methods
             return CoreService.this;
@@ -142,7 +142,7 @@ public class CoreService extends Service {
         return localBinder;
     }
 
-    public void startAccelerometerService() {
+    void startAccelerometerService() {
         Log.v(TAG, "Starting AccelerometerService");
         Thread accelerometerServiceThread = new Thread() {
             public void run() {
@@ -152,11 +152,11 @@ public class CoreService extends Service {
         accelerometerServiceThread.start();
     }
 
-    public void stopAccelerometerService() {
+    void stopAccelerometerService() {
         stopService(accelerometerIntent);
     }
 
-    public void startLoactionService() {
+    void startLoactionService() {
         Log.v(TAG, "Starting LocationService");
         Thread locationServiceThread = new Thread() {
             public void run() {
@@ -166,11 +166,11 @@ public class CoreService extends Service {
         locationServiceThread.start();
     }
 
-    public void stopLocationService() {
+    void stopLocationService() {
         stopService(locationIntent);
     }
 
-    public void startWifiService() {
+    void startWifiService() {
         Log.v(TAG, "Starting WifiService");
         Thread wifiServiceThread = new Thread() {
             public void run() {
@@ -180,11 +180,11 @@ public class CoreService extends Service {
         wifiServiceThread.start();
     }
 
-    public void stopWifiService() {
+    void stopWifiService() {
         stopService(wifiIntent);
     }
 
-    public void startBluetoothService() {
+    void startBluetoothService() {
         Log.v(TAG, "Starting BluetoothService");
         Thread bluetoothServiceThread = new Thread() {
             public void run() {
@@ -194,48 +194,49 @@ public class CoreService extends Service {
         bluetoothServiceThread.start();
     }
 
-    public void stopBluetoothService() {
+    void stopBluetoothService() {
         stopService(bluetoothIntent);
     }
 
-    public void startDecision() {
+    void startDecision() {
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
     }
 
-    public void notifyDecision() {
+    void notifyDecision() {
 
     }
 
-    public void startDataBufferCollection() {
+    void startDataBuffer() {
         dataBuffer = new DataBuffer<List>(1000);
         dataProcessor = new DataProcessor();
-        dataCollect = new Thread(dataProcessor);
-        dataCollect.start();
+        dataCollector = new Thread(dataProcessor);
+        dataCollector.start();
     }
 
-    public void stopDataBufferCollection() {
-        Log.v("CoreService", "Trying to stop dataProcessor");
-        if (dataCollect != null) {
+    void stopDataBuffer() {
+        Log.d("CoreService", "Trying to stop dataProcessor");
+        if (dataCollector != null) {
             dataProcessor.terminate();
         }
     }
 
-    public void addGeofence() {
+    void addGeofence() {
         geofence.addGeofence(this);
     }
 
-    public void registerGeofences() {
+    void registerGeofences() {
         geofence.registerGeofences(this);
     }
 
-    public void unregisterGeofences() {
+    void unregisterGeofences() {
         geofence.unregisterGeofences(this);
     }
 
-    public void newDatastore() {
+    void newDatastore() {
         dataStore.deleteDatastore();
     }
 
-    public void newTruePositive() { long time = System.currentTimeMillis(); dataStore.insertDecision(1, time); }
-    public void newFalsePositive() { long time = System.currentTimeMillis(); dataStore.insertDecision(0, time); }
+    void newTruePositive() { long time = System.currentTimeMillis(); dataStore.insertDecision(1, time); }
+
+    void newFalsePositive() { long time = System.currentTimeMillis(); dataStore.insertDecision(0, time); }
 }

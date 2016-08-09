@@ -43,7 +43,7 @@ public class WifiService extends Service {
                 }
             }
 
-            // We force the device to scan for wifi when we have finished the previous scan.
+            // We force the device to scan for wifi again when we have finished the previous scan.
             wifiManager.startScan();
         }
     };

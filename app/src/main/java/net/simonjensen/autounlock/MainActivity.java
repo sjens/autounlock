@@ -1,6 +1,7 @@
 package net.simonjensen.autounlock;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -22,50 +23,49 @@ import java.io.FileOutputStream;
 import java.nio.channels.FileChannel;
 
 public class MainActivity extends AppCompatActivity {
-    CoreService coreService;
-    boolean bound = false;
-    static boolean geofencAdded = false;
-    static int allButton = 0;
+    private CoreService coreService;
+    private boolean bound = false;
+    private static boolean geofencAdded = false;
+    private static int allButton = 0;
 
-    DataStore dataStore;
-    View trainingView;
-    TextView trainingBtleMacValue;
-    TextView trainingBtleRssiValue;
+    private View trainingView;
+    private TextView trainingBtleMacValue;
+    private TextView trainingBtleRssiValue;
 
-    static Button startAccelerometer;
-    static Button stopAccelerometer;
-    static boolean startAccelerometerEnabled = true;
-    static boolean stopAccelerometerEnabled = false;
+    private static Button startAccelerometer;
+    private static Button stopAccelerometer;
+    private static boolean startAccelerometerEnabled = true;
+    private static boolean stopAccelerometerEnabled = false;
 
-    static Button startLocation;
-    static Button stopLocation;
-    static boolean startLocationEnabled = true;
-    static boolean stopLocationEnabled = false;
+    private static Button startLocation;
+    private static Button stopLocation;
+    private static boolean startLocationEnabled = true;
+    private static boolean stopLocationEnabled = false;
 
-    static Button startWifi;
-    static Button stopWifi;
-    static boolean startWifiEnabled = true;
-    static boolean stopWifiEnabled = false;
+    private static Button startWifi;
+    private static Button stopWifi;
+    private static boolean startWifiEnabled = true;
+    private static boolean stopWifiEnabled = false;
 
-    static Button startBluetooth;
-    static Button stopBluetooth;
-    static boolean startBluetoothEnabled = true;
-    static boolean stopBluetoothEnabled = false;
+    private static Button startBluetooth;
+    private static Button stopBluetooth;
+    private static boolean startBluetoothEnabled = true;
+    private static boolean stopBluetoothEnabled = false;
 
-    static Button startAll;
-    static Button stopAll;
-    static boolean startAllEnabled = true;
-    static boolean stopAllEnabled = false;
+    private static Button startAll;
+    private static Button stopAll;
+    private static boolean startAllEnabled = true;
+    private static boolean stopAllEnabled = false;
 
-    static Button startBuffer;
-    static Button stopBuffer;
-    static boolean startBufferEnabled = true;
-    static boolean stopBufferEnabled = false;
+    private static Button startBuffer;
+    private static Button stopBuffer;
+    private static boolean startBufferEnabled = true;
+    private static boolean stopBufferEnabled = false;
 
-    static Button registerGeofence;
-    static Button unregisterGeofence;
-    static boolean registerGeofenceEnabled = false;
-    static boolean unregisterGeofenceEnabled = false;
+    private static Button registerGeofence;
+    private static Button unregisterGeofence;
+    private static boolean registerGeofenceEnabled = false;
+    private static boolean unregisterGeofenceEnabled = false;
 
     private BroadcastReceiver receiver;
 
@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
         registerGeofence.setEnabled(registerGeofenceEnabled);
         unregisterGeofence.setEnabled(unregisterGeofenceEnabled);
 
-        dataStore = new DataStore(this);
+        DataStore dataStore = new DataStore(this);
 
         trainingView = findViewById(R.id.feedbackControlsContainer);
         trainingBtleMacValue = (TextView) findViewById(R.id.btleMacValue);
@@ -148,9 +148,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        // Bind to LocalService
-        ComponentName unlockService = startService(new Intent(this, CoreService.class));
-        bindService(new Intent(this, CoreService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+
+        if (isMyServiceRunning(CoreService.class)) {
+            bindService(new Intent(this, CoreService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+        } else {
+            ComponentName coreService = startService(new Intent(this, CoreService.class));
+            bindService(new Intent(this, CoreService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+        }
 
         // Check for location permission on startup if not granted.
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -171,6 +175,16 @@ public class MainActivity extends AppCompatActivity {
             unbindService(serviceConnection);
             bound = false;
         }
+    }
+
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void onButtonClickTruePositive(View v) {
@@ -396,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickAll(View v) {
         if (bound) {
-            coreService.startDataBufferCollection();
+            coreService.startDataBuffer();
             coreService.startAccelerometerService();
             coreService.startLoactionService();
             coreService.startWifiService();
@@ -423,7 +437,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickAllStop(View v) {
         if (bound) {
-            coreService.stopDataBufferCollection();
+            coreService.stopDataBuffer();
             coreService.stopAccelerometerService();
             coreService.stopLocationService();
             coreService.stopWifiService();
@@ -444,7 +458,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickDataBuffer(View v) {
         if (bound) {
-            coreService.startDataBufferCollection();
+            coreService.startDataBuffer();
             setStartBuffer();
 
             startAllEnabled = false;
@@ -464,7 +478,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickDataBufferStop(View v) {
         if (bound) {
-            coreService.stopDataBufferCollection();
+            coreService.stopDataBuffer();
             setStopBuffer();
 
             if (allButton == 1) {

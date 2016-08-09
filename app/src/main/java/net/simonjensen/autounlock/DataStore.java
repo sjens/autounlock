@@ -13,6 +13,12 @@ public class DataStore {
     static final String ID = "ID";
     static final String TIMESTAMP = "TIMESTAMP";
 
+    static final String LOCK_TABLE = "lock";
+    static final String LOCK_MAC = "MAC";
+    static final String LOCK_PASSPHRASE = "passphrase";
+    static final String LOCK_INNER_GEOFENCE = "inner_geofence";
+    static final String LOCK_OUTER_GEOFENCE = "outer_geofence";
+
     static final String BLUETOOTH_TABLE = "bluetooth";
     static final String BLUETOOTH_NAME = "name";
     static final String BLUETOOTH_SOURCE = "Source";
@@ -63,6 +69,38 @@ public class DataStore {
         database.delete(DECISION_TABLE, null, null);
         database.delete(BUFFER_TABLE, null, null);
         database.close();
+    }
+
+    public void insertLockDetails(String lockMAC, String lockPassphrase, int lockInnerGeofence, int lockOuterGeofence, long timestamp) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(LOCK_MAC, lockMAC);
+        contentValues.put(LOCK_PASSPHRASE, lockPassphrase);
+        contentValues.put(LOCK_INNER_GEOFENCE, lockInnerGeofence);
+        contentValues.put(LOCK_OUTER_GEOFENCE, lockOuterGeofence);
+        contentValues.put(TIMESTAMP, timestamp);
+
+        try {
+            database = databaseHelper.getWritableDatabase();
+            database.beginTransaction();
+            database.replace(LOCK_TABLE, null, contentValues);
+            database.setTransactionSuccessful();
+        } finally {
+            database.endTransaction();
+        }
+    }
+
+    public LockData getLockDetails(String lockMAC) {
+        LockData lockData;
+
+        try {
+            database = databaseHelper.getReadableDatabase();
+            database.beginTransaction();
+        } finally {
+            database.endTransaction();
+        }
+
+        lockData = new LockData(null, null, null, 0, 0, null, null);
+        return  lockData;
     }
 
     public void insertBtle(String name, String btleSource, int btleRSSI, long timestamp) {
@@ -196,6 +234,13 @@ public class DataStore {
         }
 
         private void createDatastore(SQLiteDatabase database) {
+            database.execSQL("CREATE TABLE " + LOCK_TABLE + " ("
+                    + LOCK_MAC + " TEXT PRIMARY KEY, "
+                    + LOCK_PASSPHRASE + " TEXT, "
+                    + LOCK_INNER_GEOFENCE + " TEXT, "
+                    + LOCK_OUTER_GEOFENCE + " INTEGER, "
+                    + TIMESTAMP + " LONG)");
+
             database.execSQL("CREATE TABLE " + BLUETOOTH_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + BLUETOOTH_NAME + " TEXT, "
@@ -239,6 +284,7 @@ public class DataStore {
         }
 
         private void dropDatastore() {
+            database.execSQL("DROP TABLE IF EXISTS " + LOCK_TABLE);
             database.execSQL("DROP TABLE IF EXISTS " + BLUETOOTH_TABLE);
             database.execSQL("DROP TABLE IF EXISTS " + WIFI_TABLE);
             database.execSQL("DROP TABLE IF EXISTS " + ACCELEROMETER_TABLE);
