@@ -524,7 +524,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onButtonClickExportDatastore(View v) {
-        try {
+/*        try {
             File data = Environment.getDataDirectory();
 
             try {
@@ -550,13 +550,17 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             // do something
+        }*/
+        if (bound) {
+            coreService.getLock(BluetoothService.SIMON_BEKEY);
         }
     }
 
     public void onButtonClickNewDB(View v) {
         Log.v("New Datastore", "Deleting data in datastore");
         if (bound) {
-            coreService.newDatastore();
+            //coreService.newDatastore();
+            coreService.manualUnlock(BluetoothService.SIMON_BEKEY);
         }
     }
 

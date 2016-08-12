@@ -36,10 +36,8 @@ public class WifiService extends Service {
                     String MAC = scanResults.get(i).BSSID;
                     int RSSI = scanResults.get(i).level;
 
-                    WifiData aWifiDevice = new WifiData(SSID, MAC, RSSI);
+                    WifiData aWifiDevice = new WifiData(SSID, MAC, RSSI, time);
                     CoreService.recordedWifi.add(aWifiDevice);
-
-                    CoreService.dataStore.insertWifi(SSID, MAC, RSSI, time);
                 }
             }
 

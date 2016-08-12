@@ -98,10 +98,6 @@ public class AccelerometerService extends Service implements SensorEventListener
         Log.v(TAG, "SEW: " + speed[0] + " SNS: " + speed[1] + " SUD: " + speed[2]);
 
         CoreService.recordedAccelerometer.add(anAccelerometerEvent);
-
-        CoreService.dataStore.insertAccelerometer(
-                accelerationX, accelerationY, accelerationZ,
-                speed[0], speed[1], speed[2], time);
     }
 
     @Override

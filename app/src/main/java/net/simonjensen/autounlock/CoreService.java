@@ -1,14 +1,23 @@
 package net.simonjensen.autounlock;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.*;
 import android.os.Process;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -241,4 +250,53 @@ public class CoreService extends Service {
     void newTruePositive() { long time = System.currentTimeMillis(); dataStore.insertDecision(1, time); }
 
     void newFalsePositive() { long time = System.currentTimeMillis(); dataStore.insertDecision(0, time); }
+
+    void manualUnlock(String lockMAC) {
+        boolean success = true;
+        String passphrase = "";
+
+        LocationData currentLocation = recordedLocation.get(recordedLocation.size() - 1);
+
+        if (success && recordedLocation.size() != 0) {
+            LockData lockData = new LockData(lockMAC, passphrase, currentLocation, 10, 100, recordedBluetooth, recordedWifi);
+            Log.d(TAG, lockData.toString());
+            newLock(lockData);
+        }
+    }
+
+    boolean newLock(LockData lockData) {
+        Log.d(TAG, "Inserting lock into db");
+        dataStore.insertLockDetails(lockData.getMAC(), lockData.getPassphrase(), lockData.getLocation().getLatitude(),
+                lockData.getLocation().getLongitude(), lockData.getInnerGeofence(), lockData.getOuterGeofence(), System.currentTimeMillis());
+
+        for (int i = 0; i < lockData.getNearbyBluetoothDevices().size(); i++) {
+            dataStore.insertBtle(
+                    lockData.getNearbyBluetoothDevices().get(i).getName(),
+                    lockData.getNearbyBluetoothDevices().get(i).getSource(),
+                    lockData.getNearbyBluetoothDevices().get(i).getRssi(),
+                    lockData.getMAC(),
+                    lockData.getNearbyBluetoothDevices().get(i).getTime()
+            );
+        }
+
+        for (int i = 0; i < lockData.getNearbyWifiAccessPoints().size(); i++) {
+            dataStore.insertWifi(
+                    lockData.getNearbyWifiAccessPoints().get(i).getSsid(),
+                    lockData.getNearbyWifiAccessPoints().get(i).getMac(),
+                    lockData.getNearbyWifiAccessPoints().get(i).getRssi(),
+                    lockData.getMAC(),
+                    lockData.getNearbyWifiAccessPoints().get(i).getTime()
+            );
+        }
+        return true;
+    }
+
+    void getLock(String lockMAC) {
+        LockData lock = dataStore.getLockDetails(lockMAC);
+        if (lock == null) {
+            Log.e(TAG, "no lock found");
+        } else {
+            Log.e(TAG, lock.toString());
+        }
+    }
 }

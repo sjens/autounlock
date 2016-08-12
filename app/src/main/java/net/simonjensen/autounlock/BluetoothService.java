@@ -50,8 +50,6 @@ public class BluetoothService extends Service {
             aBluetoothDevice = new BluetoothData(name, source, RSSI, time);
             CoreService.recordedBluetooth.add(aBluetoothDevice);
 
-            CoreService.dataStore.insertBtle(name, source, RSSI, time);
-
             Intent i = new Intent("BTLE_CONN");
             i.putExtra("mac", source);
             i.putExtra("rssi", RSSI);

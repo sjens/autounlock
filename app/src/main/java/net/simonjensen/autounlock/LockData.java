@@ -3,6 +3,7 @@ package net.simonjensen.autounlock;
 import android.location.Location;
 
 import java.util.ArrayList;
+import java.util.List;
 
 class LockData {
     private String MAC;
@@ -10,10 +11,11 @@ class LockData {
     private LocationData location;
     private int innerGeofence;
     private int outerGeofence;
-    private ArrayList<BluetoothData> nearbyBluetoothDevices;
-    private ArrayList<WifiData> nearbyWifiAccessPoints;
+    private List<BluetoothData> nearbyBluetoothDevices;
+    private List<WifiData> nearbyWifiAccessPoints;
 
-    LockData(String MAC, String passphrase, LocationData location, int innerGeofence, int outerGeofence, ArrayList<BluetoothData> nearbyBluetoothDevices, ArrayList<WifiData> nearbyWifiAccessPoints) {
+    LockData(String MAC, String passphrase, LocationData location, int innerGeofence, int outerGeofence,
+             List<BluetoothData> nearbyBluetoothDevices, List<WifiData> nearbyWifiAccessPoints) {
         this.MAC = MAC;
         this.passphrase = passphrase;
         this.location = location;
@@ -63,7 +65,7 @@ class LockData {
         this.outerGeofence = outerGeofence;
     }
 
-    public ArrayList<BluetoothData> getNearbyBluetoothDevices() {
+    public List<BluetoothData> getNearbyBluetoothDevices() {
         return nearbyBluetoothDevices;
     }
 
@@ -71,7 +73,7 @@ class LockData {
         this.nearbyBluetoothDevices = nearbyBluetoothDevices;
     }
 
-    public ArrayList<WifiData> getNearbyWifiAccessPoints() {
+    public List<WifiData> getNearbyWifiAccessPoints() {
         return nearbyWifiAccessPoints;
     }
 

@@ -15,20 +15,20 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 public class LocationService extends Service {
-    String TAG = "LocatoinService";
+    private String TAG = "LocatoinService";
 
-    int startMode;       // indicates how to behave if the service is killed
-    IBinder binder;      // interface for clients that bind
-    boolean allowRebind; // indicates whether onRebind should be used
+    private int startMode;       // indicates how to behave if the service is killed
+    private IBinder binder;      // interface for clients that bind
+    private boolean allowRebind; // indicates whether onRebind should be used
 
-    LocationManager locationManager;
-    Location previousLocation;
+    private LocationManager locationManager;
+    private Location previousLocation;
 
-    PowerManager powerManager;
-    PowerManager.WakeLock wakeLock;
+    private PowerManager powerManager;
+    private PowerManager.WakeLock wakeLock;
 
     // Define a listener that responds to location updates
-    LocationListener locationListener = new LocationListener() {
+    private LocationListener locationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
 
             if (previousLocation == null) {
@@ -45,7 +45,7 @@ public class LocationService extends Service {
             }
         }
 
-        public void insertLocationData(Location location) {
+        void insertLocationData(Location location) {
             // Called when a new location is found by the network location provider.
             long time = System.currentTimeMillis();
 
@@ -55,12 +55,6 @@ public class LocationService extends Service {
             CoreService.recordedLocation.add(aLocation);
 
             Log.v("LOCATION: ", location.toString());
-            CoreService.dataStore.insertLocation(
-                    location.getProvider(),
-                    location.getLatitude(),
-                    location.getLongitude(),
-                    location.getAccuracy(),
-                    time);
         }
 
         public void onStatusChanged(String provider, int status, Bundle extras) {

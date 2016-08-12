@@ -10,65 +10,61 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
-public class DataStore {
-    static final String DATABASE_NAME = "datastore.db";
-    static final int DATABASE_VERSION = 1;
+class DataStore {
+    private static final String DATABASE_NAME = "datastore.db";
+    private static final int DATABASE_VERSION = 1;
 
-    static final String ID = "ID";
-    static final String TIMESTAMP = "TIMESTAMP";
+    private static final String ID = "ID";
+    private static final String TIMESTAMP = "TIMESTAMP";
 
-    static final String LOCK_TABLE = "lock";
-    static final String LOCK_MAC = "MAC";
-    static final String LOCK_PASSPHRASE = "passphrase";
-    static final String LOCK_LATITUDE = "latitude";
-    static final String LOCK_LONGITUDE = "longitude";
-    static final String LOCK_INNER_GEOFENCE = "inner_geofence";
-    static final String LOCK_OUTER_GEOFENCE = "outer_geofence";
+    private static final String LOCK_TABLE = "lock";
+    private static final String LOCK_MAC = "MAC";
+    private static final String LOCK_PASSPHRASE = "passphrase";
+    private static final String LOCK_LATITUDE = "latitude";
+    private static final String LOCK_LONGITUDE = "longitude";
+    private static final String LOCK_INNER_GEOFENCE = "inner_geofence";
+    private static final String LOCK_OUTER_GEOFENCE = "outer_geofence";
 
-    static final String BLUETOOTH_TABLE = "bluetooth";
-    static final String BLUETOOTH_NAME = "name";
-    static final String BLUETOOTH_SOURCE = "source";
-    static final String BLUETOOTH_RSSI = "RSSI";
-    static final String BLUETOOTH_NEARBY_LOCK = "nearby_lock";
+    private static final String BLUETOOTH_TABLE = "bluetooth";
+    private static final String BLUETOOTH_NAME = "name";
+    private static final String BLUETOOTH_SOURCE = "source";
+    private static final String BLUETOOTH_RSSI = "RSSI";
+    private static final String BLUETOOTH_NEARBY_LOCK = "nearby_lock";
 
-    static final String WIFI_TABLE = "wifi";
-    static final String WIFI_SSID = "SSID";
-    static final String WIFI_MAC = "MAC";
-    static final String WIFI_RSSI = "RSSI";
-    static final String WIFI_NEARBY_LOCK = "nearby_lock";
+    private static final String WIFI_TABLE = "wifi";
+    private static final String WIFI_SSID = "SSID";
+    private static final String WIFI_MAC = "MAC";
+    private static final String WIFI_RSSI = "RSSI";
+    private static final String WIFI_NEARBY_LOCK = "nearby_lock";
 
-    static final String ACCELEROMETER_TABLE = "accelerometer";
-    static final String ACCELERATION_X = "acceleration_x";
-    static final String ACCELERATION_Y = "acceleration_y";
-    static final String ACCELERATION_Z = "acceleration_z";
-    static final String SPEED_X = "speed_x";
-    static final String SPEED_Y = "speed_y";
-    static final String SPEED_Z = "speed_z";
+    private static final String ACCELEROMETER_TABLE = "accelerometer";
+    private static final String ACCELERATION_X = "acceleration_x";
+    private static final String ACCELERATION_Y = "acceleration_y";
+    private static final String ACCELERATION_Z = "acceleration_z";
+    private static final String SPEED_X = "speed_x";
+    private static final String SPEED_Y = "speed_y";
+    private static final String SPEED_Z = "speed_z";
 
-    static final String LOCATION_TABLE = "location";
-    static final String LOCATION_PROVIDER = "provider";
-    static final String LOCATION_LATITUDE = "latitude";
-    static final String LOCATION_LONGITUDE = "longitude";
-    static final String LOCATION_ACCURACY = "accuracy";
+    private static final String LOCATION_TABLE = "location";
+    private static final String LOCATION_PROVIDER = "provider";
+    private static final String LOCATION_LATITUDE = "latitude";
+    private static final String LOCATION_LONGITUDE = "longitude";
+    private static final String LOCATION_ACCURACY = "accuracy";
 
-    static final String DECISION_TABLE = "decision";
-    static final String DECISION_DECISION = "decision";
+    private static final String DECISION_TABLE = "decision";
+    private static final String DECISION_DECISION = "decision";
 
-    static final String BUFFER_TABLE = "buffer";
-    static final String DATA = "data";
+    private static final String BUFFER_TABLE = "buffer";
+    private static final String DATA = "data";
 
     private SQLiteDatabase database;
     private DatabaseHelper databaseHelper;
 
-    public DataStore(Context context) {
+    DataStore(Context context) {
         databaseHelper = new DatabaseHelper(context);
     }
 
-    public void close() {
-        database.close();
-    }
-
-    public void deleteDatastore() {
+    void deleteDatastore() {
         database = databaseHelper.getWritableDatabase();
         database.delete(BLUETOOTH_TABLE, null, null);
         database.delete(WIFI_TABLE, null, null);
@@ -79,7 +75,7 @@ public class DataStore {
         database.close();
     }
 
-    public void insertLockDetails(String lockMAC, String lockPassphrase, float lockLatitude, float lockLongitude,
+    void insertLockDetails(String lockMAC, String lockPassphrase, double lockLatitude, double lockLongitude,
                                   int lockInnerGeofence, int lockOuterGeofence, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(LOCK_MAC, lockMAC);
@@ -100,68 +96,85 @@ public class DataStore {
         }
     }
 
-    public LockData getLockDetails(String foundLock) {
+    LockData getLockDetails(String foundLock) {
         LockData lockData;
         LocationData locationData;
         BluetoothData bluetoothData;
         WifiData wifiData;
 
+        String lockMac;
+        String lockPassphrase;
+        double lockLatitude;
+        double lockLongitude;
+        int innerGeofence;
+        int outerGeofence;
+
         ArrayList<BluetoothData> nearbyBluetoothDevices = new ArrayList<>();
         ArrayList<WifiData> nearbyWifiAccessPoints = new ArrayList<>();
-
-        Cursor cursor;
 
         try {
             database = databaseHelper.getReadableDatabase();
             database.beginTransaction();
 
-            String lockQuery = "SELECT * FROM " + LOCK_TABLE + " WHERE " + LOCK_MAC + " " + foundLock + ";";
-            cursor = database.rawQuery(lockQuery, null);
-            cursor.moveToFirst();
-            String lockMac = cursor.getString(cursor.getColumnIndex(LOCK_MAC));
-            String lockPassphrase = cursor.getString(cursor.getColumnIndex(LOCK_PASSPHRASE));
-            double lockLatitude = cursor.getDouble(cursor.getColumnIndex(LOCK_LATITUDE));
-            double lockLongitude = cursor.getDouble(cursor.getColumnIndex(LOCK_LONGITUDE));
-            int innerGeofence = cursor.getInt(cursor.getColumnIndex(LOCK_INNER_GEOFENCE));
-            int outerGeofence = cursor.getInt(cursor.getColumnIndex(LOCK_OUTER_GEOFENCE));
-            cursor.close();
+            String lockQuery = "SELECT * FROM " + LOCK_TABLE + " WHERE " + LOCK_MAC + "='" + foundLock + "';";
+            Cursor lockCursor = database.rawQuery(lockQuery, null);
+
+            lockCursor.moveToFirst();
+            if (lockCursor.isAfterLast()) {
+                // We have not found any locks and return null.
+                lockCursor.close();
+                return null;
+            } else {
+                lockMac = lockCursor.getString(lockCursor.getColumnIndex(LOCK_MAC));
+                lockPassphrase = lockCursor.getString(lockCursor.getColumnIndex(LOCK_PASSPHRASE));
+                lockLatitude = lockCursor.getDouble(lockCursor.getColumnIndex(LOCK_LATITUDE));
+                lockLongitude = lockCursor.getDouble(lockCursor.getColumnIndex(LOCK_LONGITUDE));
+                innerGeofence = lockCursor.getInt(lockCursor.getColumnIndex(LOCK_INNER_GEOFENCE));
+                outerGeofence = lockCursor.getInt(lockCursor.getColumnIndex(LOCK_OUTER_GEOFENCE));
+                lockCursor.close();
+            }
 
             String bluetoothQuery = "SELECT * FROM " + BLUETOOTH_TABLE + " WHERE "
-                    + BLUETOOTH_NEARBY_LOCK + " " + foundLock + ";";
-            cursor = database.rawQuery(bluetoothQuery, null);
-            cursor.moveToFirst();
-            for (int i = 0; i <= cursor.getColumnCount(); i++) {
-                String bluetoothName = cursor.getString(cursor.getColumnIndex(BLUETOOTH_NAME));
-                String bluetoothSource = cursor.getString(cursor.getColumnIndex(BLUETOOTH_SOURCE));
-                int bluetoothRSSI = cursor.getInt(cursor.getColumnIndex(BLUETOOTH_RSSI));
-                long bluetoothTimestamp = cursor.getLong(cursor.getColumnIndex(TIMESTAMP));
+                    + BLUETOOTH_NEARBY_LOCK + "='" + foundLock + "';";
+            Cursor bluetoothCursor = database.rawQuery(bluetoothQuery, null);
+            if (bluetoothCursor.getColumnCount() != 0) {
+                bluetoothCursor.moveToFirst();
+                for (int i = 0; i <= bluetoothCursor.getColumnCount(); i++) {
+                    String bluetoothName = bluetoothCursor.getString(bluetoothCursor.getColumnIndex(BLUETOOTH_NAME));
+                    String bluetoothSource = bluetoothCursor.getString(bluetoothCursor.getColumnIndex(BLUETOOTH_SOURCE));
+                    int bluetoothRSSI = bluetoothCursor.getInt(bluetoothCursor.getColumnIndex(BLUETOOTH_RSSI));
+                    long bluetoothTimestamp = bluetoothCursor.getLong(bluetoothCursor.getColumnIndex(TIMESTAMP));
 
-                bluetoothData = new BluetoothData(bluetoothName, bluetoothSource, bluetoothRSSI, bluetoothTimestamp);
-                nearbyBluetoothDevices.add(bluetoothData);
+                    bluetoothData = new BluetoothData(bluetoothName, bluetoothSource, bluetoothRSSI, bluetoothTimestamp);
+                    nearbyBluetoothDevices.add(bluetoothData);
 
-                if (!(cursor.isLast() || cursor.isAfterLast())) {
-                    cursor.moveToNext();
+                    if (!(bluetoothCursor.isLast() || bluetoothCursor.isAfterLast())) {
+                        bluetoothCursor.moveToNext();
+                    }
                 }
             }
-            cursor.close();
+            bluetoothCursor.close();
 
             String wifiQuery = "SELECT * FROM " + WIFI_TABLE + " WHERE "
-                    + WIFI_NEARBY_LOCK + " " + foundLock + ";";
-            cursor = database.rawQuery(wifiQuery, null);
-            cursor.moveToFirst();
-            for (int i = 0; i <= cursor.getColumnCount(); i++) {
-                String wifiSSID = cursor.getString(cursor.getColumnIndex(WIFI_SSID));
-                String wifiMAC = cursor.getString(cursor.getColumnIndex(WIFI_MAC));
-                int wifiRSSI = cursor.getInt(cursor.getColumnIndex(WIFI_RSSI));
+                    + WIFI_NEARBY_LOCK + "='" + foundLock + "';";
+            Cursor wifiCursor = database.rawQuery(wifiQuery, null);
+            if (wifiCursor.getColumnCount() != 0) {
+                wifiCursor.moveToFirst();
+                for (int i = 0; i <= wifiCursor.getColumnCount(); i++) {
+                    String wifiSSID = wifiCursor.getString(wifiCursor.getColumnIndex(WIFI_SSID));
+                    String wifiMAC = wifiCursor.getString(wifiCursor.getColumnIndex(WIFI_MAC));
+                    int wifiRSSI = wifiCursor.getInt(wifiCursor.getColumnIndex(WIFI_RSSI));
+                    long wifiTimestamp = wifiCursor.getLong(wifiCursor.getColumnIndex(TIMESTAMP));
 
-                wifiData = new WifiData(wifiSSID, wifiMAC, wifiRSSI);
-                nearbyWifiAccessPoints.add(wifiData);
+                    wifiData = new WifiData(wifiSSID, wifiMAC, wifiRSSI, wifiTimestamp);
+                    nearbyWifiAccessPoints.add(wifiData);
 
-                if (!(cursor.isLast() || cursor.isAfterLast())) {
-                    cursor.moveToNext();
+                    if (!(wifiCursor.isLast() || wifiCursor.isAfterLast())) {
+                        wifiCursor.moveToNext();
+                    }
                 }
             }
-            cursor.close();
+            wifiCursor.close();
 
             locationData = new LocationData(lockLatitude, lockLongitude);
             lockData = new LockData(lockMac, lockPassphrase, locationData,
@@ -172,11 +185,12 @@ public class DataStore {
         }
     }
 
-    public void insertBtle(String name, String btleSource, int btleRSSI, long timestamp) {
+    void insertBtle(String name, String btleSource, int btleRSSI, String nearbyLock, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(BLUETOOTH_NAME, name);
         contentValues.put(BLUETOOTH_SOURCE, btleSource);
         contentValues.put(BLUETOOTH_RSSI, btleRSSI);
+        contentValues.put(BLUETOOTH_NEARBY_LOCK, nearbyLock);
         contentValues.put(TIMESTAMP, timestamp);
 
         try {
@@ -189,12 +203,13 @@ public class DataStore {
         }
     }
 
-    public void insertWifi(String wifiSSID, String wifiMAC, int wifiRSSI, long timestamp) {
+    void insertWifi(String wifiSSID, String wifiMAC, int wifiRSSI, String nearbyLock, long timestamp) {
         ContentValues contentValues = new ContentValues();
         //contentValues.put(ID, id);
         contentValues.put(WIFI_SSID, wifiSSID);
         contentValues.put(WIFI_MAC, wifiMAC);
         contentValues.put(WIFI_RSSI, wifiRSSI);
+        contentValues.put(WIFI_NEARBY_LOCK, nearbyLock);
         contentValues.put(TIMESTAMP, timestamp);
 
         try {
@@ -207,7 +222,7 @@ public class DataStore {
         }
     }
 
-    public void insertAccelerometer(float accelerometerX, float accelerometerY, float accelerometerZ,
+    void insertAccelerometer(float accelerometerX, float accelerometerY, float accelerometerZ,
                                     float speedX, float speedY, float speedZ, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(ACCELERATION_X, accelerometerX);
@@ -228,7 +243,7 @@ public class DataStore {
         }
     }
 
-    public void insertLocation(String provider, double latitude, double longitude, float accuracy, long timestamp) {
+    void insertLocation(String provider, double latitude, double longitude, float accuracy, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(LOCATION_PROVIDER, provider);
         contentValues.put(LOCATION_LATITUDE, latitude);
@@ -246,7 +261,7 @@ public class DataStore {
         }
     }
 
-    public void insertDecision(int decision, long timestamp) {
+    void insertDecision(int decision, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(DECISION_DECISION, decision);
         contentValues.put(TIMESTAMP, timestamp);
@@ -261,7 +276,7 @@ public class DataStore {
         }
     }
 
-    public void insertBuffer(long timestamp, String data) {
+    void insertBuffer(long timestamp, String data) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(TIMESTAMP, timestamp);
         contentValues.put(DATA, data);
@@ -277,7 +292,7 @@ public class DataStore {
     }
 
     private class DatabaseHelper extends SQLiteOpenHelper {
-        public DatabaseHelper(Context context) {
+        DatabaseHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
         }
 
@@ -298,7 +313,6 @@ public class DataStore {
                 dropDatastore();
                 createDatastore(database);
                 database.close();
-                return;
             }
         }
 
@@ -317,7 +331,7 @@ public class DataStore {
                     + BLUETOOTH_NAME + " TEXT, "
                     + BLUETOOTH_SOURCE + " TEXT, "
                     + BLUETOOTH_RSSI + " INTEGER, "
-                    + "FOREIGN KEY(" + BLUETOOTH_NEARBY_LOCK + ") REFERENCES " + LOCK_TABLE + "(" + LOCK_MAC + "), "
+                    + BLUETOOTH_NEARBY_LOCK + " FOREIGNKEY REFERENCES " + LOCK_TABLE + "(" + LOCK_MAC + "), "
                     + TIMESTAMP + " LONG)");
 
             database.execSQL("CREATE TABLE " + WIFI_TABLE + " ("
@@ -325,7 +339,7 @@ public class DataStore {
                     + WIFI_SSID + " TEXT, "
                     + WIFI_MAC + " TEXT, "
                     + WIFI_RSSI + " INTEGER, "
-                    + "FOREIGN KEY(" + WIFI_NEARBY_LOCK + ") REFERENCES " + LOCK_TABLE + "(" + LOCK_MAC + "), "
+                    + WIFI_NEARBY_LOCK + " FOREIGNKEY REFERENCES " + LOCK_TABLE + "(" + LOCK_MAC + "), "
                     + TIMESTAMP + " LONG)");
 
             database.execSQL("CREATE TABLE " + ACCELEROMETER_TABLE + " ("

@@ -5,7 +5,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DataProcessor implements Runnable {
+class DataProcessor implements Runnable {
     private volatile boolean running = true;
 
     @Override
@@ -71,9 +71,9 @@ public class DataProcessor implements Runnable {
                 stringBuilder.append(prevRecordedWifi.get(i).toString());
             }
 
-            CoreService.dataStore.insertBuffer(System.currentTimeMillis(), stringBuilder.toString());
+            //CoreService.dataStore.insertBuffer(System.currentTimeMillis(), stringBuilder.toString());
 
-            Log.v("dataBuffer", CoreService.dataBuffer.toString());
+            //Log.v("dataBuffer", CoreService.dataBuffer.toString());
 
             Log.v("StringOUT", stringBuilder.toString());
             try {
@@ -84,7 +84,7 @@ public class DataProcessor implements Runnable {
         }
     }
 
-    public void terminate() {
+    void terminate() {
         running = false;
     }
 }

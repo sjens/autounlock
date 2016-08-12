@@ -4,11 +4,13 @@ public class WifiData {
     String ssid;
     String mac;
     int rssi;
+    long time;
 
-    public WifiData(String ssid, String mac, int rssi) {
+    public WifiData(String ssid, String mac, int rssi, long time) {
         this.ssid = ssid;
         this.mac = mac;
         this.rssi = rssi;
+        this.time = time;
     }
 
     public String getSsid() {
@@ -35,12 +37,21 @@ public class WifiData {
         this.rssi = rssi;
     }
 
+    public long getTime() {
+        return time;
+    }
+
+    public void setTime(long time) {
+        this.time = time;
+    }
+
     @Override
     public String toString() {
         return "WifiData{" +
                 "ssid='" + ssid + '\'' +
                 ", mac='" + mac + '\'' +
                 ", rssi=" + rssi +
+                ", time=" + time +
                 '}';
     }
 }
