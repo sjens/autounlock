@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -19,6 +20,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -53,6 +55,7 @@ public class CoreService extends Service implements
     static List<WifiData> recordedWifi = new ArrayList<WifiData>();
     static List<LocationData> recordedLocation = new ArrayList<LocationData>();
     static List<AccelerometerData> recordedAccelerometer = new ArrayList<AccelerometerData>();
+    static ArrayList nearbyLocks = new ArrayList();
 
     static DataBuffer<List> dataBuffer;
     static DataStore dataStore;
@@ -136,6 +139,14 @@ public class CoreService extends Service implements
         buildGoogleApiClient();
 
         geofence = new net.simonjensen.autounlock.Geofence();
+
+        IntentFilter enteredGeofencesFilter = new IntentFilter();
+        enteredGeofencesFilter.addAction("GEOFENCES_ENTERED");
+        registerReceiver(geofencesEntered, enteredGeofencesFilter);
+
+        IntentFilter exitedGeofencesFilter = new IntentFilter();
+        exitedGeofencesFilter.addAction("GEOFENCES_EXITED");
+        registerReceiver(geofencesExited, exitedGeofencesFilter);
     }
 
     @Override
@@ -170,7 +181,7 @@ public class CoreService extends Service implements
         return localBinder;
     }
 
-    protected synchronized void buildGoogleApiClient() {
+    private synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -198,6 +209,29 @@ public class CoreService extends Service implements
     public void onResult(@NonNull Status status) {
 
     }
+
+    private BroadcastReceiver geofencesEntered = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle extras = intent.getExtras();
+            Log.i(TAG, String.valueOf(extras.getStringArrayList("Geofences")));
+            for (String lockMAC : extras.getStringArrayList("Geofences")) {
+                if (!nearbyLocks.contains(lockMAC)) {
+                    nearbyLocks.add(lockMAC);
+                }
+            }
+            if (!nearbyLocks.isEmpty()) {
+                startDataCollection();
+            }
+        }
+    };
+
+    private BroadcastReceiver geofencesExited = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //TODO: Stop all data collection
+        }
+    };
 
     void startAccelerometerService() {
         Log.v(TAG, "Starting AccelerometerService");
@@ -276,6 +310,13 @@ public class CoreService extends Service implements
         if (dataCollector != null) {
             dataProcessor.terminate();
         }
+    }
+
+    void startDataCollection() {
+        startBluetoothService();
+        startWifiService();
+        startLoactionService();
+        startDataBuffer();
     }
 
     void addGeofences() {

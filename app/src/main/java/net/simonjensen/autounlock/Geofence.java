@@ -15,17 +15,17 @@ import java.util.ArrayList;
 
 class Geofence {
 
-    static String TAG = "Geofence";
+    private static String TAG = "Geofence";
 
-    private ArrayList<com.google.android.gms.location.Geofence> geofenceArrayList;
+    static ArrayList<com.google.android.gms.location.Geofence> geofenceArrayList;
 
-    PendingIntent pendingIntent;
+    private PendingIntent pendingIntent;
 
     Geofence() {
         geofenceArrayList = new ArrayList<com.google.android.gms.location.Geofence>();
     }
 
-    void populateGeofenceList(String name, LatLng location, Float radius) {
+    private void populateGeofenceList(String name, LatLng location, Float radius) {
 
         Log.v("Populate geofence list", "Name: " + name + " Location: " + location);
 
@@ -42,7 +42,7 @@ class Geofence {
                 .build());
     }
 
-    GeofencingRequest geofencingRequest() {
+    private GeofencingRequest geofencingRequest() {
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
 
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);

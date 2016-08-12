@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Parcelable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.text.TextUtils;
@@ -22,7 +23,7 @@ import java.util.List;
 
 public class GeofenceService extends IntentService {
 
-    static String TAG = "GeofenceService";
+    private static String TAG = "GeofenceService";
 
     public GeofenceService() {
         super(TAG);
@@ -44,25 +45,30 @@ public class GeofenceService extends IntentService {
 
         int geofenceTransition = geofencingEvent.getGeofenceTransition();
 
-        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-                geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
 
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
 
-            String geofenceTransitionDetails = getGeofenceTransitionDetails(
-                    this,
-                    geofenceTransition,
-                    triggeringGeofences
-            );
+            ArrayList triggeringLockList = new ArrayList();
+            for (Geofence geofence : triggeringGeofences) {
+                String lockMAC = geofence.getRequestId().substring(5);
+                if (!triggeringLockList.contains(lockMAC)) {
+                    triggeringLockList.add(lockMAC);
+                }
+            }
 
-            sendNotification(geofenceTransitionDetails);
-            Log.i(TAG, geofenceTransitionDetails);
+            Intent geofencesEntered = new Intent("GEOFENCES_ENTERED");
+            geofencesEntered.putExtra("Geofences", triggeringLockList);
+            sendBroadcast(geofencesEntered);
+        } else if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT){
+            Intent geofencesExited = new Intent("GEOFENCES_EXITED");
+            sendBroadcast(geofencesExited);
         } else {
             Log.e(TAG, getString(R.string.geofence_transition_invalid_type, geofenceTransition));
         }
     }
 
-    public static String getErrorString(Context context, int errorCode) {
+    private static String getErrorString(Context context, int errorCode) {
         Resources mResources = context.getResources();
         switch (errorCode) {
             case GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE:
@@ -73,63 +79,6 @@ public class GeofenceService extends IntentService {
                 return mResources.getString(R.string.geofence_too_many_pending_intents);
             default:
                 return mResources.getString(R.string.unknown_geofence_error);
-        }
-    }
-
-    private String getGeofenceTransitionDetails(
-            Context context,
-            int geofenceTransition,
-            List<Geofence> triggeringGeofences) {
-
-        String geofenceTransitionString = getTransitionString(geofenceTransition);
-
-        ArrayList triggeringGeofencesIdsList = new ArrayList();
-        for (Geofence geofence : triggeringGeofences) {
-            triggeringGeofencesIdsList.add(geofence.getRequestId());
-        }
-        String triggeringGeofencesIdsString = TextUtils.join(", ",  triggeringGeofencesIdsList);
-
-        return geofenceTransitionString + ": " + triggeringGeofencesIdsString;
-    }
-
-    private void sendNotification(String notificationDetails) {
-        Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
-
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-
-        stackBuilder.addParentStack(MainActivity.class);
-
-        stackBuilder.addNextIntent(notificationIntent);
-
-        PendingIntent notificationPendingIntent =
-                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-
-        builder.setSmallIcon(R.drawable.common_ic_googleplayservices)
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(),
-                        R.drawable.common_ic_googleplayservices))
-                .setColor(Color.RED)
-                .setContentTitle(notificationDetails)
-                .setContentText(getString(R.string.geofence_transition_notification_text))
-                .setContentIntent(notificationPendingIntent);
-
-        builder.setAutoCancel(true);
-
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        mNotificationManager.notify(0, builder.build());
-    }
-
-    private String getTransitionString(int transitionType) {
-        switch (transitionType) {
-            case Geofence.GEOFENCE_TRANSITION_ENTER:
-                return "Entered geofence";
-            case Geofence.GEOFENCE_TRANSITION_EXIT:
-                return "Exited geofence";
-            default:
-                return "Unknown geofence transition";
         }
     }
 }
