@@ -495,7 +495,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickAddGeofence(View v) {
         if (bound) {
-            coreService.addGeofence();
+            coreService.addGeofences();
             if (!geofencAdded) {
                 registerGeofenceEnabled = true;
                 registerGeofence.setEnabled(registerGeofenceEnabled);

@@ -9,12 +9,19 @@ class LockData {
     private String MAC;
     private String passphrase;
     private LocationData location;
-    private int innerGeofence;
-    private int outerGeofence;
+    private float innerGeofence;
+    private float outerGeofence;
     private List<BluetoothData> nearbyBluetoothDevices;
     private List<WifiData> nearbyWifiAccessPoints;
 
-    LockData(String MAC, String passphrase, LocationData location, int innerGeofence, int outerGeofence,
+    LockData(String MAC, LocationData location, float innerGeofence, float outerGeofence) {
+        this.MAC = MAC;
+        this.location = location;
+        this.innerGeofence = innerGeofence;
+        this.outerGeofence = outerGeofence;
+    }
+
+    LockData(String MAC, String passphrase, LocationData location, float innerGeofence, float outerGeofence,
              List<BluetoothData> nearbyBluetoothDevices, List<WifiData> nearbyWifiAccessPoints) {
         this.MAC = MAC;
         this.passphrase = passphrase;
@@ -49,7 +56,7 @@ class LockData {
         this.location = location;
     }
 
-    public int getInnerGeofence() {
+    public float getInnerGeofence() {
         return innerGeofence;
     }
 
@@ -57,7 +64,7 @@ class LockData {
         this.innerGeofence = innerGeofence;
     }
 
-    public int getOuterGeofence() {
+    public float getOuterGeofence() {
         return outerGeofence;
     }
 

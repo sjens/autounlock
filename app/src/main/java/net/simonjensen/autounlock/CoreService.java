@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -13,16 +14,26 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.*;
 import android.os.Process;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CoreService extends Service {
+public class CoreService extends Service implements
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        ResultCallback<Status> {
 
     private static final String TAG = "CoreService";
 
@@ -50,6 +61,7 @@ public class CoreService extends Service {
 
     // Binder given to clients
     private final IBinder localBinder = new LocalBinder();
+    private GoogleApiClient mGoogleApiClient;
 
     /**
      * Class used for the client Binder.  Because we know this service always
@@ -121,7 +133,9 @@ public class CoreService extends Service {
         wifiIntent = new Intent(this, WifiService.class);
         bluetoothIntent = new Intent(this, BluetoothService.class);
 
-        geofence = new net.simonjensen.autounlock.Geofence(this);
+        buildGoogleApiClient();
+
+        geofence = new net.simonjensen.autounlock.Geofence();
     }
 
     @Override
@@ -134,7 +148,9 @@ public class CoreService extends Service {
         msg.arg1 = startId;
         serviceHandler.sendMessage(msg);
 
-        geofence.connect();
+        if (!mGoogleApiClient.isConnecting() || !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
+        }
 
         // If we get killed, after returning from here, restart
         return START_STICKY;
@@ -142,7 +158,9 @@ public class CoreService extends Service {
 
     @Override
     public void onDestroy() {
-        geofence.disconnect();
+        if (mGoogleApiClient.isConnecting() || mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
         Log.v("CoreService", "Service destroyed");
     }
 
@@ -150,6 +168,35 @@ public class CoreService extends Service {
     public IBinder onBind(Intent intent) {
         // localBinder is used for bound services
         return localBinder;
+    }
+
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.v(TAG, "Connected ");
+        addGeofences();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onResult(@NonNull Status status) {
+
     }
 
     void startAccelerometerService() {
@@ -231,16 +278,23 @@ public class CoreService extends Service {
         }
     }
 
-    void addGeofence() {
-        geofence.addGeofence(this);
+    void addGeofences() {
+        ArrayList<LockData> lockDataArrayList = dataStore.getKnownLocks();
+        Log.v(TAG, lockDataArrayList.get(0).toString());
+        if (!lockDataArrayList.isEmpty()) {
+            for (int i = 0; i < lockDataArrayList.size(); i++) {
+                geofence.addGeofence(lockDataArrayList.get(i));
+            }
+            registerGeofences();
+        }
     }
 
     void registerGeofences() {
-        geofence.registerGeofences(this);
+        geofence.registerGeofences(this, mGoogleApiClient);
     }
 
     void unregisterGeofences() {
-        geofence.unregisterGeofences(this);
+        geofence.unregisterGeofences(this, mGoogleApiClient);
     }
 
     void newDatastore() {
@@ -258,7 +312,15 @@ public class CoreService extends Service {
         LocationData currentLocation = recordedLocation.get(recordedLocation.size() - 1);
 
         if (success && recordedLocation.size() != 0) {
-            LockData lockData = new LockData(lockMAC, passphrase, currentLocation, 10, 100, recordedBluetooth, recordedWifi);
+            LockData lockData = new LockData(
+                    lockMAC,
+                    passphrase,
+                    currentLocation,
+                    10,
+                    100,
+                    recordedBluetooth,
+                    recordedWifi
+            );
             Log.d(TAG, lockData.toString());
             newLock(lockData);
         }
@@ -266,8 +328,15 @@ public class CoreService extends Service {
 
     boolean newLock(LockData lockData) {
         Log.d(TAG, "Inserting lock into db");
-        dataStore.insertLockDetails(lockData.getMAC(), lockData.getPassphrase(), lockData.getLocation().getLatitude(),
-                lockData.getLocation().getLongitude(), lockData.getInnerGeofence(), lockData.getOuterGeofence(), System.currentTimeMillis());
+        dataStore.insertLockDetails(
+                lockData.getMAC(),
+                lockData.getPassphrase(),
+                lockData.getLocation().getLatitude(),
+                lockData.getLocation().getLongitude(),
+                lockData.getInnerGeofence(),
+                lockData.getOuterGeofence(),
+                System.currentTimeMillis()
+        );
 
         for (int i = 0; i < lockData.getNearbyBluetoothDevices().size(); i++) {
             dataStore.insertBtle(

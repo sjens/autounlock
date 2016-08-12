@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.location.Location;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -76,7 +75,7 @@ class DataStore {
     }
 
     void insertLockDetails(String lockMAC, String lockPassphrase, double lockLatitude, double lockLongitude,
-                                  int lockInnerGeofence, int lockOuterGeofence, long timestamp) {
+                                  float lockInnerGeofence, float lockOuterGeofence, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(LOCK_MAC, lockMAC);
         contentValues.put(LOCK_PASSPHRASE, lockPassphrase);
@@ -96,6 +95,40 @@ class DataStore {
         }
     }
 
+    ArrayList<LockData> getKnownLocks() {
+        ArrayList<LockData> lockDataArrayList = new ArrayList<>();
+
+        try {
+            database = databaseHelper.getReadableDatabase();
+            database.beginTransaction();
+
+            String lockQuery = "SELECT * FROM " + LOCK_TABLE + ";";
+            Cursor lockCursor = database.rawQuery(lockQuery, null);
+
+            lockCursor.moveToFirst();
+            if (!lockCursor.isAfterLast()) {
+                for (int i = 0; i < lockCursor.getCount(); i++) {
+                    String lockMac = lockCursor.getString(lockCursor.getColumnIndex(LOCK_MAC));
+                    double lockLatitude = lockCursor.getDouble(lockCursor.getColumnIndex(LOCK_LATITUDE));
+                    double lockLongitude = lockCursor.getDouble(lockCursor.getColumnIndex(LOCK_LONGITUDE));
+                    float innerGeofence = lockCursor.getInt(lockCursor.getColumnIndex(LOCK_INNER_GEOFENCE));
+                    float outerGeofence = lockCursor.getInt(lockCursor.getColumnIndex(LOCK_OUTER_GEOFENCE));
+                    LockData lockData = new LockData(
+                            lockMac,
+                            new LocationData(lockLatitude, lockLongitude),
+                            innerGeofence,
+                            outerGeofence
+                    );
+                    lockDataArrayList.add(lockData);
+                }
+            }
+            lockCursor.close();
+        } finally {
+            database.endTransaction();
+        }
+        return lockDataArrayList;
+    }
+
     LockData getLockDetails(String foundLock) {
         LockData lockData;
         LocationData locationData;
@@ -106,8 +139,8 @@ class DataStore {
         String lockPassphrase;
         double lockLatitude;
         double lockLongitude;
-        int innerGeofence;
-        int outerGeofence;
+        float innerGeofence;
+        float outerGeofence;
 
         ArrayList<BluetoothData> nearbyBluetoothDevices = new ArrayList<>();
         ArrayList<WifiData> nearbyWifiAccessPoints = new ArrayList<>();
@@ -322,8 +355,8 @@ class DataStore {
                     + LOCK_PASSPHRASE + " TEXT, "
                     + LOCK_LATITUDE + " DOUBLE, "
                     + LOCK_LONGITUDE + " DOUBLE, "
-                    + LOCK_INNER_GEOFENCE + " TEXT, "
-                    + LOCK_OUTER_GEOFENCE + " INTEGER, "
+                    + LOCK_INNER_GEOFENCE + " FLOAT, "
+                    + LOCK_OUTER_GEOFENCE + " FLOAT, "
                     + TIMESTAMP + " LONG)");
 
             database.execSQL("CREATE TABLE " + BLUETOOTH_TABLE + " ("
