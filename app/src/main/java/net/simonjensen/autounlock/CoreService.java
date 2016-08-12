@@ -1,6 +1,5 @@
 package net.simonjensen.autounlock;
 
-import android.Manifest;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -8,26 +7,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.*;
 import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,9 +37,8 @@ public class CoreService extends Service implements
     private Intent bluetoothIntent;
     private Intent wifiIntent;
     private Intent locationIntent;
+    private Intent dataProcessorIntent;
 
-    private DataProcessor dataProcessor;
-    private Thread dataCollector;
     private Heuristics heuristics;
 
     static List<BluetoothData> recordedBluetooth = new ArrayList<BluetoothData>();
@@ -135,6 +125,7 @@ public class CoreService extends Service implements
         locationIntent = new Intent(this, LocationService.class);
         wifiIntent = new Intent(this, WifiService.class);
         bluetoothIntent = new Intent(this, BluetoothService.class);
+        dataProcessorIntent = new Intent(this, DataProcessorService.class);
 
         buildGoogleApiClient();
 
@@ -147,6 +138,10 @@ public class CoreService extends Service implements
         IntentFilter exitedGeofencesFilter = new IntentFilter();
         exitedGeofencesFilter.addAction("GEOFENCES_EXITED");
         registerReceiver(geofencesExited, exitedGeofencesFilter);
+
+        IntentFilter startDecisionFilter = new IntentFilter();
+        startDecisionFilter.addAction("START_DECISION");
+        registerReceiver(startDecision, startDecisionFilter);
     }
 
     @Override
@@ -230,6 +225,22 @@ public class CoreService extends Service implements
         @Override
         public void onReceive(Context context, Intent intent) {
             //TODO: Stop all data collection
+            Bundle extras = intent.getExtras();
+            for (String lockMAC : extras.getStringArrayList("Geofences")) {
+                if (nearbyLocks.contains(lockMAC)) {
+                    nearbyLocks.remove(lockMAC);
+                }
+            }
+            if (nearbyLocks.isEmpty()) {
+                stopDataCollection();
+            }
+        }
+    };
+
+    private BroadcastReceiver startDecision = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.e(TAG, "StartDecision");
         }
     };
 
@@ -247,7 +258,7 @@ public class CoreService extends Service implements
         stopService(accelerometerIntent);
     }
 
-    void startLoactionService() {
+    void startLocationService() {
         Log.v(TAG, "Starting LocationService");
         Thread locationServiceThread = new Thread() {
             public void run() {
@@ -289,9 +300,9 @@ public class CoreService extends Service implements
         stopService(bluetoothIntent);
     }
 
-    void startDecision(String foundLock) {
+    void startDecision(List foundLocks) {
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
-        heuristics.makeDecision(foundLock);
+        heuristics.makeDecision(foundLocks);
     }
 
     void notifyDecision() {
@@ -299,29 +310,38 @@ public class CoreService extends Service implements
     }
 
     void startDataBuffer() {
+        Log.d(TAG, "Starting data processing");
         dataBuffer = new DataBuffer<List>(1000);
-        dataProcessor = new DataProcessor();
-        dataCollector = new Thread(dataProcessor);
-        dataCollector.start();
+        //dataProcessor = new DataProcessorService();
+        Thread dataProcessorThread = new Thread() {
+            public void run() {
+                startService(dataProcessorIntent);
+            }
+        };
+        dataProcessorThread.start();
     }
 
     void stopDataBuffer() {
         Log.d("CoreService", "Trying to stop dataProcessor");
-        if (dataCollector != null) {
-            dataProcessor.terminate();
-        }
+        stopService(dataProcessorIntent);
     }
 
     void startDataCollection() {
         startBluetoothService();
         startWifiService();
-        startLoactionService();
+        startLocationService();
         startDataBuffer();
+    }
+
+    void stopDataCollection() {
+        stopBluetoothService();
+        stopWifiService();
+        stopLocationService();
+        stopDataBuffer();
     }
 
     void addGeofences() {
         ArrayList<LockData> lockDataArrayList = dataStore.getKnownLocks();
-        Log.v(TAG, lockDataArrayList.get(0).toString());
         if (!lockDataArrayList.isEmpty()) {
             for (int i = 0; i < lockDataArrayList.size(); i++) {
                 geofence.addGeofence(lockDataArrayList.get(i));
@@ -367,7 +387,7 @@ public class CoreService extends Service implements
         }
     }
 
-    boolean newLock(LockData lockData) {
+    private boolean newLock(LockData lockData) {
         Log.d(TAG, "Inserting lock into db");
         dataStore.insertLockDetails(
                 lockData.getMAC(),

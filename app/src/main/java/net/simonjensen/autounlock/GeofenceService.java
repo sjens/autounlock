@@ -46,7 +46,6 @@ public class GeofenceService extends IntentService {
         int geofenceTransition = geofencingEvent.getGeofenceTransition();
 
         if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
-
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
 
             ArrayList triggeringLockList = new ArrayList();
@@ -61,7 +60,17 @@ public class GeofenceService extends IntentService {
             geofencesEntered.putExtra("Geofences", triggeringLockList);
             sendBroadcast(geofencesEntered);
         } else if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT){
+            List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+
+            ArrayList triggeringLockList = new ArrayList();
+            for (Geofence geofence : triggeringGeofences) {
+                String lockMAC = geofence.getRequestId().substring(5);
+                if (!triggeringLockList.contains(lockMAC)) {
+                    triggeringLockList.add(lockMAC);
+                }
+            }
             Intent geofencesExited = new Intent("GEOFENCES_EXITED");
+            geofencesExited.putExtra("Geofences", triggeringLockList);
             sendBroadcast(geofencesExited);
         } else {
             Log.e(TAG, getString(R.string.geofence_transition_invalid_type, geofenceTransition));

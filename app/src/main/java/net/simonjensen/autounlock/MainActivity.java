@@ -5,7 +5,6 @@ import android.app.ActivityManager;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -16,11 +15,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.nio.channels.FileChannel;
 
 public class MainActivity extends AppCompatActivity {
     private CoreService coreService;
@@ -256,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void onButtonClickLocation(View v) {
         if (bound) {
-            coreService.startLoactionService();
+            coreService.startLocationService();
             setStartLocation();
 
             startAllEnabled = false;
@@ -412,7 +406,7 @@ public class MainActivity extends AppCompatActivity {
         if (bound) {
             coreService.startDataBuffer();
             coreService.startAccelerometerService();
-            coreService.startLoactionService();
+            coreService.startLocationService();
             coreService.startWifiService();
             coreService.startBluetoothService();
 
@@ -552,7 +546,7 @@ public class MainActivity extends AppCompatActivity {
             // do something
         }*/
         if (bound) {
-            coreService.getLock(BluetoothService.SIMON_BEKEY);
+            coreService.getLock(BluetoothService.MIBAND);
         }
     }
 
@@ -560,7 +554,7 @@ public class MainActivity extends AppCompatActivity {
         Log.v("New Datastore", "Deleting data in datastore");
         if (bound) {
             //coreService.newDatastore();
-            coreService.manualUnlock(BluetoothService.SIMON_BEKEY);
+            coreService.manualUnlock(BluetoothService.MIBAND);
         }
     }
 

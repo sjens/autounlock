@@ -1,9 +1,11 @@
 package net.simonjensen.autounlock;
 
+import java.util.List;
+
 public class Heuristics {
 
-    boolean makeDecision(String foundLock) {
-        CoreService.dataStore.getLockDetails(foundLock);
+    boolean makeDecision(List foundLocks) {
+        //CoreService.dataStore.getLockDetails(foundLock);
         return false;
     }
 }

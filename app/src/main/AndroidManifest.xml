@@ -46,6 +46,9 @@
         <service
                 android:name=".GeofenceService"
                 android:enabled="true"/>
+        <service
+                android:name=".DataProcessorService"
+                android:enabled="true"/>
 
     </application>
 
