@@ -16,7 +16,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
     private CoreService coreService;
     private boolean bound = false;
     private static boolean geofencAdded = false;
@@ -546,7 +550,10 @@ public class MainActivity extends AppCompatActivity {
             // do something
         }*/
         if (bound) {
-            coreService.getLock(BluetoothService.MIBAND);
+            List<String> foundLocks = new ArrayList<>();
+            foundLocks.add(BluetoothService.MIBAND);
+            Log.d(TAG, foundLocks.toString());
+            coreService.startDecision(foundLocks);
         }
     }
 

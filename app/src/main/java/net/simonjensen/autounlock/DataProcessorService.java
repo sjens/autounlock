@@ -55,17 +55,6 @@ public class DataProcessorService extends Service {
             List foundLocks = new ArrayList();
 
             while (running) {
-                for (int i = 0; i < CoreService.recordedBluetooth.size(); i++) {
-                    if (CoreService.recordedBluetooth.get(i).getSource().equals(BluetoothService.MIBAND)) {
-                        Log.e("Start Decision", "BeKey found");
-                        //coreService.startDecision(CoreService.recordedBluetooth.get(i).getSource());
-                        foundLocks.add(CoreService.recordedBluetooth.get(i).getSource());
-                    }
-                }
-                if (!foundLocks.isEmpty()) {
-                    sendDecisionIntent(foundLocks);
-                }
-
                 // In order to not have empty lists in the DataBuffer, previous data will be used if no new data has been found.
                 if (!CoreService.recordedAccelerometer.isEmpty() || prevRecordedAccelerometer.isEmpty()) {
                     prevRecordedAccelerometer = CoreService.recordedAccelerometer;
@@ -94,6 +83,21 @@ public class DataProcessorService extends Service {
                 dataBlob.add(prevRecordedWifi);
 
                 CoreService.dataBuffer.add(dataBlob);
+
+                // Do not start decision making before we have at least one nearby Bluetooth device (the lock),
+                // and a location. We cannot be sure any Wifi access points are nearby.
+                if (!prevRecordedBluetooth.isEmpty() && !prevRecordedLocation.isEmpty()) {
+                    for (int i = 0; i < CoreService.recordedBluetooth.size(); i++) {
+                        if (CoreService.recordedBluetooth.get(i).getSource().equals(BluetoothService.MIBAND)) {
+                            Log.e("Start Decision", "BeKey found");
+                            //coreService.startDecision(CoreService.recordedBluetooth.get(i).getSource());
+                            foundLocks.add(CoreService.recordedBluetooth.get(i).getSource());
+                        }
+                    }
+                    if (!foundLocks.isEmpty()) {
+                        sendDecisionIntent(foundLocks);
+                    }
+                }
 
                 StringBuilder stringBuilder = new StringBuilder();
                 for (int i = 0; i < prevRecordedAccelerometer.size(); i++) {

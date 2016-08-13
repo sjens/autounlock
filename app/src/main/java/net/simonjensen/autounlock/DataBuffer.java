@@ -3,7 +3,7 @@ package net.simonjensen.autounlock;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 
-public class DataBuffer<T> {
+class DataBuffer<T> {
 
     private T[] buffer;
 
@@ -12,7 +12,7 @@ public class DataBuffer<T> {
     private int head;
 
 
-    public DataBuffer(int n) {
+    DataBuffer(int n) {
         buffer = (T[]) new Object[n];
         tail = 0;
         head = 0;

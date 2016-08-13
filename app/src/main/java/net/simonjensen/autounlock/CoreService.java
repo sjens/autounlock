@@ -39,6 +39,9 @@ public class CoreService extends Service implements
     private Intent locationIntent;
     private Intent dataProcessorIntent;
 
+    private GoogleApiClient mGoogleApiClient;
+    private net.simonjensen.autounlock.Geofence geofence;
+
     private Heuristics heuristics;
 
     static List<BluetoothData> recordedBluetooth = new ArrayList<BluetoothData>();
@@ -50,11 +53,8 @@ public class CoreService extends Service implements
     static DataBuffer<List> dataBuffer;
     static DataStore dataStore;
 
-    private net.simonjensen.autounlock.Geofence geofence;
-
     // Binder given to clients
     private final IBinder localBinder = new LocalBinder();
-    private GoogleApiClient mGoogleApiClient;
 
     /**
      * Class used for the client Binder.  Because we know this service always
@@ -118,6 +118,7 @@ public class CoreService extends Service implements
         startForeground(1337, notification);
 
         dataStore = new DataStore(this);
+        heuristics = new Heuristics();
 
         Log.v("CoreService", "Service created");
 
@@ -300,7 +301,8 @@ public class CoreService extends Service implements
         stopService(bluetoothIntent);
     }
 
-    void startDecision(List<LockData> foundLocks) {
+    void startDecision(List<String> foundLocks) {
+        Log.d(TAG, foundLocks.toString());
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
         heuristics.makeDecision(foundLocks);
     }
@@ -312,7 +314,6 @@ public class CoreService extends Service implements
     void startDataBuffer() {
         Log.d(TAG, "Starting data processing");
         dataBuffer = new DataBuffer<List>(1000);
-        //dataProcessor = new DataProcessorService();
         Thread dataProcessorThread = new Thread() {
             public void run() {
                 startService(dataProcessorIntent);
@@ -386,9 +387,9 @@ public class CoreService extends Service implements
                 stopWifiService();
                 stopLocationService();
 
-                LocationData currentLocation = recordedLocation.get(recordedLocation.size() - 1);
-
                 if (success && recordedLocation.size() != 0) {
+                    LocationData currentLocation = recordedLocation.get(recordedLocation.size() - 1);
+
                     LockData lockData = new LockData(
                             lockMAC,
                             passphrase,
@@ -400,6 +401,8 @@ public class CoreService extends Service implements
                     );
                     Log.d(TAG, lockData.toString());
                     newLock(lockData);
+                } else {
+                    Log.e(TAG, "No location found, cannot add lock");
                 }
             }
         }).start();
@@ -446,7 +449,7 @@ public class CoreService extends Service implements
     void getLock(String lockMAC) {
         LockData lock = dataStore.getLockDetails(lockMAC);
         if (lock == null) {
-            Log.e(TAG, "no lock found");
+            Log.d(TAG, "no lock found");
         } else {
             Log.e(TAG, lock.toString());
         }
