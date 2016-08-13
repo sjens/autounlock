@@ -300,7 +300,7 @@ public class CoreService extends Service implements
         stopService(bluetoothIntent);
     }
 
-    void startDecision(List foundLocks) {
+    void startDecision(List<LockData> foundLocks) {
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
         heuristics.makeDecision(foundLocks);
     }
@@ -366,25 +366,43 @@ public class CoreService extends Service implements
 
     void newFalsePositive() { long time = System.currentTimeMillis(); dataStore.insertDecision(0, time); }
 
-    void manualUnlock(String lockMAC) {
-        boolean success = true;
-        String passphrase = "";
+    void manualUnlock(final String lockMAC) {
+        new Thread(new Runnable() {
+            public void run() {
+                boolean success = true;
+                String passphrase = "";
 
-        LocationData currentLocation = recordedLocation.get(recordedLocation.size() - 1);
+                startBluetoothService();
+                startWifiService();
+                startLocationService();
 
-        if (success && recordedLocation.size() != 0) {
-            LockData lockData = new LockData(
-                    lockMAC,
-                    passphrase,
-                    currentLocation,
-                    10,
-                    100,
-                    recordedBluetooth,
-                    recordedWifi
-            );
-            Log.d(TAG, lockData.toString());
-            newLock(lockData);
-        }
+                try {
+                    Thread.sleep(20000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                stopBluetoothService();
+                stopWifiService();
+                stopLocationService();
+
+                LocationData currentLocation = recordedLocation.get(recordedLocation.size() - 1);
+
+                if (success && recordedLocation.size() != 0) {
+                    LockData lockData = new LockData(
+                            lockMAC,
+                            passphrase,
+                            currentLocation,
+                            10,
+                            100,
+                            recordedBluetooth,
+                            recordedWifi
+                    );
+                    Log.d(TAG, lockData.toString());
+                    newLock(lockData);
+                }
+            }
+        }).start();
     }
 
     private boolean newLock(LockData lockData) {
@@ -418,6 +436,10 @@ public class CoreService extends Service implements
                     lockData.getNearbyWifiAccessPoints().get(i).getTime()
             );
         }
+
+        unregisterGeofences();
+        addGeofences();
+        registerGeofences();
         return true;
     }
 

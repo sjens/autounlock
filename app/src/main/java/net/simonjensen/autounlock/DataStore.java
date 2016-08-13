@@ -238,7 +238,6 @@ class DataStore {
 
     void insertWifi(String wifiSSID, String wifiMAC, int wifiRSSI, String nearbyLock, long timestamp) {
         ContentValues contentValues = new ContentValues();
-        //contentValues.put(ID, id);
         contentValues.put(WIFI_SSID, wifiSSID);
         contentValues.put(WIFI_MAC, wifiMAC);
         contentValues.put(WIFI_RSSI, wifiRSSI);
@@ -360,20 +359,20 @@ class DataStore {
                     + TIMESTAMP + " LONG)");
 
             database.execSQL("CREATE TABLE " + BLUETOOTH_TABLE + " ("
-                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + BLUETOOTH_NAME + " TEXT, "
                     + BLUETOOTH_SOURCE + " TEXT, "
                     + BLUETOOTH_RSSI + " INTEGER, "
                     + BLUETOOTH_NEARBY_LOCK + " FOREIGNKEY REFERENCES " + LOCK_TABLE + "(" + LOCK_MAC + "), "
-                    + TIMESTAMP + " LONG)");
+                    + TIMESTAMP + " LONG, "
+                    + "PRIMARY KEY (" + BLUETOOTH_SOURCE + ", " + BLUETOOTH_NEARBY_LOCK + "))");
 
             database.execSQL("CREATE TABLE " + WIFI_TABLE + " ("
-                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + WIFI_SSID + " TEXT, "
                     + WIFI_MAC + " TEXT, "
                     + WIFI_RSSI + " INTEGER, "
                     + WIFI_NEARBY_LOCK + " FOREIGNKEY REFERENCES " + LOCK_TABLE + "(" + LOCK_MAC + "), "
-                    + TIMESTAMP + " LONG)");
+                    + TIMESTAMP + " LONG, "
+                    + "PRIMARY KEY (" + WIFI_MAC + ", " + WIFI_NEARBY_LOCK + "))");
 
             database.execSQL("CREATE TABLE " + ACCELEROMETER_TABLE + " ("
                     + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -384,23 +383,6 @@ class DataStore {
                     + SPEED_Y + " FLOAT, "
                     + SPEED_Z + " FLOAT, "
                     + TIMESTAMP + " LONG)");
-
-            database.execSQL("CREATE TABLE " + LOCATION_TABLE + " ("
-                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + LOCATION_PROVIDER + " TEXT, "
-                    + LOCATION_LATITUDE + " DOUBLE, "
-                    + LOCATION_LONGITUDE + " DOUBLE, "
-                    + LOCATION_ACCURACY + " FLOAT, "
-                    + TIMESTAMP + " LONG)");
-
-            database.execSQL("CREATE TABLE " + DECISION_TABLE + " ("
-                    + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + DECISION_DECISION + " INTEGER, "
-                    + TIMESTAMP + " LONG)");
-
-            database.execSQL("CREATE TABLE " + BUFFER_TABLE + " ("
-                    + TIMESTAMP + " LONG PRIMARY KEY, "
-                    + DATA + " TEXT)");
         }
 
         private void dropDatastore() {

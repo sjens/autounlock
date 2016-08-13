@@ -4,8 +4,10 @@ import java.util.List;
 
 public class Heuristics {
 
-    boolean makeDecision(List foundLocks) {
-        //CoreService.dataStore.getLockDetails(foundLock);
+    boolean makeDecision(List<LockData> foundLocks) {
+        for (LockData foundLock : foundLocks) {
+
+        }
         return false;
     }
 }

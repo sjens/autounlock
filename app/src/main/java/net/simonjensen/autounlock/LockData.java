@@ -14,6 +14,10 @@ class LockData {
     private List<BluetoothData> nearbyBluetoothDevices;
     private List<WifiData> nearbyWifiAccessPoints;
 
+    LockData(String MAC) {
+        this.MAC = MAC;
+    }
+
     LockData(String MAC, LocationData location, float innerGeofence, float outerGeofence) {
         this.MAC = MAC;
         this.location = location;
