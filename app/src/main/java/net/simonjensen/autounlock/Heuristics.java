@@ -60,6 +60,8 @@ class Heuristics {
 
             if (CoreService.nearbyLocks.contains(foundLock)) {
                 lockScore += 50;
+            } else {
+                lockScore -= 1000;
             }
             Log.i(TAG, "lockScore " + lockScore);
             lockScores.put(foundLock, lockScore);

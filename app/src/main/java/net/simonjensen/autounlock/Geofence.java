@@ -17,7 +17,7 @@ class Geofence {
 
     private static String TAG = "Geofence";
 
-    static ArrayList<com.google.android.gms.location.Geofence> geofenceArrayList;
+    private ArrayList<com.google.android.gms.location.Geofence> geofenceArrayList;
 
     private PendingIntent pendingIntent;
 

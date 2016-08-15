@@ -1,17 +1,20 @@
 package net.simonjensen.autounlock;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.drawable.Icon;
 import android.os.*;
 import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
@@ -48,6 +51,7 @@ public class CoreService extends Service implements
     static List<WifiData> recordedWifi = new ArrayList<WifiData>();
     static List<LocationData> recordedLocation = new ArrayList<LocationData>();
     static List<AccelerometerData> recordedAccelerometer = new ArrayList<AccelerometerData>();
+    static ArrayList activeOuterGeofences = new ArrayList();
     static ArrayList nearbyLocks = new ArrayList();
 
     static DataBuffer<List> dataBuffer;
@@ -118,9 +122,8 @@ public class CoreService extends Service implements
         startForeground(1337, notification);
 
         dataStore = new DataStore(this);
+        geofence = new net.simonjensen.autounlock.Geofence();
         heuristics = new Heuristics();
-
-        Log.v("CoreService", "Service created");
 
         accelerometerIntent = new Intent(this, AccelerometerService.class);
         locationIntent = new Intent(this, LocationService.class);
@@ -129,8 +132,6 @@ public class CoreService extends Service implements
         dataProcessorIntent = new Intent(this, DataProcessorService.class);
 
         buildGoogleApiClient();
-
-        geofence = new net.simonjensen.autounlock.Geofence();
 
         IntentFilter enteredGeofencesFilter = new IntentFilter();
         enteredGeofencesFilter.addAction("GEOFENCES_ENTERED");
@@ -143,12 +144,12 @@ public class CoreService extends Service implements
         IntentFilter startDecisionFilter = new IntentFilter();
         startDecisionFilter.addAction("START_DECISION");
         registerReceiver(startDecision, startDecisionFilter);
+
+        Log.v("CoreService", "Service created");
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        //Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
-
         // For each start request, send a message to start a job and deliver the
         // start ID so we know which request we're stopping when we finish the job
         Message msg = serviceHandler.obtainMessage();
@@ -308,7 +309,37 @@ public class CoreService extends Service implements
     }
 
     void notifyDecision() {
+        // prepare intent which is triggered if the
+        // notification is selected
 
+        Intent intent = new Intent(this, CoreService.class);
+        // use System.currentTimeMillis() to have a unique ID for the pending intent
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), intent, 0);
+
+        Notification.Action decisionYes = new Notification.Action.Builder(
+                R.drawable.ic_check_black,
+                "Yes",
+                pendingIntent
+        ).build();
+
+        Notification.Action decisionNo = new Notification.Action.Builder(
+                R.drawable.ic_close_black,
+                "No",
+                pendingIntent
+        ).build();
+
+        Notification notification = new Notification.Builder(this)
+                .setContentTitle("Unlock decision was made")
+                .setContentText("decide")
+                .setSmallIcon(R.drawable.ic_lock_open_black)
+                .addAction(decisionYes)
+                .addAction(decisionNo)
+                .build();
+
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        notificationManager.notify(0, notification);
     }
 
     void startDataBuffer() {
