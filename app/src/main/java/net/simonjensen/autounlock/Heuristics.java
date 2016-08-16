@@ -23,7 +23,7 @@ class Heuristics {
         Log.d(TAG, recentWifiList.toString());
         Log.d(TAG, recentLocationList.toString());
 
-        // For each lock nearby, compare the recently recorded data with the stored data and give a score.
+        // For each lock nearby, compare the recently recorded data with the stored data and give adapter score.
         for (String foundLock : foundLocks) {
             double lockScore = 0;
             int validWifi = 0;

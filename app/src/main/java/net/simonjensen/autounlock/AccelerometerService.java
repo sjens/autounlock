@@ -122,7 +122,7 @@ public class AccelerometerService extends Service implements SensorEventListener
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // The service is starting, due to a call to startService()
+        // The service is starting, due to adapter call to startService()
         return startMode;
     }
     @Override

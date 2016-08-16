@@ -27,7 +27,7 @@ public class LocationService extends Service {
     private PowerManager powerManager;
     private PowerManager.WakeLock wakeLock;
 
-    // Define a listener that responds to location updates
+    // Define adapter listener that responds to location updates
     private LocationListener locationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
 
@@ -46,7 +46,7 @@ public class LocationService extends Service {
         }
 
         void insertLocationData(Location location) {
-            // Called when a new location is found by the network location provider.
+            // Called when adapter new location is found by the network location provider.
             long time = System.currentTimeMillis();
 
             LocationData aLocation;
@@ -93,7 +93,7 @@ public class LocationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // The service is starting, due to a call to startService()
+        // The service is starting, due to adapter call to startService()
         return startMode;
     }
 

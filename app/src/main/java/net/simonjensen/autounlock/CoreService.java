@@ -79,7 +79,7 @@ public class CoreService extends Service implements
 
         @Override
         public void handleMessage(Message msg) {
-            // Normally we would do some work here, like download a file.
+            // Normally we would do some work here, like download adapter file.
             // For our sample, we just sleep for 5 seconds.
             try {
                 Thread.sleep(5000);
@@ -95,7 +95,7 @@ public class CoreService extends Service implements
 
     @Override
     public void onCreate() {
-        // Start up the thread running the service.  Note that we create a
+        // Start up the thread running the service.  Note that we create adapter
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
         // background priority so CPU-intensive work will not disrupt our UI.
@@ -107,7 +107,7 @@ public class CoreService extends Service implements
         serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper);
 
-        // Running the service in the foreground by creating a notification
+        // Running the service in the foreground by creating adapter notification
         Intent notificationIntent = new Intent(this, MainActivity.class);
 
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
@@ -150,7 +150,7 @@ public class CoreService extends Service implements
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // For each start request, send a message to start a job and deliver the
+        // For each start request, send adapter message to start adapter job and deliver the
         // start ID so we know which request we're stopping when we finish the job
         Message msg = serviceHandler.obtainMessage();
         msg.arg1 = startId;
@@ -312,20 +312,22 @@ public class CoreService extends Service implements
         // prepare intent which is triggered if the
         // notification is selected
 
-        Intent intent = new Intent(this, CoreService.class);
-        // use System.currentTimeMillis() to have a unique ID for the pending intent
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), intent, 0);
+        Intent yesIntent = new Intent(this, CoreService.class);
+        Intent noIntent = new Intent(this, DecisionActivity.class);
+        // use System.currentTimeMillis() to have adapter unique ID for the pending intent
+        PendingIntent pendingYesIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), yesIntent, 0);
+        PendingIntent pendingNoIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), noIntent, 0);
 
         Notification.Action decisionYes = new Notification.Action.Builder(
                 R.drawable.ic_check_black,
                 "Yes",
-                pendingIntent
+                pendingYesIntent
         ).build();
 
         Notification.Action decisionNo = new Notification.Action.Builder(
                 R.drawable.ic_close_black,
                 "No",
-                pendingIntent
+                pendingNoIntent
         ).build();
 
         Notification notification = new Notification.Builder(this)
@@ -334,6 +336,7 @@ public class CoreService extends Service implements
                 .setSmallIcon(R.drawable.ic_lock_open_black)
                 .addAction(decisionYes)
                 .addAction(decisionNo)
+                .setVibrate(new long[] {0, 1000, 1000, 1000})
                 .build();
 
         NotificationManager notificationManager =

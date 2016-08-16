@@ -206,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
         stopAccelerometer.setEnabled(stopAccelerometerEnabled);
     }
 
-    /** Called when a button is clicked (the button in the layout file attaches to
+    /** Called when adapter button is clicked (the button in the layout file attaches to
      * this method with the android:onClick attribute) */
     public void onButtonClickAccel(View v) {
         if (bound) {

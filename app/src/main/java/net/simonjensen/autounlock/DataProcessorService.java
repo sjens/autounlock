@@ -85,7 +85,7 @@ public class DataProcessorService extends Service {
                 CoreService.dataBuffer.add(dataBlob);
 
                 // Do not start decision making before we have at least one nearby Bluetooth device (the lock),
-                // and a location. We cannot be sure any Wifi access points are nearby.
+                // and adapter location. We cannot be sure any Wifi access points are nearby.
                 if (!prevRecordedBluetooth.isEmpty() && !prevRecordedLocation.isEmpty()) {
                     for (int i = 0; i < CoreService.recordedBluetooth.size(); i++) {
                         if (CoreService.recordedBluetooth.get(i).getSource().equals(BluetoothService.MIBAND)) {
