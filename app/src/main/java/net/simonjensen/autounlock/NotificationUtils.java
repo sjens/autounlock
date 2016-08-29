@@ -5,9 +5,13 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Parcelable;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
+
+import java.io.Serializable;
+import java.util.List;
 
 public class NotificationUtils {
     public static final int NOTIFICATION_ID = 1;
@@ -15,7 +19,18 @@ public class NotificationUtils {
     public static final String ACTION_YES = "action_yes";
     public static final String ACTION_NO = "action_no";
 
-    public void displayNotification(Context context) {
+    private static List<BluetoothData> bluetoothDataList;
+    private List<WifiData> wifiDataList;
+    private List<LocationData> locationDataList;
+
+    public void displayNotification(Context context,
+                                    List<BluetoothData> bluetoothDataList,
+                                    List<WifiData> wifiDataList,
+                                    List<LocationData> locationDataList) {
+
+        this.bluetoothDataList = bluetoothDataList;
+        this.wifiDataList = wifiDataList;
+        this.locationDataList = locationDataList;
 
         Intent yesIntent = new Intent(context, NotificationActionService.class)
                 .setAction(ACTION_YES);
@@ -67,8 +82,11 @@ public class NotificationUtils {
                 // If you want to cancel the notification: NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID);
                 Heuristics heuristics = new Heuristics();
             } else if (ACTION_NO.equals(action)) {
-                Intent noIntent = new Intent(this, NotificationDecisionActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(noIntent);
+                Intent notificationDecision = new Intent(this, NotificationDecisionActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                notificationDecision.putExtra("bluetoothList", (Parcelable) bluetoothDataList);
+                startActivity(notificationDecision);
             }
         }
     }

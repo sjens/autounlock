@@ -558,7 +558,10 @@ public class MainActivity extends AppCompatActivity {
             //coreService.startDecision(foundLocks);
             //coreService.notifyDecision();
             NotificationUtils notificationUtils = new NotificationUtils();
-            notificationUtils.displayNotification(this);
+            notificationUtils.displayNotification(this,
+                    CoreService.recordedBluetooth,
+                    CoreService.recordedWifi,
+                    CoreService.recordedLocation);
         }
     }
 

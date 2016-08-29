@@ -11,11 +11,28 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class NotificationDecisionActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
     private ArrayList<String> listItems = new ArrayList<String>();
     ArrayAdapter<String> adapter;
+
+    private List<BluetoothData> bluetoothDataList;
+    private List<WifiData> wifiDataList;
+    private List<LocationData> locationDataList;
+
+    public void setBluetoothDataList(List<BluetoothData> bluetoothDataList) {
+        this.bluetoothDataList = bluetoothDataList;
+    }
+
+    public void setWifiDataList(List<WifiData> wifiDataList) {
+        this.wifiDataList = wifiDataList;
+    }
+
+    public void setLocationDataList(List<LocationData> locationDataList) {
+        this.locationDataList = locationDataList;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +40,8 @@ public class NotificationDecisionActivity extends AppCompatActivity implements A
         setContentView(R.layout.activity_decision);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        Log.d("test", savedInstanceState.getSerializable("bluetoothList").toString());
 
         ListView listView = (ListView) findViewById(R.id.decisionListView);
         if (listView != null) {
