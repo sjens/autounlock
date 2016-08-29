@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +31,7 @@ public class DataProcessorService extends Service {
         CoreService.recordedWifi = new ArrayList<WifiData>();
     }
 
-    public void sendDecisionIntent(List foundLocks) {
+    void sendDecisionIntent(List foundLocks) {
         Intent startDecision = new Intent("START_DECISION");
         sendBroadcast(startDecision);
     }

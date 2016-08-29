@@ -28,6 +28,15 @@
             </intent-filter>
         </activity>
 
+        <activity
+                android:name=".NotificationDecisionActivity"
+                android:excludeFromRecents="true"
+                android:label="@string/title_activity_decision"
+                android:launchMode="singleTask"
+                android:taskAffinity=""
+                android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+
         <service
                 android:name=".CoreService"
                 android:enabled="true"/>
@@ -50,11 +59,9 @@
                 android:name=".DataProcessorService"
                 android:enabled="true"/>
 
-        <activity
-                android:name=".DecisionActivity"
-                android:label="@string/title_activity_decision"
-                android:theme="@style/AppTheme.NoActionBar">
-        </activity>
+        <service
+                android:name=".NotificationUtils$NotificationActionService"
+                android:enabled="true">
+        </service>
     </application>
-
 </manifest>

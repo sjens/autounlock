@@ -8,13 +8,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.drawable.Icon;
 import android.os.*;
 import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
@@ -44,8 +42,6 @@ public class CoreService extends Service implements
 
     private GoogleApiClient mGoogleApiClient;
     private net.simonjensen.autounlock.Geofence geofence;
-
-    private Heuristics heuristics;
 
     static List<BluetoothData> recordedBluetooth = new ArrayList<BluetoothData>();
     static List<WifiData> recordedWifi = new ArrayList<WifiData>();
@@ -123,7 +119,7 @@ public class CoreService extends Service implements
 
         dataStore = new DataStore(this);
         geofence = new net.simonjensen.autounlock.Geofence();
-        heuristics = new Heuristics();
+        //heuristics = new Heuristics();
 
         accelerometerIntent = new Intent(this, AccelerometerService.class);
         locationIntent = new Intent(this, LocationService.class);
@@ -145,6 +141,10 @@ public class CoreService extends Service implements
         startDecisionFilter.addAction("START_DECISION");
         registerReceiver(startDecision, startDecisionFilter);
 
+        IntentFilter heuristicsTunerFilter = new IntentFilter();
+        heuristicsTunerFilter.addAction("HEURISTICS_TUNER");
+        registerReceiver(heuristicsTuner, heuristicsTunerFilter);
+
         Log.v("CoreService", "Service created");
     }
 
@@ -156,9 +156,7 @@ public class CoreService extends Service implements
         msg.arg1 = startId;
         serviceHandler.sendMessage(msg);
 
-        if (!mGoogleApiClient.isConnecting() || !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
+        googleConnect();
 
         // If we get killed, after returning from here, restart
         return START_STICKY;
@@ -166,9 +164,7 @@ public class CoreService extends Service implements
 
     @Override
     public void onDestroy() {
-        if (mGoogleApiClient.isConnecting() || mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
+        googleDisconnect();
         Log.v("CoreService", "Service destroyed");
     }
 
@@ -246,6 +242,13 @@ public class CoreService extends Service implements
         }
     };
 
+    private BroadcastReceiver heuristicsTuner = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, "onReceive: tuning heuristics");
+        }
+    };
+
     void startAccelerometerService() {
         Log.v(TAG, "Starting AccelerometerService");
         Thread accelerometerServiceThread = new Thread() {
@@ -305,44 +308,12 @@ public class CoreService extends Service implements
     void startDecision(List<String> foundLocks) {
         Log.d(TAG, foundLocks.toString());
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
+
+        Heuristics heuristics = new Heuristics();
+        heuristics.setRecentBluetoothList(recordedBluetooth);
+        heuristics.setRecentWifiList(recordedWifi);
+        heuristics.setRecentLocationList(recordedLocation);
         heuristics.makeDecision(foundLocks);
-    }
-
-    void notifyDecision() {
-        // prepare intent which is triggered if the
-        // notification is selected
-
-        Intent yesIntent = new Intent(this, CoreService.class);
-        Intent noIntent = new Intent(this, DecisionActivity.class);
-        // use System.currentTimeMillis() to have adapter unique ID for the pending intent
-        PendingIntent pendingYesIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), yesIntent, 0);
-        PendingIntent pendingNoIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), noIntent, 0);
-
-        Notification.Action decisionYes = new Notification.Action.Builder(
-                R.drawable.ic_check_black,
-                "Yes",
-                pendingYesIntent
-        ).build();
-
-        Notification.Action decisionNo = new Notification.Action.Builder(
-                R.drawable.ic_close_black,
-                "No",
-                pendingNoIntent
-        ).build();
-
-        Notification notification = new Notification.Builder(this)
-                .setContentTitle("Unlock decision was made")
-                .setContentText("decide")
-                .setSmallIcon(R.drawable.ic_lock_open_black)
-                .addAction(decisionYes)
-                .addAction(decisionNo)
-                .setVibrate(new long[] {0, 1000, 1000, 1000})
-                .build();
-
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        notificationManager.notify(0, notification);
     }
 
     void startDataBuffer() {
@@ -373,6 +344,18 @@ public class CoreService extends Service implements
         stopWifiService();
         stopLocationService();
         stopDataBuffer();
+    }
+
+    void googleConnect() {
+        if (!mGoogleApiClient.isConnecting() || !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
+        }
+    }
+
+    void googleDisconnect() {
+        if (mGoogleApiClient.isConnecting() || mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
     }
 
     void addGeofences() {

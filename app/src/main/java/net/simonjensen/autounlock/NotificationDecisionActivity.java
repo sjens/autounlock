@@ -1,5 +1,6 @@
 package net.simonjensen.autounlock;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -11,7 +12,7 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 
-public class DecisionActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
+public class NotificationDecisionActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
     private ArrayList<String> listItems = new ArrayList<String>();
     ArrayAdapter<String> adapter;
@@ -36,13 +37,18 @@ public class DecisionActivity extends AppCompatActivity implements AdapterView.O
                     "Increase inner geofence size",
                     "Decrease outer geofence size",
                     "Increase outer geofence size",
-                    "Redo data collection for lock"
+                    "Redo data collection for lock",
+                    "Door opened too early",
+                    "Door opened too late"
             );
         }
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Log.i("HelloListView", "You clicked Item: " + id + " at position:" + position);
+        Intent heuristicsTuner = new Intent("HEURISTICS_TUNER");
+        heuristicsTuner.putExtra("Option", position);
+        sendBroadcast(heuristicsTuner);
+        super.moveTaskToBack(true);
     }
 }

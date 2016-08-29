@@ -74,8 +74,15 @@ class DataStore {
         database.close();
     }
 
-    void insertLockDetails(String lockMAC, String lockPassphrase, double lockLatitude, double lockLongitude,
-                                  float lockInnerGeofence, float lockOuterGeofence, long timestamp) {
+    void insertLockDetails(
+            String lockMAC,
+            String lockPassphrase,
+            double lockLatitude,
+            double lockLongitude,
+            float lockInnerGeofence,
+            float lockOuterGeofence,
+            long timestamp
+    ) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(LOCK_MAC, lockMAC);
         contentValues.put(LOCK_PASSPHRASE, lockPassphrase);

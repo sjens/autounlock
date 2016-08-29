@@ -7,21 +7,39 @@ import java.util.List;
 import java.util.Map;
 
 class Heuristics {
-
     private static final String TAG = "Heuristics";
+
+    private List<BluetoothData> recentBluetoothList;
+    private List<WifiData> recentWifiList;
+    private List<LocationData> recentLocationList;
+
+    public List<BluetoothData> getRecentBluetoothList() {
+        return recentBluetoothList;
+    }
+
+    public void setRecentBluetoothList(List<BluetoothData> recentBluetoothList) {
+        this.recentBluetoothList = recentBluetoothList;
+    }
+
+    public List<WifiData> getRecentWifiList() {
+        return recentWifiList;
+    }
+
+    public void setRecentWifiList(List<WifiData> recentWifiList) {
+        this.recentWifiList = recentWifiList;
+    }
+
+    public List<LocationData> getRecentLocationList() {
+        return recentLocationList;
+    }
+
+    public void setRecentLocationList(List<LocationData> recentLocationList) {
+        this.recentLocationList = recentLocationList;
+    }
 
     void makeDecision(List<String> foundLocks) {
         Map<String, Double> lockScores = new HashMap<>();
         Map.Entry<String, Double> maxEntry = null;
-
-        List<List> recentRecordedData;
-        recentRecordedData = CoreService.dataBuffer.get();
-        List<BluetoothData> recentBluetoothList = recentRecordedData.get(1);
-        List<WifiData> recentWifiList = recentRecordedData.get(3);
-        List<LocationData> recentLocationList = recentRecordedData.get(2);
-        Log.d(TAG, recentBluetoothList.toString());
-        Log.d(TAG, recentWifiList.toString());
-        Log.d(TAG, recentLocationList.toString());
 
         // For each lock nearby, compare the recently recorded data with the stored data and give adapter score.
         for (String foundLock : foundLocks) {
@@ -74,4 +92,5 @@ class Heuristics {
             }
         }
     }
+
 }

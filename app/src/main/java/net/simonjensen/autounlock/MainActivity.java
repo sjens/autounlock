@@ -296,7 +296,9 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Log.v("Permission", "Permission grannted, yay");
-
+                    if (bound) {
+                        coreService.googleConnect();
+                    }
                 } else {
                     Toast.makeText(this, "The app needs access to location in order to function.", Toast.LENGTH_SHORT).show();
                 }
@@ -554,7 +556,9 @@ public class MainActivity extends AppCompatActivity {
             foundLocks.add(BluetoothService.MIBAND);
             Log.d(TAG, foundLocks.toString());
             //coreService.startDecision(foundLocks);
-            coreService.notifyDecision();
+            //coreService.notifyDecision();
+            NotificationUtils notificationUtils = new NotificationUtils();
+            notificationUtils.displayNotification(this);
         }
     }
 

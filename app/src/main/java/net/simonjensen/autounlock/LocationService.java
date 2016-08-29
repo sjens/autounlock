@@ -89,6 +89,8 @@ public class LocationService extends Service {
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 1, locationListener);
+
+        CoreService coreService = new CoreService();
     }
 
     @Override

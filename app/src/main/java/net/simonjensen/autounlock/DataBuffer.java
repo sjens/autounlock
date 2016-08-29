@@ -2,16 +2,17 @@ package net.simonjensen.autounlock;
 
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
+import java.util.ArrayList;
+import java.util.List;
 
 class DataBuffer<T> {
-
     private T[] buffer;
 
     private int tail;
 
     private int head;
 
-
+    @SuppressWarnings("unchecked")
     DataBuffer(int n) {
         buffer = (T[]) new Object[n];
         tail = 0;
@@ -37,9 +38,5 @@ class DataBuffer<T> {
             throw new BufferUnderflowException();
         }
         return t;
-    }
-
-    public String toString() {
-        return "DataBuffer(size=" + buffer.length + ", head=" + head + ", tail=" + tail + ")";
     }
 }
