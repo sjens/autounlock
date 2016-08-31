@@ -20,8 +20,8 @@ public class NotificationUtils {
     public static final String ACTION_NO = "action_no";
 
     private static List<BluetoothData> bluetoothDataList;
-    private List<WifiData> wifiDataList;
-    private List<LocationData> locationDataList;
+    private static List<WifiData> wifiDataList;
+    private static List<LocationData> locationDataList;
 
     public void displayNotification(Context context,
                                     List<BluetoothData> bluetoothDataList,
@@ -85,7 +85,9 @@ public class NotificationUtils {
                 Intent notificationDecision = new Intent(this, NotificationDecisionActivity.class)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-                notificationDecision.putExtra("bluetoothList", (Parcelable) bluetoothDataList);
+                notificationDecision.putExtra("bluetoothList", (Serializable) bluetoothDataList);
+                notificationDecision.putExtra("wifiList", (Serializable) wifiDataList);
+                notificationDecision.putExtra("locationList", (Serializable) locationDataList);
                 startActivity(notificationDecision);
             }
         }

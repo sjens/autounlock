@@ -1,6 +1,8 @@
 package net.simonjensen.autounlock;
 
-public class LocationData {
+import java.io.Serializable;
+
+public class LocationData implements Serializable {
     String provider;
     double latitude;
     double longitude;

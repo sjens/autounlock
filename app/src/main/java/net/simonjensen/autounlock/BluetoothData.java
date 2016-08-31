@@ -1,6 +1,8 @@
 package net.simonjensen.autounlock;
 
-public class BluetoothData {
+import java.io.Serializable;
+
+public class BluetoothData implements Serializable{
     String name;
     String source;
     int rssi;

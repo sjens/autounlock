@@ -1,6 +1,8 @@
 package net.simonjensen.autounlock;
 
-public class WifiData {
+import java.io.Serializable;
+
+public class WifiData implements Serializable {
     String ssid;
     String mac;
     int rssi;

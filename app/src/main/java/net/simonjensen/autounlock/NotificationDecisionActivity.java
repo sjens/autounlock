@@ -18,22 +18,6 @@ public class NotificationDecisionActivity extends AppCompatActivity implements A
     private ArrayList<String> listItems = new ArrayList<String>();
     ArrayAdapter<String> adapter;
 
-    private List<BluetoothData> bluetoothDataList;
-    private List<WifiData> wifiDataList;
-    private List<LocationData> locationDataList;
-
-    public void setBluetoothDataList(List<BluetoothData> bluetoothDataList) {
-        this.bluetoothDataList = bluetoothDataList;
-    }
-
-    public void setWifiDataList(List<WifiData> wifiDataList) {
-        this.wifiDataList = wifiDataList;
-    }
-
-    public void setLocationDataList(List<LocationData> locationDataList) {
-        this.locationDataList = locationDataList;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,7 +25,12 @@ public class NotificationDecisionActivity extends AppCompatActivity implements A
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Log.d("test", savedInstanceState.getSerializable("bluetoothList").toString());
+        Intent intent = getIntent();
+        List<BluetoothData> bluetoothDataList = (List<BluetoothData>) intent.getExtras().getSerializable("bluetoothList");
+        List<WifiData> wifiDataList = (List<WifiData>) intent.getExtras().getSerializable("wifiList");
+        List<LocationData> locationDataList = (List<LocationData>) intent.getExtras().getSerializable("locationList");
+
+        Log.d("test", bluetoothDataList.toString());
 
         ListView listView = (ListView) findViewById(R.id.decisionListView);
         if (listView != null) {
