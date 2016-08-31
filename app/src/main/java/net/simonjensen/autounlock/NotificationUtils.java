@@ -16,12 +16,54 @@ import java.util.List;
 public class NotificationUtils {
     public static final int NOTIFICATION_ID = 1;
 
+    public static final String ACTION_ADD_ORIENTATION = "action_add_orientation";
+    public static final String ACTION_IGNORE_ORIENTATION = "action_ignore_orientation";
     public static final String ACTION_YES = "action_yes";
     public static final String ACTION_NO = "action_no";
 
     private static List<BluetoothData> bluetoothDataList;
     private static List<WifiData> wifiDataList;
     private static List<LocationData> locationDataList;
+
+    public void displayOrientationNotification(Context context, String lockMAC, float orientation) {
+        Intent yesIntent = new Intent(context, NotificationActionService.class)
+                .setAction(ACTION_ADD_ORIENTATION);
+        yesIntent.putExtra("lock", lockMAC);
+        yesIntent.putExtra("orientation", orientation);
+
+        Intent noIntent = new Intent(context, NotificationActionService.class)
+                .setAction(ACTION_IGNORE_ORIENTATION);
+
+        // use System.currentTimeMillis() to have adapter unique ID for the pending intent
+        PendingIntent pendingYesIntent = PendingIntent.getService(
+                context,
+                (int) System.currentTimeMillis(),
+                yesIntent,
+                PendingIntent.FLAG_ONE_SHOT);
+
+        PendingIntent pendingNoIntent = PendingIntent.getService(
+                context,
+                (int) System.currentTimeMillis(),
+                noIntent,
+                PendingIntent.FLAG_ONE_SHOT);
+
+        NotificationCompat.Builder notificationBuilder =
+                (NotificationCompat.Builder) new NotificationCompat.Builder(context)
+                        .setSmallIcon(R.drawable.ic_lock_open_black)
+                        .setAutoCancel(true)
+                        .setContentTitle("Unlock orientation was recorded")
+                        .setContentText("Did you wish to unlock the door?")
+                        .addAction(new NotificationCompat.Action(R.drawable.ic_check_black,
+                                "Yes", pendingYesIntent))
+                        .addAction(new NotificationCompat.Action(R.drawable.ic_close_black,
+                                "No", pendingNoIntent))
+                        .setVibrate(new long[] {0, 1000, 1000, 1000});
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+        Notification notification = notificationBuilder.build();
+        notification.flags = Notification.FLAG_AUTO_CANCEL;
+        notificationManager.notify(NOTIFICATION_ID, notification);
+    }
 
     public void displayNotification(Context context,
                                     List<BluetoothData> bluetoothDataList,
@@ -89,6 +131,8 @@ public class NotificationUtils {
                 notificationDecision.putExtra("wifiList", (Serializable) wifiDataList);
                 notificationDecision.putExtra("locationList", (Serializable) locationDataList);
                 startActivity(notificationDecision);
+            } else if (ACTION_ADD_ORIENTATION.equals(action)) {
+                
             }
         }
     }

@@ -49,8 +49,8 @@ public class CoreService extends Service implements
     static List<AccelerometerData> recordedAccelerometer = new ArrayList<AccelerometerData>();
     static ArrayList activeOuterGeofences = new ArrayList();
     static ArrayList nearbyLocks = new ArrayList();
-    static long lastSignificantMovement;
-    static float currentOrientation;
+    static long lastSignificantMovement = 0;
+    static float currentOrientation = -1f;
 
     static DataBuffer<List> dataBuffer;
     static DataStore dataStore;
@@ -465,6 +465,41 @@ public class CoreService extends Service implements
         addGeofences();
         registerGeofences();
         return true;
+    }
+
+    void scanForLock() {
+        ArrayList<LockData> knownLocks = dataStore.getKnownLocks();
+        for (LockData lock : knownLocks) {
+            for (BluetoothData bluetoothDevice : recordedBluetooth) {
+                if (bluetoothDevice.getSource().equals(lock.getMAC())) {
+                    nearbyLockDetected(lock.getMAC());
+                }
+            }
+        }
+    }
+
+    void nearbyLockDetected(String lockMAC) {
+        final LockData foundLock = dataStore.getLockDetails(lockMAC);
+
+        if (foundLock.getOrientation() == -1) {
+            new Thread(new Runnable() {
+                boolean running = true;
+                long startTime = System.currentTimeMillis();
+
+                @Override
+                public void run() {
+                    while (running) {
+                        if (System.currentTimeMillis() - lastSignificantMovement > 2000
+                                && lastSignificantMovement != 0) {
+                            NotificationUtils notificationUtils = new NotificationUtils();
+                            notificationUtils.displayOrientationNotification(getApplicationContext(), foundLock.getMAC(), currentOrientation);
+                        } else if (System.currentTimeMillis() - startTime > 600000) {
+                            running = false;
+                        }
+                    }
+                }
+            });
+        }
     }
 
     void getLock(String lockMAC) {
