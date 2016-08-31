@@ -49,6 +49,8 @@ public class CoreService extends Service implements
     static List<AccelerometerData> recordedAccelerometer = new ArrayList<AccelerometerData>();
     static ArrayList activeOuterGeofences = new ArrayList();
     static ArrayList nearbyLocks = new ArrayList();
+    static long lastSignificantMovement;
+    static float currentOrientation;
 
     static DataBuffer<List> dataBuffer;
     static DataStore dataStore;
