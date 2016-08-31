@@ -23,6 +23,7 @@ class DataStore {
     private static final String LOCK_LONGITUDE = "longitude";
     private static final String LOCK_INNER_GEOFENCE = "inner_geofence";
     private static final String LOCK_OUTER_GEOFENCE = "outer_geofence";
+    private static final String LOCK_ORIENTATION = "orientation";
 
     private static final String BLUETOOTH_TABLE = "bluetooth";
     private static final String BLUETOOTH_NAME = "name";
@@ -81,6 +82,7 @@ class DataStore {
             double lockLongitude,
             float lockInnerGeofence,
             float lockOuterGeofence,
+            float lockOrientation,
             long timestamp
     ) {
         ContentValues contentValues = new ContentValues();
@@ -90,6 +92,7 @@ class DataStore {
         contentValues.put(LOCK_LONGITUDE, lockLongitude);
         contentValues.put(LOCK_INNER_GEOFENCE, lockInnerGeofence);
         contentValues.put(LOCK_OUTER_GEOFENCE, lockOuterGeofence);
+        contentValues.put(LOCK_ORIENTATION, lockOrientation);
         contentValues.put(TIMESTAMP, timestamp);
 
         try {
@@ -120,11 +123,13 @@ class DataStore {
                     double lockLongitude = lockCursor.getDouble(lockCursor.getColumnIndex(LOCK_LONGITUDE));
                     float innerGeofence = lockCursor.getInt(lockCursor.getColumnIndex(LOCK_INNER_GEOFENCE));
                     float outerGeofence = lockCursor.getInt(lockCursor.getColumnIndex(LOCK_OUTER_GEOFENCE));
+                    float orientation = lockCursor.getFloat(lockCursor.getColumnIndex(LOCK_ORIENTATION));
                     LockData lockData = new LockData(
                             lockMac,
                             new LocationData(lockLatitude, lockLongitude),
                             innerGeofence,
-                            outerGeofence
+                            outerGeofence,
+                            orientation
                     );
                     lockDataArrayList.add(lockData);
                 }
@@ -148,6 +153,7 @@ class DataStore {
         double lockLongitude;
         float innerGeofence;
         float outerGeofence;
+        float orientation;
 
         ArrayList<BluetoothData> nearbyBluetoothDevices = new ArrayList<>();
         ArrayList<WifiData> nearbyWifiAccessPoints = new ArrayList<>();
@@ -171,6 +177,7 @@ class DataStore {
                 lockLongitude = lockCursor.getDouble(lockCursor.getColumnIndex(LOCK_LONGITUDE));
                 innerGeofence = lockCursor.getInt(lockCursor.getColumnIndex(LOCK_INNER_GEOFENCE));
                 outerGeofence = lockCursor.getInt(lockCursor.getColumnIndex(LOCK_OUTER_GEOFENCE));
+                orientation = lockCursor.getFloat(lockCursor.getColumnIndex(LOCK_ORIENTATION));
                 lockCursor.close();
             }
 
@@ -218,7 +225,7 @@ class DataStore {
 
             locationData = new LocationData(lockLatitude, lockLongitude);
             lockData = new LockData(lockMac, lockPassphrase, locationData,
-                    innerGeofence, outerGeofence, nearbyBluetoothDevices, nearbyWifiAccessPoints);
+                    innerGeofence, outerGeofence, orientation, nearbyBluetoothDevices, nearbyWifiAccessPoints);
             return lockData;
         } finally {
             database.endTransaction();
@@ -363,6 +370,7 @@ class DataStore {
                     + LOCK_LONGITUDE + " DOUBLE, "
                     + LOCK_INNER_GEOFENCE + " FLOAT, "
                     + LOCK_OUTER_GEOFENCE + " FLOAT, "
+                    + LOCK_ORIENTATION + " FLOAT, "
                     + TIMESTAMP + " LONG)");
 
             database.execSQL("CREATE TABLE " + BLUETOOTH_TABLE + " ("

@@ -413,8 +413,9 @@ public class CoreService extends Service implements
                             lockMAC,
                             passphrase,
                             currentLocation,
-                            10,
+                            20,
                             100,
+                            -1f,
                             recordedBluetooth,
                             recordedWifi
                     );
@@ -436,6 +437,7 @@ public class CoreService extends Service implements
                 lockData.getLocation().getLongitude(),
                 lockData.getInnerGeofence(),
                 lockData.getOuterGeofence(),
+                lockData.getOrientation(),
                 System.currentTimeMillis()
         );
 
