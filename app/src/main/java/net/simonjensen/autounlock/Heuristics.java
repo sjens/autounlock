@@ -37,7 +37,7 @@ class Heuristics {
         this.recentLocationList = recentLocationList;
     }
 
-    void makeDecision(List<String> foundLocks) {
+    boolean makeDecision(List<String> foundLocks) {
         Map<String, Double> lockScores = new HashMap<>();
         Map.Entry<String, Double> maxEntry = null;
 
@@ -76,7 +76,7 @@ class Heuristics {
                 }
             }
 
-            if (CoreService.nearbyLocks.contains(foundLock)) {
+            if (CoreService.activeInnerGeofences.contains(foundLock)) {
                 lockScore += 50;
             } else {
                 lockScore -= 1000;
@@ -90,6 +90,12 @@ class Heuristics {
             if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0) {
                 maxEntry = entry;
             }
+        }
+
+        if (maxEntry.getValue() > 200) {
+            return true;
+        } else {
+            return false;
         }
     }
 

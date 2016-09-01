@@ -21,10 +21,6 @@ public class NotificationUtils {
     public static final String ACTION_YES = "action_yes";
     public static final String ACTION_NO = "action_no";
 
-    private static List<BluetoothData> bluetoothDataList;
-    private static List<WifiData> wifiDataList;
-    private static List<LocationData> locationDataList;
-
     public void displayOrientationNotification(Context context, String lockMAC, float orientation) {
         Intent yesIntent = new Intent(context, NotificationActionService.class)
                 .setAction(ACTION_ADD_ORIENTATION);
@@ -70,14 +66,14 @@ public class NotificationUtils {
                                     List<WifiData> wifiDataList,
                                     List<LocationData> locationDataList) {
 
-        this.bluetoothDataList = bluetoothDataList;
-        this.wifiDataList = wifiDataList;
-        this.locationDataList = locationDataList;
-
         Intent yesIntent = new Intent(context, NotificationActionService.class)
                 .setAction(ACTION_YES);
+
         Intent noIntent = new Intent(context, NotificationActionService.class)
                 .setAction(ACTION_NO);
+        noIntent.putExtra("bluetoothList", (Serializable) bluetoothDataList);
+        noIntent.putExtra("wifiList", (Serializable) wifiDataList);
+        noIntent.putExtra("locationList", (Serializable) locationDataList);
 
         // use System.currentTimeMillis() to have adapter unique ID for the pending intent
         PendingIntent pendingYesIntent = PendingIntent.getService(
@@ -126,13 +122,13 @@ public class NotificationUtils {
             } else if (ACTION_NO.equals(action)) {
                 Intent notificationDecision = new Intent(this, NotificationDecisionActivity.class)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                notificationDecision.putExtra("bluetoothList", (Serializable) bluetoothDataList);
-                notificationDecision.putExtra("wifiList", (Serializable) wifiDataList);
-                notificationDecision.putExtra("locationList", (Serializable) locationDataList);
+                notificationDecision.putExtras(intent.getExtras());
                 startActivity(notificationDecision);
             } else if (ACTION_ADD_ORIENTATION.equals(action)) {
-                
+                Intent addOrientationIntent = new Intent("HEURISTICS_TUNER");
+                addOrientationIntent.setAction("ADD_ORIENTATION");
+                addOrientationIntent.putExtras(intent.getExtras());
+                sendBroadcast(addOrientationIntent);
             }
         }
     }

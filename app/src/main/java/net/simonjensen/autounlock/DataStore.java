@@ -232,6 +232,21 @@ class DataStore {
         }
     }
 
+    void insertLockOrientation(String lockMAC, float orientation) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(LOCK_ORIENTATION, orientation);
+        contentValues.put(TIMESTAMP, System.currentTimeMillis());
+
+        try {
+            database = databaseHelper.getWritableDatabase();
+            database.beginTransaction();
+            database.replace(LOCK_TABLE, null, contentValues);
+            database.setTransactionSuccessful();
+        } finally {
+            database.endTransaction();
+        }
+    }
+
     void insertBtle(String name, String btleSource, int btleRSSI, String nearbyLock, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(BLUETOOTH_NAME, name);

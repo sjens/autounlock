@@ -67,7 +67,7 @@ public class AccelerometerService extends Service implements SensorEventListener
             // Log.d(TAG, "azimuth (rad): " + azimuth);
             float azimuth = (float) Math.toDegrees(orientation[0]);
             azimuth = (azimuth + 360) % 360;
-            //Log.d(TAG, "azimuth (deg): " + azimuth);
+            Log.d(TAG, "azimuth (deg): " + azimuth + " " + Math.min(Math.abs(azimuth - 350), Math.min(Math.abs((azimuth - 350) + 360) ,Math.abs((azimuth - 350) - 360))));
             CoreService.currentOrientation = azimuth;
         }
     }

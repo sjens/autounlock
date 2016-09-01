@@ -555,7 +555,7 @@ public class MainActivity extends AppCompatActivity {
             List<String> foundLocks = new ArrayList<>();
             foundLocks.add(BluetoothService.MIBAND);
             Log.d(TAG, foundLocks.toString());
-            //coreService.startDecision(foundLocks);
+            //coreService.startHeuristicsDecision(foundLocks);
             //coreService.notifyDecision();
             NotificationUtils notificationUtils = new NotificationUtils();
             notificationUtils.displayNotification(this,

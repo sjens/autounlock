@@ -1,7 +1,6 @@
 package net.simonjensen.autounlock;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -47,10 +46,15 @@ public class CoreService extends Service implements
     static List<WifiData> recordedWifi = new ArrayList<WifiData>();
     static List<LocationData> recordedLocation = new ArrayList<LocationData>();
     static List<AccelerometerData> recordedAccelerometer = new ArrayList<AccelerometerData>();
-    static ArrayList activeOuterGeofences = new ArrayList();
-    static ArrayList nearbyLocks = new ArrayList();
+    static ArrayList<String> idleInnerGeofences = new ArrayList<>();
+    static ArrayList<String> activeInnerGeofences = new ArrayList<>();
+    static ArrayList<String> activeOuterGeofences = new ArrayList<>();
+
     static long lastSignificantMovement = 0;
     static float currentOrientation = -1f;
+
+    static boolean isLocationDataCollectionStarted = false;
+    static boolean isDetailedDataCollectionStarted = false;
 
     static DataBuffer<List> dataBuffer;
     static DataStore dataStore;
@@ -131,13 +135,10 @@ public class CoreService extends Service implements
 
         buildGoogleApiClient();
 
-        IntentFilter enteredGeofencesFilter = new IntentFilter();
-        enteredGeofencesFilter.addAction("GEOFENCES_ENTERED");
-        registerReceiver(geofencesEntered, enteredGeofencesFilter);
-
-        IntentFilter exitedGeofencesFilter = new IntentFilter();
-        exitedGeofencesFilter.addAction("GEOFENCES_EXITED");
-        registerReceiver(geofencesExited, exitedGeofencesFilter);
+        IntentFilter geofencesFilter = new IntentFilter();
+        geofencesFilter.addAction("GEOFENCES_ENTERED");
+        geofencesFilter.addAction("GEOFENCES_EXITED");
+        registerReceiver(geofencesReceiver, geofencesFilter);
 
         IntentFilter startDecisionFilter = new IntentFilter();
         startDecisionFilter.addAction("START_DECISION");
@@ -145,6 +146,7 @@ public class CoreService extends Service implements
 
         IntentFilter heuristicsTunerFilter = new IntentFilter();
         heuristicsTunerFilter.addAction("HEURISTICS_TUNER");
+        heuristicsTunerFilter.addAction("ADD_ORIENTATION");
         registerReceiver(heuristicsTuner, heuristicsTunerFilter);
 
         Log.v("CoreService", "Service created");
@@ -205,34 +207,63 @@ public class CoreService extends Service implements
 
     }
 
-    private BroadcastReceiver geofencesEntered = new BroadcastReceiver() {
+    private BroadcastReceiver geofencesReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
             Bundle extras = intent.getExtras();
-            Log.i(TAG, String.valueOf(extras.getStringArrayList("Geofences")));
-            for (String lockMAC : extras.getStringArrayList("Geofences")) {
-                if (!nearbyLocks.contains(lockMAC)) {
-                    nearbyLocks.add(lockMAC);
-                }
-            }
-            if (!nearbyLocks.isEmpty()) {
-                startDataCollection();
-            }
-        }
-    };
+            List<String> triggeringGeofencesList = extras.getStringArrayList("Geofence");
 
-    private BroadcastReceiver geofencesExited = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //TODO: Stop all data collection
-            Bundle extras = intent.getExtras();
-            for (String lockMAC : extras.getStringArrayList("Geofences")) {
-                if (nearbyLocks.contains(lockMAC)) {
-                    nearbyLocks.remove(lockMAC);
+            if ("GEOFENCES_ENTERED".equals(action)) {
+                for (String geofence : triggeringGeofencesList) {
+                    if (geofence.contains("inner")) {
+                        for (String outerGeofence : activeOuterGeofences) {
+                            if (outerGeofence.equals(geofence.substring(5))) {
+                                activeOuterGeofences.remove(outerGeofence);
+                            }
+                        }
+                        activeInnerGeofences.add(geofence.substring(5));
+                        if (!isDetailedDataCollectionStarted) {
+                            isDetailedDataCollectionStarted = true;
+                            startAccelerometerService();
+                            startBluetoothService();
+                            startWifiService();
+                        }
+                    } else if (geofence.contains("outer")) {
+                        for (String innerGeofence : activeInnerGeofences) {
+                            if (innerGeofence.equals(geofence.substring(5))) {
+                                activeInnerGeofences.remove(innerGeofence);
+                            }
+                        }
+                        activeOuterGeofences.add(geofence.substring(5));
+                        if (!isLocationDataCollectionStarted) {
+                            isLocationDataCollectionStarted = true;
+                            startLocationService();
+                        }
+                    }
                 }
-            }
-            if (nearbyLocks.isEmpty()) {
-                stopDataCollection();
+            } else if ("GEOFENCES_EXITED".equals(action)) {
+                for (String geofence : triggeringGeofencesList) {
+                    if (geofence.contains("inner")) {
+                        if (activeInnerGeofences.contains(geofence.substring(5))) {
+                            activeInnerGeofences.remove(geofence.substring(5));
+                        }
+                        if (isDetailedDataCollectionStarted && activeInnerGeofences.isEmpty()) {
+                            isDetailedDataCollectionStarted = false;
+                            stopAccelerometerService();
+                            stopBluetoothService();
+                            stopWifiService();
+                        }
+                    } else if (geofence.contains("outer")) {
+                        if (activeOuterGeofences.contains(geofence.substring(5))) {
+                            activeOuterGeofences.remove(geofence.substring(5));
+                        }
+                        if (isLocationDataCollectionStarted && activeOuterGeofences.isEmpty()) {
+                            isLocationDataCollectionStarted = false;
+                            stopLocationService();
+                        }
+                    }
+                }
             }
         }
     };
@@ -248,6 +279,13 @@ public class CoreService extends Service implements
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.i(TAG, "onReceive: tuning heuristics");
+            String action = intent.getAction();
+            if ("ADD_ORIENTATION".equals(action)) {
+                Log.d(TAG, "onReceive: add orientation");
+                dataStore.insertLockOrientation(
+                        intent.getExtras().getString("lock"),
+                        intent.getExtras().getFloat("orientation"));
+            }
         }
     };
 
@@ -307,7 +345,7 @@ public class CoreService extends Service implements
         stopService(bluetoothIntent);
     }
 
-    void startDecision(List<String> foundLocks) {
+    boolean startHeuristicsDecision(List<String> foundLocks) {
         Log.d(TAG, foundLocks.toString());
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
 
@@ -315,7 +353,7 @@ public class CoreService extends Service implements
         heuristics.setRecentBluetoothList(recordedBluetooth);
         heuristics.setRecentWifiList(recordedWifi);
         heuristics.setRecentLocationList(recordedLocation);
-        heuristics.makeDecision(foundLocks);
+        return heuristics.makeDecision(foundLocks);
     }
 
     void startDataBuffer() {
@@ -467,39 +505,51 @@ public class CoreService extends Service implements
         return true;
     }
 
-    void scanForLock() {
-        ArrayList<LockData> knownLocks = dataStore.getKnownLocks();
-        for (LockData lock : knownLocks) {
-            for (BluetoothData bluetoothDevice : recordedBluetooth) {
-                if (bluetoothDevice.getSource().equals(lock.getMAC())) {
-                    nearbyLockDetected(lock.getMAC());
-                }
-            }
-        }
-    }
-
-    void nearbyLockDetected(String lockMAC) {
-        final LockData foundLock = dataStore.getLockDetails(lockMAC);
-
-        if (foundLock.getOrientation() == -1) {
-            new Thread(new Runnable() {
+    void scanForLocks() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
                 boolean running = true;
+                List<String> foundLocks = new ArrayList<>();
+                List<String> decisionLocks = new ArrayList<>();
                 long startTime = System.currentTimeMillis();
 
-                @Override
-                public void run() {
-                    while (running) {
-                        if (System.currentTimeMillis() - lastSignificantMovement > 2000
-                                && lastSignificantMovement != 0) {
-                            NotificationUtils notificationUtils = new NotificationUtils();
-                            notificationUtils.displayOrientationNotification(getApplicationContext(), foundLock.getMAC(), currentOrientation);
-                        } else if (System.currentTimeMillis() - startTime > 600000) {
-                            running = false;
+                while (running) {
+                    for (BluetoothData bluetoothData : recordedBluetooth) {
+                        if (activeInnerGeofences.contains(bluetoothData.getSource())) {
+                            foundLocks.add(bluetoothData.getSource());
                         }
                     }
+                    if (!foundLocks.isEmpty() && System.currentTimeMillis() - lastSignificantMovement > 2000) {
+                        for (String foundLock : foundLocks) {
+                            LockData foundLockWithDetails = dataStore.getLockDetails(foundLock);
+                            if (Math.min(Math.abs(currentOrientation - foundLockWithDetails.getOrientation()),
+                                    Math.min(Math.abs((currentOrientation - foundLockWithDetails.getOrientation()) + 360),
+                                            Math.abs((currentOrientation - foundLockWithDetails.getOrientation()) - 360)))
+                                    < 22.5 ) {
+                                decisionLocks.add(foundLock);
+                            }
+                        }
+                        if (!decisionLocks.isEmpty()) {
+                            startHeuristicsDecision(decisionLocks);
+                            running = false;
+                        }
+                        //nearbyLocksDetected(foundLocks);
+                    } else if (!foundLocks.isEmpty()) {
+                        foundLocks = new ArrayList<>();
+                        decisionLocks = new ArrayList<>();
+                    } else if (System.currentTimeMillis() - startTime > 600000) {
+                        running = false;
+                    }
+
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
-            });
-        }
+            }
+        });
     }
 
     void getLock(String lockMAC) {
