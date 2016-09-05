@@ -13,7 +13,7 @@ import android.util.Log;
 
 public class AccelerometerService extends Service implements SensorEventListener {
     static String TAG = "AccelerometerService";
-    private static final boolean ADAPTIVE_ACCEL_FILTER = true;
+    private static final boolean ADAPTIVE_ACCELEROMETER_FILTER = true;
 
     int startMode;       // indicates how to behave if the service is killed
     IBinder binder;      // interface for clients that bind
@@ -27,7 +27,7 @@ public class AccelerometerService extends Service implements SensorEventListener
 
     private float[] gravity = new float[3];
     private float[] magneticField = new float[3];
-    private float[] linearAcceleration = new float[3];
+    private float[] linearAcceleration = new float[4];
     private float[] previousAcceleration = new float[3];
     private float[] accelerationFilter = new float[3];
     private float[] rotationVector = new float[5];
@@ -46,9 +46,10 @@ public class AccelerometerService extends Service implements SensorEventListener
             System.arraycopy(event.values, 0, linearAcceleration, 0, event.values.length);
             processAccelerometer(linearAcceleration);
             accelerometerFilter(linearAcceleration[0], linearAcceleration[1], linearAcceleration[2]);
-        } else if (event.sensor == rotationVectorSensor) {
+        } else if (event.sensor == rotationVectorSensor && linearAcceleration != null) {
             System.arraycopy(event.values, 0, rotationVector, 0, event.values.length);
-            Log.i(TAG, "onSensorChanged: " + rotationVector[0] + " " + rotationVector[1]);
+            //Log.i(TAG, "onSensorChanged: " + rotationVector[0] + " " + rotationVector[1] + " " + rotationVector[2]);
+            rotateAccelerationToEarthCoordinates(linearAcceleration, rotationVector);
         }
     }
 
@@ -57,11 +58,12 @@ public class AccelerometerService extends Service implements SensorEventListener
         //We do not take accuracy into account
     }
 
+    // High-pass filter from:
     // https://stackoverflow.com/questions/1638864/filtering-accelerometer-data-noise
     // && https://developer.apple.com/library/ios/samplecode/AccelerometerGraph/Listings/AccelerometerGraph_AccelerometerFilter_m.html
     private void accelerometerFilter(float accelerometerX, float accelerometerY, float accelerometerZ) {
-        // high pass filter
-        float updateFreq = 30; // match this to your update speed
+        // SENSOR_DELAY_NORMAL has a delay of 200 ms, giving ~5 updates per second.
+        float updateFreq = 5; // match this to your update speed
         float cutOffFreq = 0.9f;
         float RC = 1.0f / cutOffFreq;
         float dt = 1.0f / updateFreq;
@@ -70,10 +72,9 @@ public class AccelerometerService extends Service implements SensorEventListener
         float kAccelerometerMinStep = 0.033f;
         float kAccelerometerNoiseAttenuation = 3.0f;
 
-        if(ADAPTIVE_ACCEL_FILTER)
-        {
-
-            float d = (float) clamp(Math.abs(norm(accelerationFilter[0], accelerationFilter[1], accelerationFilter[2]) - norm(accelerometerX, accelerometerY, accelerometerZ)) / kAccelerometerMinStep - 1.0f, 0.0f, 1.0f);
+        if(ADAPTIVE_ACCELEROMETER_FILTER) {
+            float d = (float) clamp(Math.abs(norm(accelerationFilter[0], accelerationFilter[1], accelerationFilter[2])
+                    - norm(accelerometerX, accelerometerY, accelerometerZ)) / kAccelerometerMinStep - 1.0f, 0.0f, 1.0f);
             alpha = d * filterConstant / kAccelerometerNoiseAttenuation + (1.0f - d) * filterConstant;
         }
 
@@ -85,9 +86,9 @@ public class AccelerometerService extends Service implements SensorEventListener
         previousAcceleration[1] = accelerometerY;
         previousAcceleration[2] = accelerometerZ;
         //onFilteredAccelerometerChanged(accelerationFilter[0], accelerationFilter[1], accelerationFilter[2]);
-        Log.e(TAG, "accelerationFilter: new reading");
-        Log.d(TAG, "accelerationFilter: unfiltered " + previousAcceleration[0] + " " + previousAcceleration[1] + " " + previousAcceleration[2]);
-        Log.d(TAG, "accelerationFilter: filtered" + accelerationFilter[0] + " " + accelerationFilter[1] + " " + accelerationFilter[2]);
+        //Log.e(TAG, "accelerationFilter: new reading");
+        //Log.d(TAG, "accelerationFilter: unfiltered " + previousAcceleration[0] + " " + previousAcceleration[1] + " " + previousAcceleration[2]);
+        //Log.d(TAG, "accelerationFilter: filtered" + accelerationFilter[0] + " " + accelerationFilter[1] + " " + accelerationFilter[2]);
     }
 
     private double norm(double x, double y, double z) {
@@ -127,8 +128,20 @@ public class AccelerometerService extends Service implements SensorEventListener
         }
     }
 
-    private void processRotationVector() {
+    private void rotateAccelerationToEarthCoordinates(float[] linearAcceleration, float[] rotationVector) {
+        float[] rotationMatrixInverted = new float[16];
+        float[] rotationMatrix = new float[16];
 
+        // Calculate the rotation matrix from the rotation vector
+        SensorManager.getRotationMatrixFromVector(rotationMatrix, rotationVector);
+
+        // Invert the rotation matrix.
+        android.opengl.Matrix.invertM(rotationMatrixInverted, 0, rotationMatrix, 0);
+
+        // Multiply the linear acceleration onto the inverted rotation matrix to get linear acceleration in
+        // earth coordinates.
+        android.opengl.Matrix.multiplyMV(linearAcceleration, 0, rotationMatrixInverted, 0, linearAcceleration, 0);
+        Log.d(TAG, "rotateAccelerationToEarthCoordinates: " + linearAcceleration[0] + " " + linearAcceleration[1] + " " + linearAcceleration[2]);
     }
 
     @Override
