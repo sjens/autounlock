@@ -569,7 +569,7 @@ public class MainActivity extends AppCompatActivity {
         Log.v("New Datastore", "Deleting data in datastore");
         if (bound) {
             //coreService.newDatastore();
-            coreService.manualUnlock(BluetoothService.MIBAND);
+            coreService.manualUnlock(BluetoothService.SIMON_BEKEY);
         }
     }
 

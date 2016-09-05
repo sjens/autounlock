@@ -13,6 +13,7 @@ import android.util.Log;
 
 public class AccelerometerService extends Service implements SensorEventListener {
     static String TAG = "AccelerometerService";
+    private static final boolean ADAPTIVE_ACCEL_FILTER = true;
 
     int startMode;       // indicates how to behave if the service is killed
     IBinder binder;      // interface for clients that bind
@@ -22,10 +23,14 @@ public class AccelerometerService extends Service implements SensorEventListener
     private Sensor gravitySensor;
     private Sensor magneticFieldSensor;
     private Sensor linearAccelerationSensor;
+    private Sensor rotationVectorSensor;
 
     private float[] gravity = new float[3];
     private float[] magneticField = new float[3];
     private float[] linearAcceleration = new float[3];
+    private float[] previousAcceleration = new float[3];
+    private float[] accelerationFilter = new float[3];
+    private float[] rotationVector = new float[5];
 
     PowerManager powerManager;
     PowerManager.WakeLock wakeLock;
@@ -40,12 +45,63 @@ public class AccelerometerService extends Service implements SensorEventListener
         } else if (event.sensor == linearAccelerationSensor) {
             System.arraycopy(event.values, 0, linearAcceleration, 0, event.values.length);
             processAccelerometer(linearAcceleration);
+            accelerometerFilter(linearAcceleration[0], linearAcceleration[1], linearAcceleration[2]);
+        } else if (event.sensor == rotationVectorSensor) {
+            System.arraycopy(event.values, 0, rotationVector, 0, event.values.length);
+            Log.i(TAG, "onSensorChanged: " + rotationVector[0] + " " + rotationVector[1]);
         }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         //We do not take accuracy into account
+    }
+
+    // https://stackoverflow.com/questions/1638864/filtering-accelerometer-data-noise
+    // && https://developer.apple.com/library/ios/samplecode/AccelerometerGraph/Listings/AccelerometerGraph_AccelerometerFilter_m.html
+    private void accelerometerFilter(float accelerometerX, float accelerometerY, float accelerometerZ) {
+        // high pass filter
+        float updateFreq = 30; // match this to your update speed
+        float cutOffFreq = 0.9f;
+        float RC = 1.0f / cutOffFreq;
+        float dt = 1.0f / updateFreq;
+        float filterConstant = RC / (dt + RC);
+        float alpha = filterConstant;
+        float kAccelerometerMinStep = 0.033f;
+        float kAccelerometerNoiseAttenuation = 3.0f;
+
+        if(ADAPTIVE_ACCEL_FILTER)
+        {
+
+            float d = (float) clamp(Math.abs(norm(accelerationFilter[0], accelerationFilter[1], accelerationFilter[2]) - norm(accelerometerX, accelerometerY, accelerometerZ)) / kAccelerometerMinStep - 1.0f, 0.0f, 1.0f);
+            alpha = d * filterConstant / kAccelerometerNoiseAttenuation + (1.0f - d) * filterConstant;
+        }
+
+        accelerationFilter[0] = (float) (alpha * (accelerationFilter[0] + accelerometerX - previousAcceleration[0]));
+        accelerationFilter[1] = (float) (alpha * (accelerationFilter[1] + accelerometerY - previousAcceleration[1]));
+        accelerationFilter[2] = (float) (alpha * (accelerationFilter[2] + accelerometerZ - previousAcceleration[2]));
+
+        previousAcceleration[0] = accelerometerX;
+        previousAcceleration[1] = accelerometerY;
+        previousAcceleration[2] = accelerometerZ;
+        //onFilteredAccelerometerChanged(accelerationFilter[0], accelerationFilter[1], accelerationFilter[2]);
+        Log.e(TAG, "accelerationFilter: new reading");
+        Log.d(TAG, "accelerationFilter: unfiltered " + previousAcceleration[0] + " " + previousAcceleration[1] + " " + previousAcceleration[2]);
+        Log.d(TAG, "accelerationFilter: filtered" + accelerationFilter[0] + " " + accelerationFilter[1] + " " + accelerationFilter[2]);
+    }
+
+    private double norm(double x, double y, double z) {
+        return Math.sqrt(x * x + y * y + z * z);
+    }
+
+    private double clamp(double v, double min, double max) {
+        if (v > max) {
+            return max;
+        } else if (v < min) {
+            return min;
+        } else {
+            return v;
+        }
     }
 
     private void processAccelerometer(float[] linearAcceleration) {
@@ -59,17 +115,20 @@ public class AccelerometerService extends Service implements SensorEventListener
     private void processMagneticField(float[] magneticField, float[] gravity) {
         float R[] = new float[9];
         float I[] = new float[9];
-        boolean success = SensorManager.getRotationMatrix(R, I, gravity,
-                magneticField);
+        boolean success = SensorManager.getRotationMatrix(R, I, gravity, magneticField);
         if (success) {
             float orientation[] = new float[3];
             SensorManager.getOrientation(R, orientation);
             // Log.d(TAG, "azimuth (rad): " + azimuth);
             float azimuth = (float) Math.toDegrees(orientation[0]);
             azimuth = (azimuth + 360) % 360;
-            Log.d(TAG, "azimuth (deg): " + azimuth + " " + Math.min(Math.abs(azimuth - 350), Math.min(Math.abs((azimuth - 350) + 360) ,Math.abs((azimuth - 350) - 360))));
+            //Log.v(TAG, "azimuth (deg): " + azimuth);
             CoreService.currentOrientation = azimuth;
         }
+    }
+
+    private void processRotationVector() {
+
     }
 
     @Override
@@ -83,9 +142,11 @@ public class AccelerometerService extends Service implements SensorEventListener
         gravitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
         magneticFieldSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         sensorManager.registerListener(this, gravitySensor, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, magneticFieldSensor, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, linearAccelerationSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, rotationVectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -114,6 +175,7 @@ public class AccelerometerService extends Service implements SensorEventListener
         sensorManager.unregisterListener(this, gravitySensor);
         sensorManager.unregisterListener(this, magneticFieldSensor);
         sensorManager.unregisterListener(this, linearAccelerationSensor);
+        sensorManager.unregisterListener(this, rotationVectorSensor);
         wakeLock.release();
     }
 }

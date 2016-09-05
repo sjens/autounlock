@@ -49,10 +49,9 @@ public class GeofenceService extends IntentService {
 
         ArrayList triggeringLockList = new ArrayList();
         for (Geofence geofence : triggeringGeofences) {
-            String lockMAC = geofence.getRequestId().substring(5);
-            if (!triggeringLockList.contains(lockMAC)) {
-                triggeringLockList.add(lockMAC);
-            }
+            String lockMAC = geofence.getRequestId();
+            Log.i(TAG, "onHandleIntent: " + lockMAC);
+            triggeringLockList.add(lockMAC);
         }
 
         if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {

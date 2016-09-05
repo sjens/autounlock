@@ -55,6 +55,7 @@ public class CoreService extends Service implements
 
     static boolean isLocationDataCollectionStarted = false;
     static boolean isDetailedDataCollectionStarted = false;
+    static boolean isScanningForLocks = false;
 
     static DataBuffer<List> dataBuffer;
     static DataStore dataStore;
@@ -212,7 +213,9 @@ public class CoreService extends Service implements
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             Bundle extras = intent.getExtras();
-            List<String> triggeringGeofencesList = extras.getStringArrayList("Geofence");
+            List<String> triggeringGeofencesList = extras.getStringArrayList("Geofences");
+
+            Log.i(TAG, "onReceive: " + extras.getStringArrayList("Geofences"));
 
             if ("GEOFENCES_ENTERED".equals(action)) {
                 for (String geofence : triggeringGeofencesList) {
@@ -224,10 +227,13 @@ public class CoreService extends Service implements
                         }
                         activeInnerGeofences.add(geofence.substring(5));
                         if (!isDetailedDataCollectionStarted) {
+                            Log.d(TAG, "onReceive: starting detailed data collection");
                             isDetailedDataCollectionStarted = true;
+                            isScanningForLocks = true;
                             startAccelerometerService();
                             startBluetoothService();
                             startWifiService();
+                            scanForLocks();
                         }
                     } else if (geofence.contains("outer")) {
                         for (String innerGeofence : activeInnerGeofences) {
@@ -250,6 +256,7 @@ public class CoreService extends Service implements
                         }
                         if (isDetailedDataCollectionStarted && activeInnerGeofences.isEmpty()) {
                             isDetailedDataCollectionStarted = false;
+                            isScanningForLocks = false;
                             stopAccelerometerService();
                             stopBluetoothService();
                             stopWifiService();
@@ -509,13 +516,14 @@ public class CoreService extends Service implements
         new Thread(new Runnable() {
             @Override
             public void run() {
-                boolean running = true;
+                Log.i(TAG, "run: scanForLocks()");
                 List<String> foundLocks = new ArrayList<>();
                 List<String> decisionLocks = new ArrayList<>();
                 long startTime = System.currentTimeMillis();
 
-                while (running) {
+                while (isScanningForLocks) {
                     for (BluetoothData bluetoothData : recordedBluetooth) {
+                        Log.d(TAG, "run: " + bluetoothData.getSource() + activeInnerGeofences.toString());
                         if (activeInnerGeofences.contains(bluetoothData.getSource())) {
                             foundLocks.add(bluetoothData.getSource());
                         }
@@ -523,7 +531,10 @@ public class CoreService extends Service implements
                     if (!foundLocks.isEmpty() && System.currentTimeMillis() - lastSignificantMovement > 2000) {
                         for (String foundLock : foundLocks) {
                             LockData foundLockWithDetails = dataStore.getLockDetails(foundLock);
-                            if (Math.min(Math.abs(currentOrientation - foundLockWithDetails.getOrientation()),
+                            if (foundLockWithDetails.getOrientation() == -1) {
+                                NotificationUtils notification = new NotificationUtils();
+                                notification.displayOrientationNotification(getApplicationContext(), foundLockWithDetails.getMAC(), currentOrientation);
+                            } else if (Math.min(Math.abs(currentOrientation - foundLockWithDetails.getOrientation()),
                                     Math.min(Math.abs((currentOrientation - foundLockWithDetails.getOrientation()) + 360),
                                             Math.abs((currentOrientation - foundLockWithDetails.getOrientation()) - 360)))
                                     < 22.5 ) {
@@ -532,14 +543,14 @@ public class CoreService extends Service implements
                         }
                         if (!decisionLocks.isEmpty()) {
                             startHeuristicsDecision(decisionLocks);
-                            running = false;
+                            isScanningForLocks = false;
                         }
                         //nearbyLocksDetected(foundLocks);
                     } else if (!foundLocks.isEmpty()) {
                         foundLocks = new ArrayList<>();
                         decisionLocks = new ArrayList<>();
                     } else if (System.currentTimeMillis() - startTime > 600000) {
-                        running = false;
+                        isScanningForLocks = false;
                     }
 
                     try {
@@ -549,7 +560,7 @@ public class CoreService extends Service implements
                     }
                 }
             }
-        });
+        }).start();
     }
 
     void getLock(String lockMAC) {

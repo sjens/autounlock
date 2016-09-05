@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class WifiService extends Service {
@@ -30,6 +31,7 @@ public class WifiService extends Service {
                 List<ScanResult> scanResults = wifiManager.getScanResults();
                 long time = System.currentTimeMillis();
 
+                CoreService.recordedWifi = new ArrayList<>();
                 for (int i = 0; i < scanResults.size(); i++) {
                     Log.v("Wifi", String.valueOf(scanResults.get(i)));
                     String SSID = scanResults.get(i).SSID;
