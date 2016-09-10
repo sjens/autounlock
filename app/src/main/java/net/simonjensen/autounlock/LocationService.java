@@ -30,7 +30,6 @@ public class LocationService extends Service {
     // Define adapter listener that responds to location updates
     private LocationListener locationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
-
             if (previousLocation == null) {
                 insertLocationData(location);
                 previousLocation = location;
@@ -84,11 +83,12 @@ public class LocationService extends Service {
 
         Log.v("LocationService", "Starting location gathering");
         // Register the listener with the Location Manager to receive location updates
+        // We set minTime and minDistance to 0 because we want all location updates, even when we haven't moved.
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1, 1, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 1, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 
         CoreService coreService = new CoreService();
     }

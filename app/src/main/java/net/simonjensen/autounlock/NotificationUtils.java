@@ -53,7 +53,7 @@ public class NotificationUtils {
                                 "Yes", pendingYesIntent))
                         .addAction(new NotificationCompat.Action(R.drawable.ic_close_black,
                                 "No", pendingNoIntent))
-                        .setVibrate(new long[] {0, 1000, 1000, 1000});
+                        .setVibrate(new long[] {0, 100});
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         Notification notification = notificationBuilder.build();
@@ -98,7 +98,7 @@ public class NotificationUtils {
                                 "Yes", pendingYesIntent))
                         .addAction(new NotificationCompat.Action(R.drawable.ic_close_black,
                                 "No", pendingNoIntent))
-                        .setVibrate(new long[] {0, 1000, 1000, 1000});
+                        .setVibrate(new long[] {0, 100});
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
         Notification notification = notificationBuilder.build();

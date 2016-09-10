@@ -16,6 +16,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -210,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
      * this method with the android:onClick attribute) */
     public void onButtonClickAccel(View v) {
         if (bound) {
+            coreService.export = new ArrayList<>();
             coreService.startAccelerometerService();
             setStartAccelerometer();
 
@@ -524,6 +526,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onButtonClickExportDatastore(View v) {
+        String filename = String.valueOf(System.currentTimeMillis());
+        String[] numbers = new String[] {"1, 2, 3"};
+        FileOutputStream outputStream;
+
+        Log.d(TAG, "onButtonClickExportDatastore: ");
+
+        try {
+            outputStream = openFileOutput(filename, Context.MODE_APPEND);
+            for (String s : CoreService.export) {
+                outputStream.write(s.getBytes());
+                outputStream.write('\n');
+            }
+            outputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 /*        try {
             File data = Environment.getDataDirectory();
 
@@ -551,7 +570,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             // do something
         }*/
-        if (bound) {
+/*        if (bound) {
             List<String> foundLocks = new ArrayList<>();
             foundLocks.add(BluetoothService.MIBAND);
             Log.d(TAG, foundLocks.toString());
@@ -562,7 +581,7 @@ public class MainActivity extends AppCompatActivity {
                     CoreService.recordedBluetooth,
                     CoreService.recordedWifi,
                     CoreService.recordedLocation);
-        }
+        }*/
     }
 
     public void onButtonClickNewDB(View v) {

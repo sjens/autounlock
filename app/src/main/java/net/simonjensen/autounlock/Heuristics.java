@@ -13,24 +13,12 @@ class Heuristics {
     private List<WifiData> recentWifiList;
     private List<LocationData> recentLocationList;
 
-    public List<BluetoothData> getRecentBluetoothList() {
-        return recentBluetoothList;
-    }
-
     public void setRecentBluetoothList(List<BluetoothData> recentBluetoothList) {
         this.recentBluetoothList = recentBluetoothList;
     }
 
-    public List<WifiData> getRecentWifiList() {
-        return recentWifiList;
-    }
-
     public void setRecentWifiList(List<WifiData> recentWifiList) {
         this.recentWifiList = recentWifiList;
-    }
-
-    public List<LocationData> getRecentLocationList() {
-        return recentLocationList;
     }
 
     public void setRecentLocationList(List<LocationData> recentLocationList) {

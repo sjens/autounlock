@@ -46,6 +46,15 @@ public class BluetoothService extends Service {
             int RSSI = result.getRssi();
             long time = System.currentTimeMillis();
 
+            for (BluetoothData bluetooth : CoreService.recordedBluetooth) {
+                if (time - bluetooth.getTime() > 5000) {
+                    Log.e(TAG, "onScanResult: " + source + (time - bluetooth.getTime()));
+                    CoreService.recordedBluetooth.remove(bluetooth);
+                } else if (bluetooth.getSource().equals(source)){
+                    CoreService.recordedBluetooth.remove(bluetooth);
+                }
+            }
+
             BluetoothData aBluetoothDevice;
             aBluetoothDevice = new BluetoothData(name, source, RSSI, time);
             CoreService.recordedBluetooth.add(aBluetoothDevice);
@@ -100,7 +109,6 @@ public class BluetoothService extends Service {
         }
 
         setScanSettings();
-
         bluetoothAdapter.getBluetoothLeScanner().startScan(null, scanSettings, scanCallback);
     }
 

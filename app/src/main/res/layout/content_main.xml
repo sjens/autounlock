@@ -242,7 +242,7 @@
             android:id="@+id/exportdb"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
-            android:text="Start Decision"
+            android:text="Export"
             android:onClick="onButtonClickExportDatastore"
             android:layout_below="@+id/unregistergeofence"
             android:layout_alignParentStart="true"/>

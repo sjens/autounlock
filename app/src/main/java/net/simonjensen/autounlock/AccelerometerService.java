@@ -24,6 +24,7 @@ public class AccelerometerService extends Service implements SensorEventListener
     private Sensor magneticFieldSensor;
     private Sensor linearAccelerationSensor;
     private Sensor rotationVectorSensor;
+    private Sensor gyroscopeSensor;
 
     private float[] gravity = new float[3];
     private float[] magneticField = new float[3];
@@ -31,9 +32,15 @@ public class AccelerometerService extends Service implements SensorEventListener
     private float[] previousAcceleration = new float[3];
     private float[] accelerationFilter = new float[3];
     private float[] rotationVector = new float[5];
+    private float[] gyroscope = new float[3];
 
     PowerManager powerManager;
     PowerManager.WakeLock wakeLock;
+
+    private static final float NS2S = 1.0f / 1000000000.0f;
+    private float previousTimestamp;
+    float dT = 0;
+    float previousVelocity[] = new float[3];
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -46,10 +53,25 @@ public class AccelerometerService extends Service implements SensorEventListener
             System.arraycopy(event.values, 0, linearAcceleration, 0, event.values.length);
             processAccelerometer(linearAcceleration);
             accelerometerFilter(linearAcceleration[0], linearAcceleration[1], linearAcceleration[2]);
+            if (previousTimestamp != 0) {
+                dT = (event.timestamp - previousTimestamp) * NS2S;
+            }
+            previousTimestamp = event.timestamp;
+            float vel[] = new float[3];
+            vel[0] = (dT * event.values[0]) + previousVelocity[0];
+            vel[1] = (dT * event.values[1]) + previousVelocity[1];
+            vel[2] = (dT * event.values[2]) + previousVelocity[2];
+            //Log.i(TAG, "onSensorChanged: " + vel[1]);
+            previousVelocity = vel;
+            //CoreService.export.add(String.valueOf(linearAcceleration[0]) + " " + String.valueOf(linearAcceleration[1]) + " " + String.valueOf(linearAcceleration[2])
+            //        + " " + String.valueOf(vel[0]) + " " + String.valueOf(vel[1]) + " " + String.valueOf(vel[2]));
         } else if (event.sensor == rotationVectorSensor && linearAcceleration != null) {
             System.arraycopy(event.values, 0, rotationVector, 0, event.values.length);
             //Log.i(TAG, "onSensorChanged: " + rotationVector[0] + " " + rotationVector[1] + " " + rotationVector[2]);
             rotateAccelerationToEarthCoordinates(linearAcceleration, rotationVector);
+        } else if (event.sensor == gyroscopeSensor) {
+            //Log.d(TAG, "onSensorChanged: " + event.values[0] + " " + event.values[1] + " " + event.values[2]);
+            //CoreService.export.add(String.valueOf(event.values[0]) + " " + String.valueOf(event.values[1]) + " " + String.valueOf(event.values[2]));
         }
     }
 
@@ -63,7 +85,7 @@ public class AccelerometerService extends Service implements SensorEventListener
     // && https://developer.apple.com/library/ios/samplecode/AccelerometerGraph/Listings/AccelerometerGraph_AccelerometerFilter_m.html
     private void accelerometerFilter(float accelerometerX, float accelerometerY, float accelerometerZ) {
         // SENSOR_DELAY_NORMAL has a delay of 200 ms, giving ~5 updates per second.
-        float updateFreq = 5; // match this to your update speed
+        float updateFreq = 6; // match this to your update speed
         float cutOffFreq = 0.9f;
         float RC = 1.0f / cutOffFreq;
         float dt = 1.0f / updateFreq;
@@ -123,6 +145,7 @@ public class AccelerometerService extends Service implements SensorEventListener
             // Log.d(TAG, "azimuth (rad): " + azimuth);
             float azimuth = (float) Math.toDegrees(orientation[0]);
             azimuth = (azimuth + 360) % 360;
+
             //Log.v(TAG, "azimuth (deg): " + azimuth);
             CoreService.currentOrientation = azimuth;
         }
@@ -141,7 +164,11 @@ public class AccelerometerService extends Service implements SensorEventListener
         // Multiply the linear acceleration onto the inverted rotation matrix to get linear acceleration in
         // earth coordinates.
         android.opengl.Matrix.multiplyMV(linearAcceleration, 0, rotationMatrixInverted, 0, linearAcceleration, 0);
-        Log.d(TAG, "rotateAccelerationToEarthCoordinates: " + linearAcceleration[0] + " " + linearAcceleration[1] + " " + linearAcceleration[2]);
+        //Log.d(TAG, "rotateAccelerationToEarthCoordinates: " + linearAcceleration[0] + " " + linearAcceleration[1] + " " + linearAcceleration[2]);
+    }
+
+    private void calculateVelocity(float[] linearAcceleration) {
+
     }
 
     @Override
@@ -156,10 +183,12 @@ public class AccelerometerService extends Service implements SensorEventListener
         magneticFieldSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
         rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         sensorManager.registerListener(this, gravitySensor, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, magneticFieldSensor, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, linearAccelerationSensor, SensorManager.SENSOR_DELAY_NORMAL);
         sensorManager.registerListener(this, rotationVectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_NORMAL);
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -189,6 +218,7 @@ public class AccelerometerService extends Service implements SensorEventListener
         sensorManager.unregisterListener(this, magneticFieldSensor);
         sensorManager.unregisterListener(this, linearAccelerationSensor);
         sensorManager.unregisterListener(this, rotationVectorSensor);
+        sensorManager.unregisterListener(this, gyroscopeSensor);
         wakeLock.release();
     }
 }

@@ -32,22 +32,26 @@ public class CoreService extends Service implements
 
     private Looper serviceLooper;
     private ServiceHandler serviceHandler;
+    private ScannerService lockScanner;
 
     private Intent accelerometerIntent;
     private Intent bluetoothIntent;
     private Intent wifiIntent;
     private Intent locationIntent;
     private Intent dataProcessorIntent;
+    private Intent scannerIntent;
 
     private GoogleApiClient mGoogleApiClient;
     private net.simonjensen.autounlock.Geofence geofence;
 
+    static ArrayList<String> export = new ArrayList<>();
+    static ArrayList<String> velocity = new ArrayList<>();
     static List<BluetoothData> recordedBluetooth = new ArrayList<BluetoothData>();
     static List<WifiData> recordedWifi = new ArrayList<WifiData>();
     static List<LocationData> recordedLocation = new ArrayList<LocationData>();
     static List<AccelerometerData> recordedAccelerometer = new ArrayList<AccelerometerData>();
     static ArrayList<String> idleInnerGeofences = new ArrayList<>();
-    static ArrayList<String> activeInnerGeofences = new ArrayList<>();
+    static volatile ArrayList<String> activeInnerGeofences = new ArrayList<>();
     static ArrayList<String> activeOuterGeofences = new ArrayList<>();
 
     static long lastSignificantMovement = 0;
@@ -55,7 +59,7 @@ public class CoreService extends Service implements
 
     static boolean isLocationDataCollectionStarted = false;
     static boolean isDetailedDataCollectionStarted = false;
-    static boolean isScanningForLocks = false;
+    static volatile boolean isScanningForLocks = false;
 
     static DataBuffer<List> dataBuffer;
     static DataStore dataStore;
@@ -133,6 +137,7 @@ public class CoreService extends Service implements
         wifiIntent = new Intent(this, WifiService.class);
         bluetoothIntent = new Intent(this, BluetoothService.class);
         dataProcessorIntent = new Intent(this, DataProcessorService.class);
+        scannerIntent = new Intent(this, ScannerService.class);
 
         buildGoogleApiClient();
 
@@ -151,6 +156,8 @@ public class CoreService extends Service implements
         registerReceiver(heuristicsTuner, heuristicsTunerFilter);
 
         Log.v("CoreService", "Service created");
+
+        activeInnerGeofences.add("test");
     }
 
     @Override
@@ -227,7 +234,7 @@ public class CoreService extends Service implements
                         }
                         activeInnerGeofences.add(geofence.substring(5));
                         if (!isDetailedDataCollectionStarted) {
-                            Log.d(TAG, "onReceive: starting detailed data collection");
+                            Log.i(TAG, "onReceive: starting detailed data collection");
                             isDetailedDataCollectionStarted = true;
                             isScanningForLocks = true;
                             startAccelerometerService();
@@ -288,10 +295,14 @@ public class CoreService extends Service implements
             Log.i(TAG, "onReceive: tuning heuristics");
             String action = intent.getAction();
             if ("ADD_ORIENTATION".equals(action)) {
-                Log.d(TAG, "onReceive: add orientation");
+                Log.w(TAG, "onReceive: add orientation, lock: " + intent.getExtras().getString("lock") + " orientation: " + intent.getExtras().getFloat("orientation"));
                 dataStore.insertLockOrientation(
                         intent.getExtras().getString("lock"),
                         intent.getExtras().getFloat("orientation"));
+                if (isDetailedDataCollectionStarted && !isScanningForLocks) {
+                    isScanningForLocks = true;
+                    scanForLocks();
+                }
             }
         }
     };
@@ -460,7 +471,7 @@ public class CoreService extends Service implements
                             currentLocation,
                             20,
                             100,
-                            -1f,
+                            currentOrientation,
                             recordedBluetooth,
                             recordedWifi
                     );
@@ -512,55 +523,14 @@ public class CoreService extends Service implements
         return true;
     }
 
-    void scanForLocks() {
-        new Thread(new Runnable() {
-            @Override
+    private void scanForLocks() {
+        Log.e(TAG, "scanForLocks: " + activeInnerGeofences);
+        Thread scannerServiceThread = new Thread() {
             public void run() {
-                Log.i(TAG, "run: scanForLocks()");
-                List<String> foundLocks = new ArrayList<>();
-                List<String> decisionLocks = new ArrayList<>();
-                long startTime = System.currentTimeMillis();
-
-                while (isScanningForLocks) {
-                    for (BluetoothData bluetoothData : recordedBluetooth) {
-                        Log.d(TAG, "run: " + bluetoothData.getSource() + activeInnerGeofences.toString());
-                        if (activeInnerGeofences.contains(bluetoothData.getSource())) {
-                            foundLocks.add(bluetoothData.getSource());
-                        }
-                    }
-                    if (!foundLocks.isEmpty() && System.currentTimeMillis() - lastSignificantMovement > 2000) {
-                        for (String foundLock : foundLocks) {
-                            LockData foundLockWithDetails = dataStore.getLockDetails(foundLock);
-                            if (foundLockWithDetails.getOrientation() == -1) {
-                                NotificationUtils notification = new NotificationUtils();
-                                notification.displayOrientationNotification(getApplicationContext(), foundLockWithDetails.getMAC(), currentOrientation);
-                            } else if (Math.min(Math.abs(currentOrientation - foundLockWithDetails.getOrientation()),
-                                    Math.min(Math.abs((currentOrientation - foundLockWithDetails.getOrientation()) + 360),
-                                            Math.abs((currentOrientation - foundLockWithDetails.getOrientation()) - 360)))
-                                    < 22.5 ) {
-                                decisionLocks.add(foundLock);
-                            }
-                        }
-                        if (!decisionLocks.isEmpty()) {
-                            startHeuristicsDecision(decisionLocks);
-                            isScanningForLocks = false;
-                        }
-                        //nearbyLocksDetected(foundLocks);
-                    } else if (!foundLocks.isEmpty()) {
-                        foundLocks = new ArrayList<>();
-                        decisionLocks = new ArrayList<>();
-                    } else if (System.currentTimeMillis() - startTime > 600000) {
-                        isScanningForLocks = false;
-                    }
-
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+                startService(scannerIntent);
             }
-        }).start();
+        };
+        scannerServiceThread.start();
     }
 
     void getLock(String lockMAC) {
