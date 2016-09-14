@@ -153,11 +153,10 @@ public class CoreService extends Service implements
         IntentFilter heuristicsTunerFilter = new IntentFilter();
         heuristicsTunerFilter.addAction("HEURISTICS_TUNER");
         heuristicsTunerFilter.addAction("ADD_ORIENTATION");
+        heuristicsTunerFilter.addAction("STOP_SCAN");
         registerReceiver(heuristicsTuner, heuristicsTunerFilter);
 
         Log.v("CoreService", "Service created");
-
-        activeInnerGeofences.add("test");
     }
 
     @Override
@@ -285,7 +284,13 @@ public class CoreService extends Service implements
     private BroadcastReceiver startDecision = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            Bundle extras = intent.getExtras();
             Log.e(TAG, "StartDecision");
+            if ("START_DECISION".equals(action)) {
+                Log.i(TAG, "onReceive: arraylist " + extras.getStringArrayList("Locks"));
+                startHeuristicsDecision(extras.getStringArrayList("Locks"));
+            }
         }
     };
 
@@ -303,11 +308,20 @@ public class CoreService extends Service implements
                     isScanningForLocks = true;
                     scanForLocks();
                 }
+            } else if ("STOP_SCAN".equals(action)) {
+                stopAccelerometerService();
+                stopBluetoothService();
+                stopWifiService();
+                stopLocationService();
+                isScanningForLocks = false;
+                isDetailedDataCollectionStarted = false;
+                isLocationDataCollectionStarted = false;
             }
         }
     };
 
     void startAccelerometerService() {
+        export = new ArrayList<>();
         Log.v(TAG, "Starting AccelerometerService");
         Thread accelerometerServiceThread = new Thread() {
             public void run() {
@@ -363,7 +377,7 @@ public class CoreService extends Service implements
         stopService(bluetoothIntent);
     }
 
-    boolean startHeuristicsDecision(List<String> foundLocks) {
+    boolean startHeuristicsDecision(ArrayList<String> foundLocks) {
         Log.d(TAG, foundLocks.toString());
         Toast.makeText(this, "BeKey found", Toast.LENGTH_SHORT).show();
 
@@ -448,6 +462,7 @@ public class CoreService extends Service implements
                 boolean success = true;
                 String passphrase = "";
 
+                startAccelerometerService();
                 startBluetoothService();
                 startWifiService();
                 startLocationService();
@@ -458,6 +473,7 @@ public class CoreService extends Service implements
                     e.printStackTrace();
                 }
 
+                stopAccelerometerService();
                 stopBluetoothService();
                 stopWifiService();
                 stopLocationService();
@@ -469,7 +485,7 @@ public class CoreService extends Service implements
                             lockMAC,
                             passphrase,
                             currentLocation,
-                            20,
+                            30,
                             100,
                             currentOrientation,
                             recordedBluetooth,

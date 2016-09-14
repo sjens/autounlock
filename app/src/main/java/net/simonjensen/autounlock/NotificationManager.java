@@ -13,7 +13,7 @@ import android.util.Log;
 import java.io.Serializable;
 import java.util.List;
 
-public class NotificationUtils {
+public class NotificationManager {
     public static final int NOTIFICATION_ID = 1;
 
     public static final String ACTION_ADD_ORIENTATION = "action_add_orientation";

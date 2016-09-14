@@ -39,8 +39,9 @@ public class AccelerometerService extends Service implements SensorEventListener
 
     private static final float NS2S = 1.0f / 1000000000.0f;
     private float previousTimestamp;
-    float dT = 0;
-    float previousVelocity[] = new float[3];
+    private float dT = 0;
+    private float previousVelocity[] = new float[3];
+    private long startTime;
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -48,30 +49,15 @@ public class AccelerometerService extends Service implements SensorEventListener
             System.arraycopy(event.values, 0, gravity, 0, event.values.length);
         } else if (event.sensor == magneticFieldSensor) {
             System.arraycopy(event.values, 0, magneticField, 0, event.values.length);
-            processMagneticField(magneticField, gravity);
+            recordCurrentOrientation(magneticField, gravity);
         } else if (event.sensor == linearAccelerationSensor) {
             System.arraycopy(event.values, 0, linearAcceleration, 0, event.values.length);
-            processAccelerometer(linearAcceleration);
+            recordLastSignificantMovement(linearAcceleration);
             accelerometerFilter(linearAcceleration[0], linearAcceleration[1], linearAcceleration[2]);
-            if (previousTimestamp != 0) {
-                dT = (event.timestamp - previousTimestamp) * NS2S;
-            }
-            previousTimestamp = event.timestamp;
-            float vel[] = new float[3];
-            vel[0] = (dT * event.values[0]) + previousVelocity[0];
-            vel[1] = (dT * event.values[1]) + previousVelocity[1];
-            vel[2] = (dT * event.values[2]) + previousVelocity[2];
-            //Log.i(TAG, "onSensorChanged: " + vel[1]);
-            previousVelocity = vel;
-            //CoreService.export.add(String.valueOf(linearAcceleration[0]) + " " + String.valueOf(linearAcceleration[1]) + " " + String.valueOf(linearAcceleration[2])
-            //        + " " + String.valueOf(vel[0]) + " " + String.valueOf(vel[1]) + " " + String.valueOf(vel[2]));
         } else if (event.sensor == rotationVectorSensor && linearAcceleration != null) {
             System.arraycopy(event.values, 0, rotationVector, 0, event.values.length);
-            //Log.i(TAG, "onSensorChanged: " + rotationVector[0] + " " + rotationVector[1] + " " + rotationVector[2]);
-            rotateAccelerationToEarthCoordinates(linearAcceleration, rotationVector);
+            rotateAccelerationToEarthCoordinates(linearAcceleration, rotationVector, event.timestamp);
         } else if (event.sensor == gyroscopeSensor) {
-            //Log.d(TAG, "onSensorChanged: " + event.values[0] + " " + event.values[1] + " " + event.values[2]);
-            //CoreService.export.add(String.valueOf(event.values[0]) + " " + String.valueOf(event.values[1]) + " " + String.valueOf(event.values[2]));
         }
     }
 
@@ -100,17 +86,13 @@ public class AccelerometerService extends Service implements SensorEventListener
             alpha = d * filterConstant / kAccelerometerNoiseAttenuation + (1.0f - d) * filterConstant;
         }
 
-        accelerationFilter[0] = (float) (alpha * (accelerationFilter[0] + accelerometerX - previousAcceleration[0]));
-        accelerationFilter[1] = (float) (alpha * (accelerationFilter[1] + accelerometerY - previousAcceleration[1]));
-        accelerationFilter[2] = (float) (alpha * (accelerationFilter[2] + accelerometerZ - previousAcceleration[2]));
+        accelerationFilter[0] = (alpha * (accelerationFilter[0] + accelerometerX - previousAcceleration[0]));
+        accelerationFilter[1] = (alpha * (accelerationFilter[1] + accelerometerY - previousAcceleration[1]));
+        accelerationFilter[2] = (alpha * (accelerationFilter[2] + accelerometerZ - previousAcceleration[2]));
 
         previousAcceleration[0] = accelerometerX;
         previousAcceleration[1] = accelerometerY;
         previousAcceleration[2] = accelerometerZ;
-        //onFilteredAccelerometerChanged(accelerationFilter[0], accelerationFilter[1], accelerationFilter[2]);
-        //Log.e(TAG, "accelerationFilter: new reading");
-        //Log.d(TAG, "accelerationFilter: unfiltered " + previousAcceleration[0] + " " + previousAcceleration[1] + " " + previousAcceleration[2]);
-        //Log.d(TAG, "accelerationFilter: filtered" + accelerationFilter[0] + " " + accelerationFilter[1] + " " + accelerationFilter[2]);
     }
 
     private double norm(double x, double y, double z) {
@@ -127,7 +109,8 @@ public class AccelerometerService extends Service implements SensorEventListener
         }
     }
 
-    private void processAccelerometer(float[] linearAcceleration) {
+    // Last significant movement is recorded when no axis exceeds 0.5 m/s^2 acceleration in any direction.
+    private void recordLastSignificantMovement(float[] linearAcceleration) {
         if (linearAcceleration[0] > 0.5 || linearAcceleration[0] < -0.5
                 || linearAcceleration[1] > 0.5 || linearAcceleration[1] < -0.5
                 || linearAcceleration[2] > 0.5 || linearAcceleration[2] < -0.5) {
@@ -135,25 +118,26 @@ public class AccelerometerService extends Service implements SensorEventListener
         }
     }
 
-    private void processMagneticField(float[] magneticField, float[] gravity) {
+    // getOrientation() returns radians, we convert to degrees.
+    private void recordCurrentOrientation(float[] magneticField, float[] gravity) {
         float R[] = new float[9];
         float I[] = new float[9];
         boolean success = SensorManager.getRotationMatrix(R, I, gravity, magneticField);
         if (success) {
             float orientation[] = new float[3];
             SensorManager.getOrientation(R, orientation);
-            // Log.d(TAG, "azimuth (rad): " + azimuth);
             float azimuth = (float) Math.toDegrees(orientation[0]);
             azimuth = (azimuth + 360) % 360;
 
-            //Log.v(TAG, "azimuth (deg): " + azimuth);
             CoreService.currentOrientation = azimuth;
         }
     }
 
-    private void rotateAccelerationToEarthCoordinates(float[] linearAcceleration, float[] rotationVector) {
+    // Rotation is calculated by getting a rotation matrix and mulitplying the linear acceleration onto it.
+    private void rotateAccelerationToEarthCoordinates(float[] linearAcceleration, float[] rotationVector, long timestamp) {
         float[] rotationMatrixInverted = new float[16];
         float[] rotationMatrix = new float[16];
+        float[] rotatedLinearAcceleration = new float[4];
 
         // Calculate the rotation matrix from the rotation vector
         SensorManager.getRotationMatrixFromVector(rotationMatrix, rotationVector);
@@ -163,12 +147,34 @@ public class AccelerometerService extends Service implements SensorEventListener
 
         // Multiply the linear acceleration onto the inverted rotation matrix to get linear acceleration in
         // earth coordinates.
-        android.opengl.Matrix.multiplyMV(linearAcceleration, 0, rotationMatrixInverted, 0, linearAcceleration, 0);
-        //Log.d(TAG, "rotateAccelerationToEarthCoordinates: " + linearAcceleration[0] + " " + linearAcceleration[1] + " " + linearAcceleration[2]);
+        android.opengl.Matrix.multiplyMV(rotatedLinearAcceleration, 0, rotationMatrixInverted, 0, linearAcceleration, 0);
+        //Log.i(TAG, "rotateAccelerationToEarthCoordinates: " + rotatedLinearAcceleration[0] + " " + rotatedLinearAcceleration[1] + " " + rotatedLinearAcceleration[2]);
+        calculateVelocity(rotatedLinearAcceleration, timestamp);
     }
 
-    private void calculateVelocity(float[] linearAcceleration) {
+    // Velocity is calculated by integrating the linear acceleration.
+    private void calculateVelocity(float[] linearAcceleration, long timestamp) {
+        if (previousTimestamp != 0) {
+            dT = (timestamp - previousTimestamp) * NS2S;
+            previousTimestamp = timestamp;
+            float velocity[] = new float[3];
+            velocity[0] = (dT * linearAcceleration[0]) + previousVelocity[0];
+            velocity[1] = (dT * linearAcceleration[1]) + previousVelocity[1];
+            velocity[2] = (dT * linearAcceleration[2]) + previousVelocity[2];
 
+            //Log.i(TAG, "calculateVelocity: " + String.valueOf(velocity[0]) + " " + String.valueOf(velocity[1]) + " " + String.valueOf(velocity[2]));
+            CoreService.export.add(String.valueOf(System.currentTimeMillis() - startTime) + " "
+                            + String.valueOf(linearAcceleration[0]) + " "
+                            + String.valueOf(linearAcceleration[1]) + " "
+                            + String.valueOf(linearAcceleration[2]) + " "
+                            + String.valueOf(velocity[0]) + " "
+                            + String.valueOf(velocity[1]) + " "
+                            + String.valueOf(velocity[2]));
+
+            previousVelocity = velocity;
+        } else {
+            previousTimestamp = timestamp;
+        }
     }
 
     @Override
@@ -184,11 +190,12 @@ public class AccelerometerService extends Service implements SensorEventListener
         linearAccelerationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
         rotationVectorSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        sensorManager.registerListener(this, gravitySensor, SensorManager.SENSOR_DELAY_NORMAL);
-        sensorManager.registerListener(this, magneticFieldSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        sensorManager.registerListener(this, linearAccelerationSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        sensorManager.registerListener(this, rotationVectorSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(this, gravitySensor, SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this, magneticFieldSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this, linearAccelerationSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this, rotationVectorSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        startTime = System.currentTimeMillis();
     }
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {

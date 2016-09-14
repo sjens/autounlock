@@ -211,7 +211,6 @@ public class MainActivity extends AppCompatActivity {
      * this method with the android:onClick attribute) */
     public void onButtonClickAccel(View v) {
         if (bound) {
-            coreService.export = new ArrayList<>();
             coreService.startAccelerometerService();
             setStartAccelerometer();
 
@@ -576,7 +575,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, foundLocks.toString());
             //coreService.startHeuristicsDecision(foundLocks);
             //coreService.notifyDecision();
-            NotificationUtils notificationUtils = new NotificationUtils();
+            NotificationManager notificationUtils = new NotificationManager();
             notificationUtils.displayNotification(this,
                     CoreService.recordedBluetooth,
                     CoreService.recordedWifi,

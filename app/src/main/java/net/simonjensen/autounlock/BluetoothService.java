@@ -14,6 +14,8 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 
+import java.util.ArrayList;
+
 public class BluetoothService extends Service {
     static String TAG = "BluetoothService";
 
@@ -31,6 +33,8 @@ public class BluetoothService extends Service {
     PowerManager powerManager;
     PowerManager.WakeLock wakeLock;
 
+    long prev = 0;
+
     //Scan call back function
     private ScanCallback scanCallback = new ScanCallback() {
         @Override
@@ -45,15 +49,24 @@ public class BluetoothService extends Service {
             String source = result.getDevice().getAddress();
             int RSSI = result.getRssi();
             long time = System.currentTimeMillis();
+            ArrayList<BluetoothData> bluetoothDevicesToRemove = new ArrayList<>();
+
+            if (source.equals(SIMON_BEKEY)) {
+                long timediff = time - prev;
+                prev = time;
+                CoreService.export.add(String.valueOf(timediff));
+            }
 
             for (BluetoothData bluetooth : CoreService.recordedBluetooth) {
                 if (time - bluetooth.getTime() > 5000) {
-                    Log.e(TAG, "onScanResult: " + source + (time - bluetooth.getTime()));
-                    CoreService.recordedBluetooth.remove(bluetooth);
+                    bluetoothDevicesToRemove.add(bluetooth);
+                    //CoreService.recordedBluetooth.remove(bluetooth);
                 } else if (bluetooth.getSource().equals(source)){
-                    CoreService.recordedBluetooth.remove(bluetooth);
+                    bluetoothDevicesToRemove.add(bluetooth);
+                    //CoreService.recordedBluetooth.remove(bluetooth);
                 }
             }
+            CoreService.recordedBluetooth.removeAll(bluetoothDevicesToRemove);
 
             BluetoothData aBluetoothDevice;
             aBluetoothDevice = new BluetoothData(name, source, RSSI, time);

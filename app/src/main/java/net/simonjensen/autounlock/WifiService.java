@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WifiService extends Service {
+    private static String TAG = "WifiService";
+
     int startMode;       // indicates how to behave if the service is killed
     IBinder binder;      // interface for clients that bind
     boolean allowRebind; // indicates whether onRebind should be used

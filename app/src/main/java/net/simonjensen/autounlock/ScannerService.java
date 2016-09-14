@@ -3,10 +3,13 @@ package net.simonjensen.autounlock;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class ScannerService extends Service {
@@ -16,6 +19,8 @@ public class ScannerService extends Service {
     private Thread scannerThread;
 
     private static final String TAG = "ScannerService";
+
+    private Intent stopScan = new Intent("STOP_SCAN");
 
     @Override
     public void onCreate() {
@@ -39,8 +44,8 @@ public class ScannerService extends Service {
 
         @Override
         public void run() {
-            List<String> foundLocks = new ArrayList<>();
-            List<String> decisionLocks = new ArrayList<>();
+            List<String> foundLocks = new ArrayList<String>();
+            ArrayList<String> decisionLocks = new ArrayList<String>();
             long startTime = System.currentTimeMillis();
 
             while (running) {
@@ -51,36 +56,37 @@ public class ScannerService extends Service {
                         foundLocks.add(bluetoothData.getSource());
                     }
                 }
+                Log.i(TAG, "run: " + CoreService.currentOrientation + " " + CoreService.lastSignificantMovement);
                 if (!foundLocks.isEmpty() && System.currentTimeMillis() - CoreService.lastSignificantMovement > 2000) {
                     for (String foundLock : foundLocks) {
-                        Log.d(TAG, "run: here? --");
                         LockData foundLockWithDetails = CoreService.dataStore.getLockDetails(foundLock);
                         if (foundLockWithDetails.getOrientation() == -1) {
-                            NotificationUtils notification = new NotificationUtils();
+                            NotificationManager notification = new NotificationManager();
                             notification.displayOrientationNotification(getApplicationContext(), foundLockWithDetails.getMAC(), CoreService.currentOrientation);
-                            CoreService.isScanningForLocks = false;
+                            sendBroadcast(stopScan);
+                            running = false;
+                            stopSelf();
                         } else if (Math.min(Math.abs(CoreService.currentOrientation - foundLockWithDetails.getOrientation()),
                                 Math.min(Math.abs((CoreService.currentOrientation - foundLockWithDetails.getOrientation()) + 360),
                                         Math.abs((CoreService.currentOrientation - foundLockWithDetails.getOrientation()) - 360)))
                                 < 22.5 ) {
                             decisionLocks.add(foundLock);
-                            Log.w(TAG, "run: decisionLocks " + decisionLocks.toString());
-                        } else {
-                            Log.e(TAG, "run: we shouldn't get this far");
                         }
                     }
                     if (!decisionLocks.isEmpty()) {
-                        Log.e(TAG, "run: here?");
-                        //startHeuristicsDecision(decisionLocks);
-                        CoreService.isScanningForLocks = false;
+                        Intent startDecision = new Intent("START_DECISION");
+                        startDecision.putStringArrayListExtra("Locks", decisionLocks);
+                        sendBroadcast(startDecision);
+
+                        sendBroadcast(stopScan);
                         running = false;
+                        stopSelf();
                     }
                 } else if (!foundLocks.isEmpty()) {
                     foundLocks = new ArrayList<>();
                     decisionLocks = new ArrayList<>();
-                } else if (System.currentTimeMillis() - startTime > 6) {
-                    Log.e(TAG, "run: stopping");
-                    CoreService.isScanningForLocks = false;
+                } else if (System.currentTimeMillis() - startTime > 60000) {
+                    sendBroadcast(stopScan);
                     running = false;
                     stopSelf();
                 }
@@ -94,7 +100,7 @@ public class ScannerService extends Service {
         }
 
         private void terminate() {
-            CoreService.isScanningForLocks = false;
+            sendBroadcast(stopScan);
             running = false;
         }
     }

@@ -2,6 +2,7 @@ package net.simonjensen.autounlock;
 
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,7 @@ class Heuristics {
         this.recentLocationList = recentLocationList;
     }
 
-    boolean makeDecision(List<String> foundLocks) {
+    boolean makeDecision(ArrayList<String> foundLocks) {
         Map<String, Double> lockScores = new HashMap<>();
         Map.Entry<String, Double> maxEntry = null;
 

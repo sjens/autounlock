@@ -30,6 +30,13 @@ public class LocationService extends Service {
     // Define adapter listener that responds to location updates
     private LocationListener locationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
+/*            if (location.getProvider().equals("gps") && previousLocation != null) {
+                Log.i(TAG, "onLocationChanged: " + location.getProvider() + " " + location.getAccuracy() + " " + String.valueOf(System.currentTimeMillis() - previousLocation.getTime()));
+                CoreService.export.add(String.valueOf(location.getAccuracy()) + " " + String.valueOf(System.currentTimeMillis() - previousLocation.getTime()) + " " + String.valueOf(location.getLatitude()) + " " + String.valueOf(location.getLongitude()));
+                previousLocation = location;
+            } else if (location.getProvider().equals("gps") && previousLocation == null){
+                previousLocation = location;
+            }*/
             if (previousLocation == null) {
                 insertLocationData(location);
                 previousLocation = location;
