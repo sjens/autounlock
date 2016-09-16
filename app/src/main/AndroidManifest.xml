@@ -61,7 +61,7 @@
                 android:name=".ScannerService"
                 android:enabled="true"/>
         <service
-                android:name=".NotificationManager$NotificationActionService"
+                android:name=".NotificationUtility$NotificationActionService"
                 android:enabled="true">
         </service>
     </application>

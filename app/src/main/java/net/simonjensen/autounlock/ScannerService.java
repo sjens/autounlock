@@ -3,13 +3,10 @@ package net.simonjensen.autounlock;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class ScannerService extends Service {
@@ -61,7 +58,7 @@ public class ScannerService extends Service {
                     for (String foundLock : foundLocks) {
                         LockData foundLockWithDetails = CoreService.dataStore.getLockDetails(foundLock);
                         if (foundLockWithDetails.getOrientation() == -1) {
-                            NotificationManager notification = new NotificationManager();
+                            NotificationUtility notification = new NotificationUtility();
                             notification.displayOrientationNotification(getApplicationContext(), foundLockWithDetails.getMAC(), CoreService.currentOrientation);
                             sendBroadcast(stopScan);
                             running = false;

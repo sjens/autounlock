@@ -252,7 +252,7 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:text="Manual Unlock"
-            android:onClick="onButtonClickNewDB"
+            android:onClick="onButtonClickManualUnlock"
             android:layout_below="@+id/unregistergeofence"
             android:layout_alignEnd="@+id/databufferstop"/>
 

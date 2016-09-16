@@ -25,7 +25,6 @@ public class BluetoothService extends Service {
 
     static final String SIMON_BEKEY = "7C:09:2B:EF:04:04";
     static final String RASMUS_BEKEY = "7C:09:2B:EF:03:FB";
-    static final String MIBAND = "C8:0F:10:1F:C1:23";
 
     BluetoothAdapter bluetoothAdapter;
     ScanSettings scanSettings;
@@ -57,6 +56,7 @@ public class BluetoothService extends Service {
                 CoreService.export.add(String.valueOf(timediff));
             }
 
+            // Bluetooth data for same lock and old data is deleted
             for (BluetoothData bluetooth : CoreService.recordedBluetooth) {
                 if (time - bluetooth.getTime() > 5000) {
                     bluetoothDevicesToRemove.add(bluetooth);

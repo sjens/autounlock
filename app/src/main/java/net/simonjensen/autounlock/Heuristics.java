@@ -1,5 +1,6 @@
 package net.simonjensen.autounlock;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ class Heuristics {
         this.recentLocationList = recentLocationList;
     }
 
-    boolean makeDecision(ArrayList<String> foundLocks) {
+    boolean makeDecision(Context context, ArrayList<String> foundLocks) {
         Map<String, Double> lockScores = new HashMap<>();
         Map.Entry<String, Double> maxEntry = null;
 
@@ -82,10 +83,27 @@ class Heuristics {
         }
 
         if (maxEntry.getValue() > 200) {
+            NotificationUtility notification = new NotificationUtility();
+            notification.displayUnlockNotification(context, maxEntry.getKey(), recentBluetoothList, recentWifiList, recentLocationList);
             return true;
         } else {
             return false;
         }
     }
 
+    void updateGeofenceSize(String lock, String type, String direction) {
+        if (type.equals("Inner")) {
+            if (direction.equals("Larger")) {
+
+            } else if (direction.equals("Smaller")) {
+
+            }
+        } else if (type.equals("Outer")) {
+            if (direction.equals("Larger")) {
+
+            } else if (direction.equals("Smaller")) {
+
+            }
+        }
+    }
 }

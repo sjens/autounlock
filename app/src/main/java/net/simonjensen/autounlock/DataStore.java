@@ -352,6 +352,23 @@ class DataStore {
         }
     }
 
+    void deleteLockData(String lock) {
+        String lockQuery = "DELETE FROM " + LOCK_TABLE + " WHERE " + LOCK_MAC + "='" + lock + "';";
+        String bluetoothQuery = "DELETE FROM " + BLUETOOTH_TABLE + " WHERE " + BLUETOOTH_NEARBY_LOCK + "='" + lock + "';";
+        String wifiQuery = "DELETE FROM " + WIFI_TABLE + " WHERE " + WIFI_NEARBY_LOCK + "='" + lock + "';";
+
+        try {
+            database = databaseHelper.getWritableDatabase();
+            database.beginTransaction();
+            database.execSQL(lockQuery);
+            database.execSQL(bluetoothQuery);
+            database.execSQL(wifiQuery);
+            database.setTransactionSuccessful();
+        } finally {
+            database.endTransaction();
+        }
+    }
+
     private class DatabaseHelper extends SQLiteOpenHelper {
         DatabaseHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);

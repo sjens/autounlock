@@ -10,6 +10,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,11 @@ public class NotificationDecisionActivity extends AppCompatActivity implements A
 
     private ArrayList<String> listItems = new ArrayList<String>();
     ArrayAdapter<String> adapter;
+
+    String lock;
+    List<BluetoothData> bluetoothDataList;
+    List<WifiData> wifiDataList;
+    List<LocationData> locationDataList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,11 +32,10 @@ public class NotificationDecisionActivity extends AppCompatActivity implements A
         setSupportActionBar(toolbar);
 
         Intent intent = getIntent();
-        List<BluetoothData> bluetoothDataList = (List<BluetoothData>) intent.getExtras().getSerializable("bluetoothList");
-        List<WifiData> wifiDataList = (List<WifiData>) intent.getExtras().getSerializable("wifiList");
-        List<LocationData> locationDataList = (List<LocationData>) intent.getExtras().getSerializable("locationList");
-
-        Log.d("test", bluetoothDataList.toString());
+        lock = intent.getExtras().getString("Lock");
+        bluetoothDataList = (List<BluetoothData>) intent.getExtras().getSerializable("BluetoothList");
+        wifiDataList = (List<WifiData>) intent.getExtras().getSerializable("WifiList");
+        locationDataList = (List<LocationData>) intent.getExtras().getSerializable("LocationList");
 
         ListView listView = (ListView) findViewById(R.id.decisionListView);
         if (listView != null) {
@@ -46,8 +51,7 @@ public class NotificationDecisionActivity extends AppCompatActivity implements A
                     "Decrease outer geofence size",
                     "Increase outer geofence size",
                     "Redo data collection for lock",
-                    "Door opened too early",
-                    "Door opened too late"
+                    "Redo orientation"
             );
         }
     }
@@ -55,7 +59,11 @@ public class NotificationDecisionActivity extends AppCompatActivity implements A
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Intent heuristicsTuner = new Intent("HEURISTICS_TUNER");
-        heuristicsTuner.putExtra("Option", position);
+        heuristicsTuner.putExtra("Position", position);
+        heuristicsTuner.putExtra("Lock", lock);
+        heuristicsTuner.putExtra("BluetoothData", (Serializable) bluetoothDataList);
+        heuristicsTuner.putExtra("WifiData", (Serializable) wifiDataList);
+        heuristicsTuner.putExtra("LocationData", (Serializable) locationDataList);
         sendBroadcast(heuristicsTuner);
         super.moveTaskToBack(true);
     }

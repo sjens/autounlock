@@ -16,7 +16,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -525,7 +524,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onButtonClickExportDatastore(View v) {
-        String filename = String.valueOf(System.currentTimeMillis());
+/*        String filename = String.valueOf(System.currentTimeMillis());
         String[] numbers = new String[] {"1, 2, 3"};
         FileOutputStream outputStream;
 
@@ -540,7 +539,7 @@ public class MainActivity extends AppCompatActivity {
             outputStream.close();
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 
 /*        try {
             File data = Environment.getDataDirectory();
@@ -569,24 +568,23 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             // do something
         }*/
-/*        if (bound) {
+        if (bound) {
             List<String> foundLocks = new ArrayList<>();
-            foundLocks.add(BluetoothService.MIBAND);
+            foundLocks.add(BluetoothService.SIMON_BEKEY);
             Log.d(TAG, foundLocks.toString());
             //coreService.startHeuristicsDecision(foundLocks);
             //coreService.notifyDecision();
-            NotificationManager notificationUtils = new NotificationManager();
-            notificationUtils.displayNotification(this,
+            NotificationUtility notification = new NotificationUtility();
+            notification.displayUnlockNotification(this,
+                    BluetoothService.SIMON_BEKEY,
                     CoreService.recordedBluetooth,
                     CoreService.recordedWifi,
                     CoreService.recordedLocation);
-        }*/
+        }
     }
 
-    public void onButtonClickNewDB(View v) {
-        Log.v("New Datastore", "Deleting data in datastore");
+    public void onButtonClickManualUnlock(View v) {
         if (bound) {
-            //coreService.newDatastore();
             coreService.manualUnlock(BluetoothService.SIMON_BEKEY);
         }
     }

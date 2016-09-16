@@ -50,7 +50,6 @@ public class CoreService extends Service implements
     static List<WifiData> recordedWifi = new ArrayList<WifiData>();
     static List<LocationData> recordedLocation = new ArrayList<LocationData>();
     static List<AccelerometerData> recordedAccelerometer = new ArrayList<AccelerometerData>();
-    static ArrayList<String> idleInnerGeofences = new ArrayList<>();
     static volatile ArrayList<String> activeInnerGeofences = new ArrayList<>();
     static ArrayList<String> activeOuterGeofences = new ArrayList<>();
 
@@ -148,13 +147,13 @@ public class CoreService extends Service implements
 
         IntentFilter startDecisionFilter = new IntentFilter();
         startDecisionFilter.addAction("START_DECISION");
-        registerReceiver(startDecision, startDecisionFilter);
+        registerReceiver(startDecisionReceiver, startDecisionFilter);
 
         IntentFilter heuristicsTunerFilter = new IntentFilter();
         heuristicsTunerFilter.addAction("HEURISTICS_TUNER");
         heuristicsTunerFilter.addAction("ADD_ORIENTATION");
         heuristicsTunerFilter.addAction("STOP_SCAN");
-        registerReceiver(heuristicsTuner, heuristicsTunerFilter);
+        registerReceiver(heuristicsReceiver, heuristicsTunerFilter);
 
         Log.v("CoreService", "Service created");
     }
@@ -191,6 +190,18 @@ public class CoreService extends Service implements
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+    }
+
+    void googleConnect() {
+        if (!mGoogleApiClient.isConnecting() || !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
+        }
+    }
+
+    void googleDisconnect() {
+        if (mGoogleApiClient.isConnecting() || mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
     }
 
     @Override
@@ -281,7 +292,7 @@ public class CoreService extends Service implements
         }
     };
 
-    private BroadcastReceiver startDecision = new BroadcastReceiver() {
+    private BroadcastReceiver startDecisionReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -289,16 +300,26 @@ public class CoreService extends Service implements
             Log.e(TAG, "StartDecision");
             if ("START_DECISION".equals(action)) {
                 Log.i(TAG, "onReceive: arraylist " + extras.getStringArrayList("Locks"));
-                startHeuristicsDecision(extras.getStringArrayList("Locks"));
+                if (!startHeuristicsDecision(extras.getStringArrayList("Locks"))) {
+                    isLocationDataCollectionStarted = true;
+                    isDetailedDataCollectionStarted = true;
+                    isScanningForLocks = true;
+                    startLocationService();
+                    startAccelerometerService();
+                    startBluetoothService();
+                    startWifiService();
+                    scanForLocks();
+                }
             }
         }
     };
 
-    private BroadcastReceiver heuristicsTuner = new BroadcastReceiver() {
+    private BroadcastReceiver heuristicsReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.i(TAG, "onReceive: tuning heuristics");
             String action = intent.getAction();
+            Bundle extras = intent.getExtras();
             if ("ADD_ORIENTATION".equals(action)) {
                 Log.w(TAG, "onReceive: add orientation, lock: " + intent.getExtras().getString("lock") + " orientation: " + intent.getExtras().getFloat("orientation"));
                 dataStore.insertLockOrientation(
@@ -316,6 +337,20 @@ public class CoreService extends Service implements
                 isScanningForLocks = false;
                 isDetailedDataCollectionStarted = false;
                 isLocationDataCollectionStarted = false;
+            } else if ("HEURISTICS_TUNER".equals(action)) {
+                switch (extras.getInt("Position")) {
+                    case 1: updateGeofenceSize(extras.getString("Lock"), "Inner", "Smaller");
+                        break;
+                    case 2: updateGeofenceSize(extras.getString("Lock"), "Inner", "Larger");
+                        break;
+                    case 3: updateGeofenceSize(extras.getString("Lock"), "Outer", "Smaller");
+                        break;
+                    case 4: updateGeofenceSize(extras.getString("Lock"), "Outer", "Larger");
+                        break;
+                    case 5: redoDataCollection(extras.getString("Lock"));
+                        break;
+                    case 6:
+                }
             }
         }
     };
@@ -385,7 +420,17 @@ public class CoreService extends Service implements
         heuristics.setRecentBluetoothList(recordedBluetooth);
         heuristics.setRecentWifiList(recordedWifi);
         heuristics.setRecentLocationList(recordedLocation);
-        return heuristics.makeDecision(foundLocks);
+        return heuristics.makeDecision(this, foundLocks);
+    }
+
+    void updateGeofenceSize(String lock, String type, String direction) {
+        Heuristics heuristics = new Heuristics();
+        heuristics.updateGeofenceSize(lock, type, direction);
+    }
+
+    void redoDataCollection(String lock) {
+        dataStore.deleteLockData(lock);
+        manualUnlock(lock);
     }
 
     void startDataBuffer() {
@@ -416,18 +461,6 @@ public class CoreService extends Service implements
         stopWifiService();
         stopLocationService();
         stopDataBuffer();
-    }
-
-    void googleConnect() {
-        if (!mGoogleApiClient.isConnecting() || !mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.connect();
-        }
-    }
-
-    void googleDisconnect() {
-        if (mGoogleApiClient.isConnecting() || mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
-        }
     }
 
     void addGeofences() {
@@ -487,7 +520,7 @@ public class CoreService extends Service implements
                             currentLocation,
                             30,
                             100,
-                            currentOrientation,
+                            -1f,
                             recordedBluetooth,
                             recordedWifi
                     );

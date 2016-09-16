@@ -11,9 +11,10 @@ import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
-public class NotificationManager {
+public class NotificationUtility {
     public static final int NOTIFICATION_ID = 1;
 
     public static final String ACTION_ADD_ORIENTATION = "action_add_orientation";
@@ -61,32 +62,34 @@ public class NotificationManager {
         notificationManager.notify(NOTIFICATION_ID, notification);
     }
 
-    public void displayNotification(Context context,
-                                    List<BluetoothData> bluetoothDataList,
-                                    List<WifiData> wifiDataList,
-                                    List<LocationData> locationDataList) {
+    public void displayUnlockNotification(Context context,
+                                          String lock,
+                                          List<BluetoothData> bluetoothDataList,
+                                          List<WifiData> wifiDataList,
+                                          List<LocationData> locationDataList) {
 
         Intent yesIntent = new Intent(context, NotificationActionService.class)
                 .setAction(ACTION_YES);
 
         Intent noIntent = new Intent(context, NotificationActionService.class)
                 .setAction(ACTION_NO);
-        noIntent.putExtra("bluetoothList", (Serializable) bluetoothDataList);
-        noIntent.putExtra("wifiList", (Serializable) wifiDataList);
-        noIntent.putExtra("locationList", (Serializable) locationDataList);
+        noIntent.putExtra("Lock", lock);
+        noIntent.putExtra("BluetoothList", (Serializable) bluetoothDataList);
+        noIntent.putExtra("WifiList", (Serializable) wifiDataList);
+        noIntent.putExtra("LocationList", (Serializable) locationDataList);
 
         // use System.currentTimeMillis() to have adapter unique ID for the pending intent
         PendingIntent pendingYesIntent = PendingIntent.getService(
                 context,
                 (int) System.currentTimeMillis(),
                 yesIntent,
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_UPDATE_CURRENT);
 
         PendingIntent pendingNoIntent = PendingIntent.getService(
                 context,
                 (int) System.currentTimeMillis(),
                 noIntent,
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationCompat.Builder notificationBuilder =
                 (NotificationCompat.Builder) new NotificationCompat.Builder(context)
@@ -116,15 +119,15 @@ public class NotificationManager {
             String action = intent.getAction();
             Log.d("Notification", "Received notification action: " + action);
             if (ACTION_YES.equals(action)) {
-                // TODO: handle action 1.
-                // If you want to cancel the notification: NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID);
-                Heuristics heuristics = new Heuristics();
+                NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID);
             } else if (ACTION_NO.equals(action)) {
+                NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID);
                 Intent notificationDecision = new Intent(this, NotificationDecisionActivity.class)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 notificationDecision.putExtras(intent.getExtras());
                 startActivity(notificationDecision);
             } else if (ACTION_ADD_ORIENTATION.equals(action)) {
+                NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID);
                 Intent addOrientationIntent = new Intent("HEURISTICS_TUNER");
                 addOrientationIntent.setAction("ADD_ORIENTATION");
                 addOrientationIntent.putExtras(intent.getExtras());

@@ -51,7 +51,7 @@ public class DataProcessorService extends Service {
             List<LocationData> prevRecordedLocation = new ArrayList<LocationData>();
             List<WifiData> prevRecordedWifi = new ArrayList<WifiData>();
 
-            List foundLocks = new ArrayList();
+            ArrayList<String> foundLocks = new ArrayList();
 
             while (running) {
                 // In order to not have empty lists in the DataBuffer, previous data will be used if no new data has been found.
@@ -87,10 +87,12 @@ public class DataProcessorService extends Service {
                 // and adapter location. We cannot be sure any Wifi access points are nearby.
                 if (!prevRecordedBluetooth.isEmpty() && !prevRecordedLocation.isEmpty()) {
                     for (int i = 0; i < CoreService.recordedBluetooth.size(); i++) {
-                        if (CoreService.recordedBluetooth.get(i).getSource().equals(BluetoothService.MIBAND)) {
+                        if (CoreService.recordedBluetooth.get(i).getSource().equals(BluetoothService.SIMON_BEKEY)) {
                             Log.e("Start Decision", "BeKey found");
-                            //coreService.startHeuristicsDecision(CoreService.recordedBluetooth.get(i).getSource());
                             foundLocks.add(CoreService.recordedBluetooth.get(i).getSource());
+                            Intent startDecision = new Intent("START_DECISION");
+                            startDecision.putStringArrayListExtra("Locks", foundLocks);
+                            sendBroadcast(startDecision);
                         }
                     }
                     if (!foundLocks.isEmpty()) {

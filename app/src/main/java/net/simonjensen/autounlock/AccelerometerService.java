@@ -56,7 +56,7 @@ public class AccelerometerService extends Service implements SensorEventListener
             accelerometerFilter(linearAcceleration[0], linearAcceleration[1], linearAcceleration[2]);
         } else if (event.sensor == rotationVectorSensor && linearAcceleration != null) {
             System.arraycopy(event.values, 0, rotationVector, 0, event.values.length);
-            rotateAccelerationToEarthCoordinates(linearAcceleration, rotationVector, event.timestamp);
+            rotateAccelerationToWorldCoordinates(linearAcceleration, rotationVector, event.timestamp);
         } else if (event.sensor == gyroscopeSensor) {
         }
     }
@@ -134,7 +134,7 @@ public class AccelerometerService extends Service implements SensorEventListener
     }
 
     // Rotation is calculated by getting a rotation matrix and mulitplying the linear acceleration onto it.
-    private void rotateAccelerationToEarthCoordinates(float[] linearAcceleration, float[] rotationVector, long timestamp) {
+    private void rotateAccelerationToWorldCoordinates(float[] linearAcceleration, float[] rotationVector, long timestamp) {
         float[] rotationMatrixInverted = new float[16];
         float[] rotationMatrix = new float[16];
         float[] rotatedLinearAcceleration = new float[4];
@@ -148,7 +148,7 @@ public class AccelerometerService extends Service implements SensorEventListener
         // Multiply the linear acceleration onto the inverted rotation matrix to get linear acceleration in
         // earth coordinates.
         android.opengl.Matrix.multiplyMV(rotatedLinearAcceleration, 0, rotationMatrixInverted, 0, linearAcceleration, 0);
-        //Log.i(TAG, "rotateAccelerationToEarthCoordinates: " + rotatedLinearAcceleration[0] + " " + rotatedLinearAcceleration[1] + " " + rotatedLinearAcceleration[2]);
+        //Log.i(TAG, "rotateAccelerationToWorldCoordinates: " + rotatedLinearAcceleration[0] + " " + rotatedLinearAcceleration[1] + " " + rotatedLinearAcceleration[2]);
         calculateVelocity(rotatedLinearAcceleration, timestamp);
     }
 
@@ -162,19 +162,20 @@ public class AccelerometerService extends Service implements SensorEventListener
             velocity[1] = (dT * linearAcceleration[1]) + previousVelocity[1];
             velocity[2] = (dT * linearAcceleration[2]) + previousVelocity[2];
 
-            //Log.i(TAG, "calculateVelocity: " + String.valueOf(velocity[0]) + " " + String.valueOf(velocity[1]) + " " + String.valueOf(velocity[2]));
-            CoreService.export.add(String.valueOf(System.currentTimeMillis() - startTime) + " "
-                            + String.valueOf(linearAcceleration[0]) + " "
-                            + String.valueOf(linearAcceleration[1]) + " "
-                            + String.valueOf(linearAcceleration[2]) + " "
-                            + String.valueOf(velocity[0]) + " "
-                            + String.valueOf(velocity[1]) + " "
-                            + String.valueOf(velocity[2]));
+            processSensorData(linearAcceleration, velocity);
 
             previousVelocity = velocity;
         } else {
             previousTimestamp = timestamp;
         }
+    }
+
+    private void processSensorData (float[] linearAcceleration, float[] velocity) {
+        long time = System . currentTimeMillis () ;
+        AccelerometerData anAccelerometerEvent = new AccelerometerData (
+                linearAcceleration[0], linearAcceleration[1], linearAcceleration[2],
+                velocity[0], velocity[1], velocity[2], time) ;
+        CoreService.recordedAccelerometer.add(anAccelerometerEvent);
     }
 
     @Override
@@ -197,26 +198,31 @@ public class AccelerometerService extends Service implements SensorEventListener
         sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_FASTEST);
         startTime = System.currentTimeMillis();
     }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // The service is starting, due to adapter call to startService()
         return startMode;
     }
+
     @Override
     public IBinder onBind(Intent intent) {
         // A client is binding to the service with bindService()
         return binder;
     }
+
     @Override
     public boolean onUnbind(Intent intent) {
         // All clients have unbound with unbindService()
         return allowRebind;
     }
+
     @Override
     public void onRebind(Intent intent) {
         // A client is binding to the service with bindService(),
         // after onUnbind() has already been called
     }
+
     @Override
     public void onDestroy() {
         // The service is no longer used and is being destroyed
