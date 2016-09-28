@@ -41,6 +41,7 @@ public class ScannerService extends Service {
 
         @Override
         public void run() {
+            CoreService.isScanningForLocks = true;
             List<String> foundLocks = new ArrayList<String>();
             ArrayList<String> decisionLocks = new ArrayList<String>();
             long startTime = System.currentTimeMillis();
@@ -54,7 +55,8 @@ public class ScannerService extends Service {
                     }
                 }
                 Log.i(TAG, "run: " + CoreService.currentOrientation + " " + CoreService.lastSignificantMovement);
-                if (!foundLocks.isEmpty() && System.currentTimeMillis() - CoreService.lastSignificantMovement > 2000) {
+                if (!foundLocks.isEmpty() && !CoreService.recordedLocation.isEmpty()
+                        && System.currentTimeMillis() - CoreService.lastSignificantMovement > 2000) {
                     for (String foundLock : foundLocks) {
                         LockData foundLockWithDetails = CoreService.dataStore.getLockDetails(foundLock);
                         if (foundLockWithDetails.getOrientation() == -1) {
@@ -62,6 +64,7 @@ public class ScannerService extends Service {
                             notification.displayOrientationNotification(getApplicationContext(), foundLockWithDetails.getMAC(), CoreService.currentOrientation);
                             sendBroadcast(stopScan);
                             running = false;
+                            CoreService.isScanningForLocks = false;
                             stopSelf();
                         } else if (Math.min(Math.abs(CoreService.currentOrientation - foundLockWithDetails.getOrientation()),
                                 Math.min(Math.abs((CoreService.currentOrientation - foundLockWithDetails.getOrientation()) + 360),
@@ -77,14 +80,17 @@ public class ScannerService extends Service {
 
                         sendBroadcast(stopScan);
                         running = false;
+                        CoreService.isScanningForLocks = false;
                         stopSelf();
                     }
                 } else if (!foundLocks.isEmpty()) {
                     foundLocks = new ArrayList<>();
                     decisionLocks = new ArrayList<>();
                 } else if (System.currentTimeMillis() - startTime > 60000) {
+                    Log.e(TAG, "run: here?");
                     sendBroadcast(stopScan);
                     running = false;
+                    CoreService.isScanningForLocks = false;
                     stopSelf();
                 }
 

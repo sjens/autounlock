@@ -5,6 +5,7 @@ import android.app.ActivityManager;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -16,6 +17,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -541,7 +546,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }*/
 
-/*        try {
+        try {
             File data = Environment.getDataDirectory();
 
             try {
@@ -567,8 +572,8 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             // do something
-        }*/
-        if (bound) {
+        }
+/*        if (bound) {
             List<String> foundLocks = new ArrayList<>();
             foundLocks.add(BluetoothService.SIMON_BEKEY);
             Log.d(TAG, foundLocks.toString());
@@ -580,7 +585,7 @@ public class MainActivity extends AppCompatActivity {
                     CoreService.recordedBluetooth,
                     CoreService.recordedWifi,
                     CoreService.recordedLocation);
-        }
+        }*/
     }
 
     public void onButtonClickManualUnlock(View v) {

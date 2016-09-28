@@ -1,6 +1,7 @@
 package net.simonjensen.autounlock;
 
 import android.content.Context;
+import android.location.Location;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -66,7 +67,17 @@ class Heuristics {
                 }
             }
 
-            if (CoreService.activeInnerGeofences.contains(foundLock)) {
+            if (!recentLocationList.isEmpty()) {
+                float[] results = new float[3];
+                Location.distanceBetween(storedLockData.getLocation().getLatitude(), storedLockData.getLocation().getLongitude(),
+                        recentLocationList.get(recentLocationList.size() - 1).getLatitude(), recentLocationList.get(recentLocationList.size() - 1).getLongitude(),
+                        results);
+                Log.e(TAG, "makeDecision: distanceBetween " + results[0]);
+                lockScore += 100 - results[0];
+            }
+
+            if (CoreService.activeInnerGeofences.contains(foundLock)
+                    && CoreService.activeOuterGeofences.contains(foundLock)) {
                 lockScore += 50;
             } else {
                 lockScore -= 1000;
@@ -82,28 +93,12 @@ class Heuristics {
             }
         }
 
-        if (maxEntry.getValue() > 200) {
+        if (maxEntry.getValue() > 250) {
             NotificationUtility notification = new NotificationUtility();
             notification.displayUnlockNotification(context, maxEntry.getKey(), recentBluetoothList, recentWifiList, recentLocationList);
             return true;
         } else {
             return false;
-        }
-    }
-
-    void updateGeofenceSize(String lock, String type, String direction) {
-        if (type.equals("Inner")) {
-            if (direction.equals("Larger")) {
-
-            } else if (direction.equals("Smaller")) {
-
-            }
-        } else if (type.equals("Outer")) {
-            if (direction.equals("Larger")) {
-
-            } else if (direction.equals("Smaller")) {
-
-            }
         }
     }
 }

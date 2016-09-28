@@ -95,8 +95,8 @@ public class NotificationUtility {
                 (NotificationCompat.Builder) new NotificationCompat.Builder(context)
                         .setSmallIcon(R.drawable.ic_lock_open_black)
                         .setAutoCancel(true)
-                        .setContentTitle("Unlock decision was made")
-                        .setContentText("decide")
+                        .setContentTitle(String.valueOf(lock) + " was unlocked")
+                        .setContentText("Was this decision correct?")
                         .addAction(new NotificationCompat.Action(R.drawable.ic_check_black,
                                 "Yes", pendingYesIntent))
                         .addAction(new NotificationCompat.Action(R.drawable.ic_close_black,
@@ -132,6 +132,9 @@ public class NotificationUtility {
                 addOrientationIntent.setAction("ADD_ORIENTATION");
                 addOrientationIntent.putExtras(intent.getExtras());
                 sendBroadcast(addOrientationIntent);
+            } else if (ACTION_IGNORE_ORIENTATION.equals(action)) {
+                Intent restartScanner = new Intent("START_SCAN");
+                sendBroadcast(restartScanner);
             }
         }
     }

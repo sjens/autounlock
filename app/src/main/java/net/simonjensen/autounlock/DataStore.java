@@ -232,21 +232,6 @@ class DataStore {
         }
     }
 
-    void insertLockOrientation(String lockMAC, float orientation) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(LOCK_ORIENTATION, orientation);
-        contentValues.put(TIMESTAMP, System.currentTimeMillis());
-
-        try {
-            database = databaseHelper.getWritableDatabase();
-            database.beginTransaction();
-            database.replace(LOCK_TABLE, null, contentValues);
-            database.setTransactionSuccessful();
-        } finally {
-            database.endTransaction();
-        }
-    }
-
     void insertBtle(String name, String btleSource, int btleRSSI, String nearbyLock, long timestamp) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(BLUETOOTH_NAME, name);
@@ -346,6 +331,38 @@ class DataStore {
             database = databaseHelper.getWritableDatabase();
             database.beginTransaction();
             database.replace(BUFFER_TABLE, null, contentValues);
+            database.setTransactionSuccessful();
+        } finally {
+            database.endTransaction();
+        }
+    }
+
+    void updateLockOrientation(String lockMAC, float orientation) {
+        String updateQuery = "UPDATE " + LOCK_TABLE
+                + " SET " + LOCK_ORIENTATION + " = '" + orientation + "', "
+                + TIMESTAMP + " = '" + String.valueOf(System.currentTimeMillis()) + "' "
+                + "WHERE " + LOCK_MAC + " = '" + lockMAC + "';";
+
+        try {
+            database = databaseHelper.getWritableDatabase();
+            database.beginTransaction();
+            database.execSQL(updateQuery);
+            database.setTransactionSuccessful();
+        } finally {
+            database.endTransaction();
+        }
+    }
+
+    void updateGeofence(String lockMAC, String geofence, String size) {
+        String updateQuery = "UPDATE " + LOCK_TABLE
+                + " SET " + geofence + " = '" + size + "', "
+                + TIMESTAMP + " = '" + String.valueOf(System.currentTimeMillis()) + "' "
+                + "WHERE " + LOCK_MAC + " = '" + lockMAC + "';";
+
+        try {
+            database = databaseHelper.getWritableDatabase();
+            database.beginTransaction();
+            database.execSQL(updateQuery);
             database.setTransactionSuccessful();
         } finally {
             database.endTransaction();

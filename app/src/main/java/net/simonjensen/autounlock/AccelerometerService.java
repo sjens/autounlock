@@ -120,11 +120,11 @@ public class AccelerometerService extends Service implements SensorEventListener
 
     // getOrientation() returns radians, we convert to degrees.
     private void recordCurrentOrientation(float[] magneticField, float[] gravity) {
-        float R[] = new float[9];
-        float I[] = new float[9];
+        float[] R = new float[9];
+        float[] I = new float[9];
         boolean success = SensorManager.getRotationMatrix(R, I, gravity, magneticField);
         if (success) {
-            float orientation[] = new float[3];
+            float[] orientation = new float[3];
             SensorManager.getOrientation(R, orientation);
             float azimuth = (float) Math.toDegrees(orientation[0]);
             azimuth = (azimuth + 360) % 360;
@@ -175,8 +175,7 @@ public class AccelerometerService extends Service implements SensorEventListener
         AccelerometerData anAccelerometerEvent = new AccelerometerData (
                 linearAcceleration[0], linearAcceleration[1], linearAcceleration[2],
                 velocity[0], velocity[1], velocity[2], time) ;
-        CoreService.recordedAccelerometer.add(anAccelerometerEvent);
-    }
+        CoreService.recordedAccelerometer.add(anAccelerometerEvent) ; }
 
     @Override
     public void onCreate() {
@@ -198,31 +197,26 @@ public class AccelerometerService extends Service implements SensorEventListener
         sensorManager.registerListener(this, gyroscopeSensor, SensorManager.SENSOR_DELAY_FASTEST);
         startTime = System.currentTimeMillis();
     }
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // The service is starting, due to adapter call to startService()
         return startMode;
     }
-
     @Override
     public IBinder onBind(Intent intent) {
         // A client is binding to the service with bindService()
         return binder;
     }
-
     @Override
     public boolean onUnbind(Intent intent) {
         // All clients have unbound with unbindService()
         return allowRebind;
     }
-
     @Override
     public void onRebind(Intent intent) {
         // A client is binding to the service with bindService(),
         // after onUnbind() has already been called
     }
-
     @Override
     public void onDestroy() {
         // The service is no longer used and is being destroyed

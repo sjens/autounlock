@@ -153,6 +153,7 @@ public class CoreService extends Service implements
         heuristicsTunerFilter.addAction("HEURISTICS_TUNER");
         heuristicsTunerFilter.addAction("ADD_ORIENTATION");
         heuristicsTunerFilter.addAction("STOP_SCAN");
+        heuristicsTunerFilter.addAction("START_SCAN");
         registerReceiver(heuristicsReceiver, heuristicsTunerFilter);
 
         Log.v("CoreService", "Service created");
@@ -237,11 +238,6 @@ public class CoreService extends Service implements
             if ("GEOFENCES_ENTERED".equals(action)) {
                 for (String geofence : triggeringGeofencesList) {
                     if (geofence.contains("inner")) {
-                        for (String outerGeofence : activeOuterGeofences) {
-                            if (outerGeofence.equals(geofence.substring(5))) {
-                                activeOuterGeofences.remove(outerGeofence);
-                            }
-                        }
                         activeInnerGeofences.add(geofence.substring(5));
                         if (!isDetailedDataCollectionStarted) {
                             Log.i(TAG, "onReceive: starting detailed data collection");
@@ -253,11 +249,6 @@ public class CoreService extends Service implements
                             scanForLocks();
                         }
                     } else if (geofence.contains("outer")) {
-                        for (String innerGeofence : activeInnerGeofences) {
-                            if (innerGeofence.equals(geofence.substring(5))) {
-                                activeInnerGeofences.remove(innerGeofence);
-                            }
-                        }
                         activeOuterGeofences.add(geofence.substring(5));
                         if (!isLocationDataCollectionStarted) {
                             isLocationDataCollectionStarted = true;
@@ -268,9 +259,6 @@ public class CoreService extends Service implements
             } else if ("GEOFENCES_EXITED".equals(action)) {
                 for (String geofence : triggeringGeofencesList) {
                     if (geofence.contains("inner")) {
-                        if (activeInnerGeofences.contains(geofence.substring(5))) {
-                            activeInnerGeofences.remove(geofence.substring(5));
-                        }
                         if (isDetailedDataCollectionStarted && activeInnerGeofences.isEmpty()) {
                             isDetailedDataCollectionStarted = false;
                             isScanningForLocks = false;
@@ -279,9 +267,6 @@ public class CoreService extends Service implements
                             stopWifiService();
                         }
                     } else if (geofence.contains("outer")) {
-                        if (activeOuterGeofences.contains(geofence.substring(5))) {
-                            activeOuterGeofences.remove(geofence.substring(5));
-                        }
                         if (isLocationDataCollectionStarted && activeOuterGeofences.isEmpty()) {
                             isLocationDataCollectionStarted = false;
                             stopLocationService();
@@ -322,7 +307,7 @@ public class CoreService extends Service implements
             Bundle extras = intent.getExtras();
             if ("ADD_ORIENTATION".equals(action)) {
                 Log.w(TAG, "onReceive: add orientation, lock: " + intent.getExtras().getString("lock") + " orientation: " + intent.getExtras().getFloat("orientation"));
-                dataStore.insertLockOrientation(
+                dataStore.updateLockOrientation(
                         intent.getExtras().getString("lock"),
                         intent.getExtras().getFloat("orientation"));
                 if (isDetailedDataCollectionStarted && !isScanningForLocks) {
@@ -337,19 +322,21 @@ public class CoreService extends Service implements
                 isScanningForLocks = false;
                 isDetailedDataCollectionStarted = false;
                 isLocationDataCollectionStarted = false;
+            } else if ("START_SCAN".equals(action)) {
+                scanForLocks();
             } else if ("HEURISTICS_TUNER".equals(action)) {
                 switch (extras.getInt("Position")) {
-                    case 1: updateGeofenceSize(extras.getString("Lock"), "Inner", "Smaller");
+                    case 0: updateGeofenceSize(extras.getString("Lock"), "Inner", "Smaller");
                         break;
-                    case 2: updateGeofenceSize(extras.getString("Lock"), "Inner", "Larger");
+                    case 1: updateGeofenceSize(extras.getString("Lock"), "Inner", "Larger");
                         break;
-                    case 3: updateGeofenceSize(extras.getString("Lock"), "Outer", "Smaller");
+                    case 2: updateGeofenceSize(extras.getString("Lock"), "Outer", "Smaller");
                         break;
-                    case 4: updateGeofenceSize(extras.getString("Lock"), "Outer", "Larger");
+                    case 3: updateGeofenceSize(extras.getString("Lock"), "Outer", "Larger");
                         break;
-                    case 5: redoDataCollection(extras.getString("Lock"));
+                    case 4: redoDataCollection(extras.getString("Lock"));
                         break;
-                    case 6:
+                    case 5: redoOrientation(extras.getString("Lock"));
                 }
             }
         }
@@ -424,13 +411,37 @@ public class CoreService extends Service implements
     }
 
     void updateGeofenceSize(String lock, String type, String direction) {
-        Heuristics heuristics = new Heuristics();
-        heuristics.updateGeofenceSize(lock, type, direction);
+        if (type.equals("Inner")) {
+            if (direction.equals("Larger")) {
+                LockData lockData = dataStore.getLockDetails(lock);
+                String size = String.valueOf(lockData.getInnerGeofence() * 1.25);
+                dataStore.updateGeofence(lock, "inner_geofence", size);
+            } else if (direction.equals("Smaller")) {
+                LockData lockData = dataStore.getLockDetails(lock);
+                String size = String.valueOf(lockData.getInnerGeofence() * 0.75);
+                dataStore.updateGeofence(lock, "inner_geofence", size);
+            }
+        } else if (type.equals("Outer")) {
+            if (direction.equals("Larger")) {
+                LockData lockData = dataStore.getLockDetails(lock);
+                String size = String.valueOf(lockData.getOuterGeofence() * 1.25);
+                dataStore.updateGeofence(lock, "outer_geofence", size);
+            } else if (direction.equals("Smaller")) {
+                LockData lockData = dataStore.getLockDetails(lock);
+                String size = String.valueOf(lockData.getOuterGeofence() * 0.75);
+                dataStore.updateGeofence(lock, "outer_geofence", size);
+            }
+        }
     }
+
 
     void redoDataCollection(String lock) {
         dataStore.deleteLockData(lock);
         manualUnlock(lock);
+    }
+
+    void redoOrientation(String lock) {
+        dataStore.updateLockOrientation(lock, -1f);
     }
 
     void startDataBuffer() {
